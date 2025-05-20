@@ -25,11 +25,24 @@ class NodeProfiler(TimerProfiler):
         *,
         sources: Sequence[Node] = (),
         sinks: Sequence[Node] = (),
+        filter_types: Sequence[type[Node] | str] | None = None,
         n_runs: int = 10_000,
     ):
+        if filter_types:
+            target_nodes = self._filter_nodes(target_nodes, filter_types)
         super().__init__(target_nodes, sources, sinks, n_runs)
         self._allowed_groupby = _ALLOWED_GROUPBY
         self._primary_col = "time"
+
+    def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
+        def condition(node: Node):
+            for t in node_types:
+                if type(node).__name__ == t:
+                    return True
+                if isinstance(t, type) and isinstance(node, t):
+                    return True
+
+        return list(filter(condition, nodes))
 
     @classmethod
     def estimate_node(cls, node: Node, n_runs: int = 10_000):
