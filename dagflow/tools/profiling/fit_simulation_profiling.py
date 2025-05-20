@@ -127,7 +127,7 @@ class FitSimulationProfiler(TimerProfiler):
     def print_report(
         self,
         *,
-        rows: int | None = 40,
+        rows: int | None = 100,
         group_by: str | Sequence[str] | None = ("parameters", "endpoints", "eval mode"),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
@@ -135,9 +135,9 @@ class FitSimulationProfiler(TimerProfiler):
         report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nFit simulation Profiling {hex(id(self))}, "
-            f"fit steps (n_runs): {self._n_runs}, "
-            f"nodes in subgraph: {len(self._target_nodes)}\n"
-            f"parameters: {len(self._sources)}, endpoints: {self._sinks}\n",
+            f"fit steps (n_runs): {self._n_runs},\n"
+            f"nodes in subgraph: {len(self._target_nodes)}, "
+            f"parameters: {len(self._sources)}, endpoints: {len(self._sinks)},\n"
             f"eval mode: {self.mode}, "
             f"{f'derivative points: {self._n_points}' if self._mode == 'parameter-wise' else ''}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "

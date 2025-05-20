@@ -148,7 +148,7 @@ class MemoryProfiler(Profiler):
     def print_report(
         self,
         *,
-        rows: int | None = 40,
+        rows: int | None = 100,
         group_by: str | Sequence[str] | None = "type",
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
