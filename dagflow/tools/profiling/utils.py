@@ -4,9 +4,9 @@ from collections import deque
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
+
     from dagflow.core.node import Node
-    from collections.abc import Generator
-    from collections.abc import Sequence
 
 
 def __child_nodes_gen(node: Node) -> Generator[Node, None, None]:
