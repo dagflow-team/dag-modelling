@@ -81,12 +81,12 @@ class MemoryProfiler(Profiler):
             else:
                 estimations[inp] = 0
         for out in node.outputs.iter_all():
+            # If there is an _allocating_input,
+            #  the `out.data` refers to the child `Input` data.
+            # However if there is no `_allocating_input`
+            #  and owns_buffer=False (and `out.data` is not `None` of course)
+            #  then it means there is allocated memory for this Output.
             if out.has_data and (out.owns_buffer or out._allocating_input is None):
-                # If there is an _allocating_input,
-                #  the `out.data` refers to the child `Input` data.
-                # However if there is no `_allocating_input`
-                #  and owns_buffer=False (and `out.data` is not `None` of course)
-                #  then it means there is allocated memory for this Output.
                 estimations[out] = out._data.nbytes
             else:
                 estimations[out] = 0
