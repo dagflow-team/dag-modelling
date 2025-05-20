@@ -83,6 +83,7 @@ class NodeProfiler(TimerProfiler):
         print(
             f"\nNode Profiling {hex(id(self))}, "
             f"n_runs for each node: {self._n_runs}\n"
+            f"nodes in subgraph: {len(self._target_nodes)}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )

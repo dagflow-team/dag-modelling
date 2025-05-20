@@ -156,6 +156,7 @@ class MemoryProfiler(Profiler):
         report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nMemory Profiling {hex(id(self))}, "
+            f"nodes in subgraph: {len(self._target_nodes)}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
