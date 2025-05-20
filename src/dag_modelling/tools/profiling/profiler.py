@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -11,7 +10,7 @@ from tabulate import tabulate
 from .utils import gather_related_nodes, reveal_source_sink
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterable
+    from collections.abc import Callable, Iterable
 
     from pandas.api.typing import DataFrameGroupBy
 
