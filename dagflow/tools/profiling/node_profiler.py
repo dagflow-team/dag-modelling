@@ -28,6 +28,26 @@ class NodeProfiler(TimerProfiler):
         filter_types: Sequence[type[Node] | str] | None = None,
         n_runs: int = 10_000,
     ):
+        """
+        Initialize a NodeProfiler.
+
+        Parameters
+        ----------
+        target_nodes : Sequence[Node], optional
+            The collection of nodes to profile. If `filter_types` is provided,
+            only nodes matching the specified types or type names will be retained.
+        sources : Sequence[Node], optional
+            A collection of nodes used as starting points to find the subgraph of target_nodes,
+            if target_nodes is not specified.
+        sinks : Sequence[Node], optional
+            A collection of nodes used as ending points to find the subgraph of target nodes,
+            if target_nodes is not specified.
+        filter_types : Sequence[type[Node] | str], optional
+            A list of node classes or their class names. When specified, `target_nodes`
+            will be filtered to include only nodes matching these types.
+        n_runs : int, default=10000
+            The number of times each node's function will be executed.
+        """
         if filter_types:
             target_nodes = self._filter_nodes(target_nodes, filter_types)
         super().__init__(target_nodes, sources, sinks, n_runs)
