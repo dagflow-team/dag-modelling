@@ -132,14 +132,14 @@ class MemoryProfiler(Profiler):
     ) -> DataFrame:
         return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
 
-    def _present_in_units(self, value, separator="\n\t") -> str:
+    def _present_in_units(self, value, float_bytes=False, separator="\n\t") -> str:
         """Convert the `value` in bytes to kilobytes, and megabytes.
 
         Return formatted string, where the values separated by `separator`:
         """
         return separator.join(
             (
-                f"{value:.1f} bytes",
+                f"{value:.{1 if float_bytes else 0}f} bytes",
                 f"{value / 2**10:.1f} KB",
                 f"{value / 2**20:.1f} MB",
             )
@@ -168,5 +168,5 @@ class MemoryProfiler(Profiler):
         print(f"\t{self._present_in_units(size_bytes)}")
         s_node = size_bytes / len(self._target_nodes)
         print("TOTAL SIZE / node count:")
-        print(f"\t{self._present_in_units(s_node)}")
+        print(f"\t{self._present_in_units(s_node, float_bytes=True)}")
         return report
