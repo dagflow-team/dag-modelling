@@ -279,6 +279,4 @@ class Profiler(metaclass=ABCMeta):
         Return `Pandas.DataPrame` as report
         ( See: `make_report()` method )
         """
-        report = self.make_report(group_by, aggregations, sort_by)
-        self._print_table(report, rows)
         raise NotImplementedError("You must override `print_report` in subclass")
