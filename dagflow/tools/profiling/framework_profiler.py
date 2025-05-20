@@ -134,6 +134,7 @@ class FrameworkProfiler(TimerProfiler):
             f"\nFramework Profiling {hex(id(self))}, "
             f"n_runs for given subgraph: {self._n_runs}, "
             f"nodes in subgraph: {len(self._target_nodes)}\n"
+            f"sources: {len(self._sources)}, sinks: {self._sinks}\n",
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
