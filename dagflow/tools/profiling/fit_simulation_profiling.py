@@ -3,7 +3,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal
 
-from pandas import DataFrame
+from numpy import sum as npsum
+from pandas import DataFrame, Series
 
 from dagflow.core.node import Node
 
@@ -57,7 +58,26 @@ class FitSimulationProfiler(TimerProfiler):
         self._mode = mode
         self._allowed_groupby = _ALLOWED_GROUPBY
         self._primary_col = "time"
-        self._default_aggregations = ("count", "single", "sum")
+
+        # rename 't_single' (which is just a mean) to 't_step' for this profiling
+        # TODO: perhaps not the most beautiful way to accomplish this
+        for col_name in ("mean", "t_mean", "single"):
+            self._column_aliases[col_name] = "t_step"
+        for alias in ("single", "t_single"):
+            self._aggregate_aliases[alias.replace("single", "step")] = "mean"
+
+        self.register_aggregate_func(
+            func=self._t_calls,
+            aliases=("calls", "t_calls"),
+            column_name="t_calls"
+        )
+        self.register_aggregate_func(
+            func=self._t_single,
+            aliases=("single", "t_single"),
+            column_name="t_single",
+        )
+
+        self._default_aggregations = ("count", "step", "single", "sum")
         self._n_points = derivative_points
 
     @property
@@ -114,6 +134,28 @@ class FitSimulationProfiler(TimerProfiler):
             }
         )
         return self
+
+    def _t_calls(self, _s: Series) -> Series:
+        """User-defined aggregate function.
+        Return number of calls for each "point" in derivative estimation for given group
+        """
+        # TODO: add tests
+        return Series({"t_calls": (self._n_points + 1) * len(_s.index)})
+
+    def _t_single(self, _s: Series) -> Series:
+        """User-defined aggregate function.
+        Return total time divided by number of calls
+        for each point in derivative computation.
+
+        NOTE: This function is differ from 't_single' in parent classes,
+        where it stands for traditional 'mean'.
+        """
+        # TODO: add tests
+        if self._n_points < 2:
+            raise ValueError("Number of derivative points cannot be less than 2")
+        if len(_s.index) == 0:
+            raise ZeroDivisionError("An empty group is received for t_single computation!")
+        return Series({"t_single": npsum(_s) / ((self._n_points + 1) * len(_s.index))})
 
     def make_report(
         self,
