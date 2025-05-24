@@ -44,15 +44,23 @@ class FitSimulationProfiler(TimerProfiler):
         The `parameters` and `endpoints` must each contain at least one node.
 
         The `derivative_points` specifies the number of points for derivative estimation
-        and only used when `mode="parameter-wise"`. Defaults to `4`.
+        for `mode="parameter-wise"`. Defaults to `4`.
+        When the user sets `mode="simultaneous"` it is assumed that `derivative_points=0`
         """
         if not parameters or not endpoints:
             raise ValueError("There must be at least one parameter and at least one endpoint")
         super().__init__(sources=parameters, sinks=endpoints, n_runs=n_runs)
         if mode == "parameter-wise":
             self._fit_step = self._separate_step
+            # TODO: add tests
+            if derivative_points < 2:
+                raise ValueError("Number of derivative points cannot be less than 2")
+            self._n_points = derivative_points
+            self._default_aggregations = ("step", "call", "total", "n_steps", "n_calls")
         elif mode == "simultaneous":
             self._fit_step = self._together_step
+            self._n_points = 0
+            self._default_aggregations = ("call", "total", "n_calls")
         else:
             raise ValueError(f"Unknown mode: {mode}")
         self._mode = mode
@@ -65,19 +73,22 @@ class FitSimulationProfiler(TimerProfiler):
         for alias in ("single", "t_single"):
             self._aggregate_aliases[alias.replace("single", "step")] = "mean"
 
-        self.register_aggregate_func(
-            func=self._t_calls,
-            aliases=("calls", "t_calls"),
-            column_name="t_calls"
-        )
-        self.register_aggregate_func(
-            func=self._t_single,
-            aliases=("single", "t_single"),
-            column_name="t_single",
-        )
+        # rename 'count' to 'n_steps'
+        for col_name in ("count", "t_count"):
+            self._column_aliases[col_name] = "n_steps"
+        for alias in ("steps", "n_steps"):
+            self._aggregate_aliases[alias] = "count"
 
-        self._default_aggregations = ("count", "step", "single", "sum")
-        self._n_points = derivative_points
+        self.register_aggregate_func(
+            func=self._n_calls,
+            aliases=("n_calls", ),
+            column_name="n_calls"
+        )
+        self.register_aggregate_func(
+            func=self._t_call,
+            aliases=("call", "t_call"),
+            column_name="t_call",
+        )
 
     @property
     def mode(self):
@@ -134,27 +145,21 @@ class FitSimulationProfiler(TimerProfiler):
         )
         return self
 
-    def _t_calls(self, _s: Series) -> Series:
+    def _n_calls(self, _s: Series) -> Series:
         """User-defined aggregate function.
         Return number of calls for each "point" in derivative estimation for given group
         """
         # TODO: add tests
-        return Series({"t_calls": (self._n_points + 1) * len(_s.index)})
+        return Series({"n_calls": (self._n_points + 1) * len(_s.index)})
 
-    def _t_single(self, _s: Series) -> Series:
+    def _t_call(self, _s: Series) -> Series:
         """User-defined aggregate function.
-        Return total time divided by number of calls
-        for each point in derivative computation.
-
-        NOTE: This function is differ from 't_single' in parent classes,
-        where it stands for traditional 'mean'.
+        Return [total time] divided by [number of calls
+        for each point in derivative computation + 1].
         """
-        # TODO: add tests
-        if self._n_points < 2:
-            raise ValueError("Number of derivative points cannot be less than 2")
         if len(_s.index) == 0:
-            raise ZeroDivisionError("An empty group is received for t_single computation!")
-        return Series({"t_single": npsum(_s) / ((self._n_points + 1) * len(_s.index))})
+            raise ZeroDivisionError("An empty group is received for t_call computation!")
+        return Series({"t_call": npsum(_s) / ((self._n_points + 1) * len(_s.index))})
 
     def make_report(
         self,
