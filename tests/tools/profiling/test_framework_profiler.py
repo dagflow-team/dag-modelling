@@ -111,5 +111,5 @@ def test_single_by_node_g0(graph_0):
 
     profiling = FrameworkProfiler(nodes, n_runs=1500)
     profiling.estimate_framework_time()
-    profiling.print_report(aggregations=["count", "t_single", "single_by_node"])
-    profiling.print_report(aggregations=["count", "single", "t_mean_by_node"])
+    profiling.print_report(aggregations=["count", "t_single", "node_average"])
+    profiling.print_report(aggregations=["count", "single", "t_node_average"])

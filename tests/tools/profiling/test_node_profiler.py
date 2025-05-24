@@ -108,13 +108,14 @@ def test_make_report_g1(graph_1):
     profiling.make_report(aggregations=["min", "std", "count"])
     profiling.make_report(aggregations=["t_min", "t_std", "t_count"])
     profiling.make_report(aggregations=["t_mean", "t_percentage", "t_count"])
+    profiling.make_report(aggregations=["t_mean", "fraction_percent", "t_count"])
     profiling.make_report(aggregations=["median", "%_of_total"])
     profiling.make_report(aggregations=["count", "min", "std"])
 
     report = profiling.make_report(aggregations=["count", "min", "percentage"])
-    assert "t_sum" not in report.columns
+    assert "t_total" not in report.columns
     report = profiling.make_report(aggregations=["sum", "percentage"])
-    assert "t_sum" in report.columns
+    assert "t_total" in report.columns
 
     with raises(ValueError) as excinfo:
         profiling.make_report(aggregations=["bad_function"])
@@ -147,7 +148,7 @@ def test_print_report_g1_2(graph_1):
         n_runs = 10**i
         profiling = NodeProfiler(target_nodes, n_runs=n_runs)
         profiling.estimate_target_nodes()
-        profiling.print_report(aggregations=["single", "count", "sum", "percentage"])
+        profiling.print_report(aggregations=["single", "count", "sum", "fraction_percent"])
 
 
 def test_print_report_g1_3(graph_1):
