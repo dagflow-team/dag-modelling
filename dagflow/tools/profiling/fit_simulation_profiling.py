@@ -80,9 +80,7 @@ class FitSimulationProfiler(TimerProfiler):
             self._aggregate_aliases[alias] = "count"
 
         self.register_aggregate_func(
-            func=self._n_calls,
-            aliases=("n_calls", ),
-            column_name="n_calls"
+            func=self._n_calls, aliases=("n_calls",), column_name="n_calls"
         )
         self.register_aggregate_func(
             func=self._t_call,

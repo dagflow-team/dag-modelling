@@ -95,9 +95,7 @@ class TimerProfiler(Profiler):
         self._n_runs = value
 
     @classmethod
-    def _timeit_all_runs(
-        cls, stmt: Callable, n_runs: int, setup: Callable | None = None
-    ) -> float:
+    def _timeit_all_runs(cls, stmt: Callable, n_runs: int, setup: Callable | None = None) -> float:
         """Estimate total time of the statement running multiple times.
         Use `time.perf_counter_ns` internally to measure time in nanoseconds
         and then convert it to seconds by dividing the total time by 1 billion.
