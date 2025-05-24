@@ -57,7 +57,6 @@ class FitSimulationProfiler(TimerProfiler):
             raise ValueError(f"Unknown mode: {mode}")
         self._mode = mode
         self._allowed_groupby = _ALLOWED_GROUPBY
-        self._primary_col = "time"
 
         # rename 't_single' (which is just a mean) to 't_step' for this profiling
         # TODO: perhaps not the most beautiful way to accomplish this

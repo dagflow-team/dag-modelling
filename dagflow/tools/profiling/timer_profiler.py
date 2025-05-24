@@ -53,8 +53,10 @@ SINK_COL_WIDTH = 32
 class TimerProfiler(Profiler):
     """Base class for time-related profiling.
 
+    The `"time"` column is used to store the measured values.
     It is not designed to be used directly,
-    you should consider `NodeProfiler` or `FrameworkProfiler`.
+    you should consider `NodeProfiler`,
+    `FrameworkProfiler` or `FitSimulationProfiler`
     """
 
     __slots__ = ("_n_runs", "_timer")
@@ -77,6 +79,7 @@ class TimerProfiler(Profiler):
             column_name="%_of_total",
         )
         super().__init__(target_nodes, sources, sinks)
+        self._primary_col = "time"
 
     @property
     def n_runs(self) -> int:

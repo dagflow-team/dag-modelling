@@ -52,7 +52,6 @@ class NodeProfiler(TimerProfiler):
             target_nodes = self._filter_nodes(target_nodes, filter_types)
         super().__init__(target_nodes, sources, sinks, n_runs)
         self._allowed_groupby = _ALLOWED_GROUPBY
-        self._primary_col = "time"
 
     def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
         def condition(node: Node):

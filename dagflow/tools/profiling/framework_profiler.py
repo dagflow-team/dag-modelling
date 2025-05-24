@@ -52,7 +52,6 @@ class FrameworkProfiler(TimerProfiler):
             column_name="t_single_by_node",
         )
         self._default_aggregations = ("count", "single", "sum", "t_single_by_node")
-        self._primary_col = "time"
         self._replaced_fcns = {}
         if not (self._sources and self._sinks):
             self._reveal_source_sink()
