@@ -44,14 +44,12 @@ class FrameworkProfiler(TimerProfiler):
         self.register_aggregate_func(
             func=self._t_single_node,
             aliases=[
-                "t_single_by_node",
-                "single_by_node",
-                "mean_by_node",
-                "t_mean_by_node",
+                "t_node_average",
+                "node_average",
             ],
-            column_name="t_single_by_node",
+            column_name="t_node_average",
         )
-        self._default_aggregations = ("count", "single", "sum", "t_single_by_node")
+        self._default_aggregations = ("count", "single", "sum", "t_node_average")
         self._replaced_fcns = {}
         if not (self._sources and self._sinks):
             self._reveal_source_sink()
@@ -61,7 +59,7 @@ class FrameworkProfiler(TimerProfiler):
 
         This as also an example of user-defined aggregate function
         """
-        return Series({"t_single_by_node": mean(_s) / len(self._target_nodes)})
+        return Series({"t_node_average": mean(_s) / len(self._target_nodes)})
 
     def _taint_nodes(self):
         for node in self._target_nodes:
