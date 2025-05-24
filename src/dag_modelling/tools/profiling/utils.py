@@ -26,8 +26,7 @@ def __check_reachable(nodes_gathered, sinks):
     for sink in sinks:
         if sink not in nodes_gathered:
             raise ValueError(
-                f"One of the `sinks` nodes is unreachable: {sink} "
-                "(no paths from sources)"
+                f"One of the `sinks` nodes is unreachable: {sink} " "(no paths from sources)"
             )
 
 
