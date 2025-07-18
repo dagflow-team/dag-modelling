@@ -166,7 +166,7 @@ class plot_auto:
 
         labels = self._output.labels
 
-        self._title = labels.get_plottitle(substitutions=self._latex_substitutions)
+        self._title = labels.get_plot_title(substitutions=self._latex_substitutions)
         self._xlabel = self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
         self._ylabel = labels.axis_unit
 

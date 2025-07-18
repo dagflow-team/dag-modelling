@@ -84,7 +84,7 @@ def to_TH1(output: Output, *, substitutions: dict[str, str] = {}) -> TH1D:
         edges = edges_to_args(output.dd.axes_edges[0].data)
     except IndexError:
         edges = data.size, 0, float(data.size)
-    hist = TH1D("", labels.get_roottitle(substitutions=substitutions), *edges)
+    hist = TH1D("", labels.get_root_title(substitutions=substitutions), *edges)
     buffer = get_buffer_hist1(hist)
 
     buffer[:] = data
@@ -110,7 +110,7 @@ def to_TH2(output: Output, *, substitutions: dict[str, str] = {}) -> TH2D:
     except IndexError:
         edgesY = data.shape[1], 0, float(data.shape[1])
 
-    hist = TH2D("", labels.get_roottitle(substitutions=substitutions), *(edgesX + edgesY))
+    hist = TH2D("", labels.get_root_title(substitutions=substitutions), *(edgesX + edgesY))
     buffer = get_buffer_hist2(hist)
 
     buffer[:] = data
@@ -130,7 +130,7 @@ def to_TGraph(output, *, substitutions: dict[str, str] = {}):
     x = _buffer_clean(output.dd.axes_meshes[0].data)
     y = _buffer_clean(output.data)
 
-    title = labels.get_roottitle(substitutions=substitutions)
+    title = labels.get_root_title(substitutions=substitutions)
     xtitle = output.dd.axis_label(0, axistype="mesh", root=True) or "Index [#]"
     ytitle = labels.rootaxis
 
@@ -149,7 +149,7 @@ def to_TGraph2(output, *, substitutions: dict[str, str] = {}):
     y = _buffer_clean(output.dd.axes_meshes[1].data)
     z = _buffer_clean(output.data)
 
-    title = labels.get_roottitle(substitutions=substitutions)
+    title = labels.get_root_title(substitutions=substitutions)
     xtitle = output.dd.axis_label(0, axistype="mesh", root=True) or "Index [#]"
     ytitle = output.dd.axis_label(1, axistype="mesh", root=True) or "Index [#]"
     ztitle = labels.rootaxis

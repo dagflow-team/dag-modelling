@@ -23,7 +23,7 @@ def test_Integrator_trap(debug_graph):
 
         metaint = Integrator(
             "trap",
-            labels={"integrator": {"plottitle": "Integrator", "axis": "integral"}},
+            labels={"integrator": {"plot_title": "Integrator", "axis": "integral"}},
         )
 
         cosf = Cos("cos")

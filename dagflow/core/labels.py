@@ -135,7 +135,7 @@ class Labels:
         for the graph, or text_unit
 
     _latex : str
-        for latex output, or to replace plottitle
+        for latex output, or to replace plot_title
 
     _mark : str
         for short mark on the graphiz graph
@@ -152,16 +152,16 @@ class Labels:
     _yaxis : str
         for own Y axis, when it is not provided
 
-    _plottitle : str
+    _plot_title : str
         for plot title, will be replaced by latex if not found
 
-    _roottitle : str
-        for canvas title (root), will be replaced by plottitle with \→# substitution
+    _root_title : str
+        for canvas title (root), will be replaced by plot_title with \→# substitution
 
     _unit : str
         for text unit
 
-    _latexunit : str
+    _latex_unit : str
         for latex text unit
 
     _xunit : str
@@ -182,11 +182,11 @@ class Labels:
         "_axis",
         "_xaxis",
         "_yaxis",
-        "_plottitle",
-        "_roottitle",
+        "_plot_title",
+        "_root_title",
         "_rootaxis",
         "_unit",
-        "_latexunit",
+        "_latex_unit",
         "_xunit",
         "_yunit",
         "_paths",
@@ -203,11 +203,11 @@ class Labels:
     _axis: str | None
     _xaxis: str | None
     _yaxis: str | None
-    _plottitle: str | None
-    _roottitle: str | None
+    _plot_title: str | None
+    _root_title: str | None
     _rootaxis: str | None
     _unit: str | None
-    _latexunit: str | None
+    _latex_unit: str | None
     _xunit: str | None
     _yunit: str | None
     _mark: str | None
@@ -267,11 +267,11 @@ class Labels:
             "axis",
             "xaxis",
             "yaxis",
-            "plottitle",
-            "roottitle",
+            "plot_title",
+            "root_title",
             "rootaxis",
             "unit",
-            "latexunit",
+            "latex_unit",
             "xunit",
             "yunit",
         ):
@@ -399,37 +399,37 @@ class Labels:
 
     @property
     def latex_unit(self) -> str | None:
-        if unit := self.latexunit:
+        if unit := self.latex_unit:
             return f"{self.latex} [{unit}]"
 
         return self.latex
 
     @property
-    def plottitle(self) -> str | None:
-        return self._plottitle or self._latex or self._text.replace(r"\n", "\n")
+    def plot_title(self) -> str | None:
+        return self._plot_title or self._latex or self._text.replace(r"\n", "\n")
 
-    def get_plottitle(self, *, substitutions: Mapping[str, str] = {}) -> str | None:
-        return self._plottitle or self.get_latex(substitutions=substitutions)
+    def get_plot_title(self, *, substitutions: Mapping[str, str] = {}) -> str | None:
+        return self._plot_title or self.get_latex(substitutions=substitutions)
 
-    @plottitle.setter
-    def plottitle(self, value: str | None):
-        self._plottitle = value
+    @plot_title.setter
+    def plot_title(self, value: str | None):
+        self._plot_title = value
 
     @property
-    def roottitle(self) -> str | None:
-        if self._roottitle is not None:
-            return self._roottitle
-        return _latex_to_root(self.plottitle)
+    def root_title(self) -> str | None:
+        if self._root_title is not None:
+            return self._root_title
+        return _latex_to_root(self.plot_title)
 
-    @roottitle.setter
-    def roottitle(self, value: str | None):
-        self._roottitle = value
+    @root_title.setter
+    def root_title(self, value: str | None):
+        self._root_title = value
 
-    def get_roottitle(self, **kwargs) -> str | None:
-        if self._roottitle is not None:
-            return self._roottitle
+    def get_root_title(self, **kwargs) -> str | None:
+        if self._root_title is not None:
+            return self._root_title
 
-        return _latex_to_root(self.get_plottitle(**kwargs))
+        return _latex_to_root(self.get_plot_title(**kwargs))
 
     @property
     def rootaxis(self) -> str | None:
@@ -445,7 +445,7 @@ class Labels:
 
     @property
     def axis(self) -> str | None:
-        return self._axis or self.plottitle
+        return self._axis or self.plot_title
 
     @axis.setter
     def axis(self, value: str | None):
@@ -453,7 +453,7 @@ class Labels:
 
     @property
     def axis_unit(self) -> str | None:
-        if unit := self.latexunit:
+        if unit := self.latex_unit:
             return f"{self.axis} [{unit}]"
 
         return self.axis
@@ -497,12 +497,12 @@ class Labels:
         self._unit = value
 
     @property
-    def latexunit(self) -> str | None:
-        return self._latexunit or self.unit
+    def latex_unit(self) -> str | None:
+        return self._latex_unit or self.unit
 
-    @latexunit.setter
-    def latexunit(self, value: str | None):
-        self._latexunit = value
+    @latex_unit.setter
+    def latex_unit(self, value: str | None):
+        self._latex_unit = value
 
     @property
     def xunit(self) -> str | None:
@@ -624,7 +624,7 @@ class Labels:
                 "_latex",
                 "_mark",
                 "_axis",
-                "_plottitle",
+                "_plot_title",
                 "_index_values",
                 "_index_dict",
                 "_paths",

@@ -146,7 +146,7 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
         integrator = IntegratorCore(
             "integrator",
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )
@@ -242,7 +242,7 @@ def test_IntegratorCore_gl2to1d_x(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )
@@ -304,7 +304,7 @@ def test_IntegratorCore_gl2to1d_y(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )
