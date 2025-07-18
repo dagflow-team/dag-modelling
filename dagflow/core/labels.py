@@ -124,24 +124,71 @@ def apply_substitutions(
 
 
 class Labels:
+    """A class to treat labels.
+
+    Attributes
+    ----------
+    _text : str
+        for plain text (terminal)
+
+    _graph : str
+        for the graph, or text_unit
+
+    _latex : str
+        for latex output, or to replace plottitle
+
+    _mark : str
+        for short mark on the graphiz graph
+
+    _axis : str
+        used when the output is associated to the axis
+
+    _rootaxis : str
+        used when the output is associated to the axis (root latex)
+
+    _xaxis : str
+        for own X axis, when it is not provided
+
+    _yaxis : str
+        for own Y axis, when it is not provided
+
+    _plottitle : str
+        for plot title, will be replaced by latex if not found
+
+    _roottitle : str
+        for canvas title (root), will be replaced by plottitle with \→# substitution
+
+    _unit : str
+        for text unit
+
+    _latexunit : str
+        for latex text unit
+
+    _xunit : str
+        for text unit for own X axis
+
+    _yunit : str
+        for text unit for own Y axis
+    """
+
     __slots__ = (
         "_name",
         "_index_values",
         "_index_dict",
-        "_text",  # for plain text (terminal)
-        "_graph",  # for the graph, or text_unit
-        "_latex",  # for latex output, or to replace plottitle
-        "_mark",  # for short mark on the graphiz graph
-        "_axis",  # for the relevant axis, will be replaced with plottitle if not found
-        "_xaxis",  # for own X axis, when it is not provided
-        "_yaxis",  # for own Y axis, when it is not provided
-        "_plottitle",  # for plot title, will be replaced by latex if not found
-        "_roottitle",  # for canvas title (root), will be replaced by plottitle with \→# substitution
+        "_text",
+        "_graph",
+        "_latex",
+        "_mark",
+        "_axis",
+        "_xaxis",
+        "_yaxis",
+        "_plottitle",
+        "_roottitle",
         "_rootaxis",
-        "_unit",  # for text unit
-        "_latexunit",  # for latex text unit
-        "_xunit",  # for text unit for own X axis
-        "_yunit",  # for text unit for own Y axis
+        "_unit",
+        "_latexunit",
+        "_xunit",
+        "_yunit",
         "_paths",
         "_plotoptions",
         "_node_hidden",

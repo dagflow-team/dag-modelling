@@ -428,11 +428,7 @@ class NodeStorage(NestedMKDict):
     def to_latex_file(
         self, filename: str | None = None, *, return_df: bool = False, **kwargs
     ) -> str | tuple[str, DataFrame]:
-        df = self.to_df(
-            label_from="latex",
-            group_path_format = "group [{nitems}]",
-            **kwargs
-        )
+        df = self.to_df(label_from="latex", group_path_format="group [{nitems}]", **kwargs)
         tex = df.to_latex(escape=False)
 
         if filename:
@@ -448,8 +444,10 @@ class NodeStorage(NestedMKDict):
     def to_latex_files_split(self, dirname: str, **kwargs) -> None:
         visitor = ParametersVisitorLatex(
             dirname,
-            df_kwargs = {"group_path_format": "group [{nitems}]",},
-            **kwargs
+            df_kwargs={
+                "group_path_format": "group [{nitems}]",
+            },
+            **kwargs,
         )
         self.visit(visitor)
 
@@ -517,7 +515,7 @@ class PlotVisitor(NestedMKDictVisitor):
         "_currently_active_overlay",
         "_close_on_exitdict",
         "_exact_substitutions",
-        "_savefig_kwargs"
+        "_savefig_kwargs",
     )
     _show_all: bool
     _folder: str | None
@@ -642,13 +640,10 @@ class PlotVisitor(NestedMKDictVisitor):
         for key, fig in self._active_figures.items():
             sca(fig.axes[0])
             self._savefig(key, close=True, overlay=True)
-        # print(f"Close {len(self._active_figures)} figures")
         self._active_figures = {}
 
     def start(self, dct):
-        self._n_elements = 0
-        for _ in dct.walkitems():
-            self._n_elements += 1
+        self._n_elements = sum(1 for _ in dct.walkitems())
         self._i_element = 0
 
     def enterdict(self, key, v):
@@ -718,15 +713,15 @@ class ParametersVisitorText(NestedMKDictVisitor):
     __slots__ = (
         "_kwargs",
         "_data_list",
-        "_localdata",
+        "_local_data",
         "_path",
         "_parent_key",
-        "_group_path_format"
+        "_group_path_format",
     )
     _kwargs: dict
     _data_list: list[dict]
     _data_dict: NestedMKDict
-    _localdata: list[dict]
+    _local_data: list[dict]
     _paths: list[tuple[str, ...]]
     _path: tuple[str, ...]
     _parent_key: tuple[str, ...]
@@ -734,11 +729,7 @@ class ParametersVisitorText(NestedMKDictVisitor):
     _group_path_format: str
 
     def __init__(
-        self,
-        *,
-        parent_key: KeyLike = (),
-        group_path_format: str = "{path} [{nitems}]",
-        **kwargs
+        self, *, parent_key: KeyLike = (), group_path_format: str = "{path} [{nitems}]", **kwargs
     ):
         self._kwargs = kwargs
         self._parent_key = properkey(parent_key)
@@ -757,13 +748,13 @@ class ParametersVisitorText(NestedMKDictVisitor):
         self._data_dict = NestedMKDict({}, sep=".")
         self._path = ()
         self._paths = []
-        self._localdata = []
+        self._local_data = []
 
     def enterdict(self, k, v):
         self._store()
         self._path = k
         self._paths.append(self._path)
-        self._localdata = []
+        self._local_data = []
 
     def visit(self, key, value):
         match value:
@@ -784,7 +775,7 @@ class ParametersVisitorText(NestedMKDictVisitor):
         subkeystr = ".".join(subkey)
 
         dct["path"] = self._path and f".. {subkeystr}" or subkeystr
-        self._localdata.append(dct)
+        self._local_data.append(dct)
 
         self._data_dict[key] = dct
 
@@ -797,20 +788,20 @@ class ParametersVisitorText(NestedMKDictVisitor):
             self._path = self._paths[-1] if self._paths else ()
 
     def _store(self):
-        if not self._localdata:
+        if not self._local_data:
             return
 
         strkey = ".".join(self._parent_key + self._path)
-        nitems = len(self._localdata)
+        nitems = len(self._local_data)
         self._data_list.append(
             {
                 "path": self._group_path_format.format(path=strkey, nitems=nitems),
-                "count": len(self._localdata),
+                "count": nitems,
                 "label": strkey,
             }
         )
-        self._data_list.extend(self._localdata)
-        self._localdata = []
+        self._data_list.extend(self._local_data)
+        self._local_data = []
 
     def stop(self, dct):
         pass
@@ -824,7 +815,7 @@ class ParametersVisitorLatex(NestedMKDictVisitor):
         "_filter_columns",
         "_column_labels",
         "_column_formats",
-        "_latex_substitutions"
+        "_latex_substitutions",
     )
     _dirname: Path
     _df_kwargs: dict[str, Any]
@@ -841,7 +832,7 @@ class ParametersVisitorLatex(NestedMKDictVisitor):
         filter_columns: Iterable[str] = (),
         df_kwargs: Mapping[str, Any] = {},
         to_latex_kwargs: dict = {},
-        latex_substitutions: Mapping[str, str] = {}
+        latex_substitutions: Mapping[str, str] = {},
     ):
         self._dirname = Path(dirname)
         self._df_kwargs = dict(df_kwargs)
