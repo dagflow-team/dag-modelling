@@ -206,7 +206,7 @@ class ExportToRootVisitor(NestedMKDictVisitor):
         self._n_elements = 0
 
     def start(self, dct):
-        self._n_elements = sum(1 for _ in dct.walkitems())
+        self._n_elements = dct.len_recursive()
         self._i_element = 0
 
     def enterdict(self, key, v):
