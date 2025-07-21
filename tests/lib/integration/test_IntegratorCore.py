@@ -1,4 +1,4 @@
-from matplotlib.pyplot import close, subplots
+from matplotlib.pyplot import close, subplots, show
 from numpy import allclose, linspace, meshgrid, pi, vectorize
 from pytest import mark, raises
 
@@ -146,7 +146,7 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
         integrator = IntegratorCore(
             "integrator",
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )
@@ -179,32 +179,34 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
     ]
 
     subplots(1, 1, subplot_kw={"projection": "3d"})
-    plot_auto(integrator, method="bar3d", colorbar=True)
+    plot_auto(integrator, plotoptions="bar3d", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="pcolormesh", colorbar=True)
+    plot_auto(integrator, plotoptions="pcolormesh", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="pcolor", colorbar=True)
+    plot_auto(integrator, plotoptions="pcolor", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="pcolorfast", colorbar=True)
+    plot_auto(integrator, plotoptions="pcolorfast", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="imshow", colorbar=True)
+    plot_auto(integrator, plotoptions="imshow", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="matshow", colorbar=True)
+    plot_auto(integrator, plotoptions="matshow", colorbar=True)
 
     subplots(1, 1)
-    plot_auto(integrator, method="matshow", extent=None, colorbar=True)
+    plot_auto(integrator, plotoptions="matshow", extent=None, colorbar=True)
 
+    # show()
     for _ in range(7):
         close()
 
     poly0.scale = 2.2
     poly0.taint()
     assert allclose(integrator.outputs[0].data, res * poly0.scale, atol=1e-10)
+
 
     savegraph(graph, f"output/{testname}.png")
 
@@ -240,7 +242,7 @@ def test_IntegratorCore_gl2to1d_x(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )
@@ -302,7 +304,7 @@ def test_IntegratorCore_gl2to1d_y(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plottitle": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {testname}",
                 "axis": "integral",
             },
         )

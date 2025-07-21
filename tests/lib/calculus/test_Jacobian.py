@@ -4,7 +4,7 @@ from pytest import mark
 from dagflow.core.graph import Graph
 from dagflow.plot.graphviz import savegraph
 from dagflow.lib.arithmetic import Product, Sum
-from dagflow.lib.common import Array, Concatenation
+from dagflow.lib.common import Array, Concatenation, Copy
 from dagflow.lib.calculus import Jacobian
 from dagflow.lib.calculus.jacobian import compute_jacobian
 from dagflow.lib.linalg import LinearFunction
@@ -44,7 +44,16 @@ def test_Jacobian_01(dtype, testname):
         valueslist >> parsconcat
         parsconcat >> jac
 
+        jac2 = Copy("jac_copy")
+        jac >> jac2
+
+    assert jac.tainted is True
+    assert jac2.tainted is True
     res = jac.outputs[0].data[:]
+    jac2.touch()
+    assert jac.tainted is False
+    assert jac2.tainted is False
+
     factors = {
         "d": 30,
         "f": 10,
@@ -52,8 +61,26 @@ def test_Jacobian_01(dtype, testname):
     assert allclose(diag(res), 1, atol=factors[dtype] * finfo(dtype).resolution, rtol=0)
 
     jac.taint()
+    assert jac.tainted is False
+    assert jac2.tainted is False
     new_res = jac.outputs[0].data
     assert allclose(new_res, res, atol=factors[dtype] * finfo(dtype).resolution, rtol=0)
+
+    jac.unfreeze()
+    assert jac.tainted is True
+    assert jac2.tainted is True
+    new_res = jac.outputs[0].data
+    assert allclose(new_res, res, atol=factors[dtype] * finfo(dtype).resolution, rtol=0)
+
+    jac.compute()
+    assert jac.tainted is False
+    assert jac2.tainted is True
+    new_res = jac.outputs[0].data
+    new_res2 = jac2.outputs[0].data
+    assert allclose(new_res, res, atol=factors[dtype] * finfo(dtype).resolution, rtol=0)
+    assert allclose(new_res2, res, atol=factors[dtype] * finfo(dtype).resolution, rtol=0)
+    assert jac.tainted is False
+    assert jac2.tainted is False
 
     savegraph(graph, f"output/{testname}.png")
 

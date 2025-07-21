@@ -13,28 +13,28 @@ if TYPE_CHECKING:
 
 
 @njit(cache=True)
-def _bincenter(edges: NDArray[double], centers: NDArray[double]) -> None:
-    nbins = len(centers)
+def _binwidth(edges: NDArray[double], width: NDArray[double]) -> None:
+    nbins = len(width)
     for i in range(nbins):
-        centers[i] = (edges[i] + edges[i + 1]) * 0.5
+        width[i] = edges[i+1] - edges[i]
 
 
-class BinCenter(OneToOneNode):
+class BinWidth(OneToOneNode):
     """
-    The node finds centers of bins by the edges
+    The node finds widths of bins by the edges
 
     inputs:
         `i`: array with edges of bins (N)
 
     outputs:
-        `i`: array with centers of bins (N-1)
+        `i`: array with width of bins (N-1)
     """
 
     __slots__ = ()
 
     def _function(self):
         for _input, _output in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
-            _bincenter(_input, _output)
+            _binwidth(_input, _output)
 
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
@@ -44,4 +44,5 @@ class BinCenter(OneToOneNode):
             inputdd = _input.dd
             _output.dd.dtype = inputdd.dtype
             _output.dd.shape = (inputdd.shape[0] - 1,)
+
             _output.dd.axes_edges = (_input.parent_output,)

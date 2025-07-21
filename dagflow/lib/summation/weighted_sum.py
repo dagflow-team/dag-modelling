@@ -20,6 +20,7 @@ class WeightedSum(ManyToOneNode):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs, allowed_kw_inputs=("weight",))
+        self._labels.setdefault("mark", "Σᵢwᵢa⃗ᵢ")
         self._weight = self._add_input("weight", positional=False)
         self._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
 

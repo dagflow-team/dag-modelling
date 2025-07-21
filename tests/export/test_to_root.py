@@ -26,58 +26,58 @@ def test_to_root(testname, debug_graph, dtype):
     labels = {
             'edgesx': {
                 'text': 'Edges X',
-                'plottitle': 'Edges X $\\theta^{2}$',
+                'plot_title': 'Edges X $\\theta^{2}$',
                 'axis': 'X $\\theta^{2}$',
                 },
             'edgesy': {
                 'text': 'Edges Y',
-                'plottitle': 'Edges Y $\\theta^{2}$',
+                'plot_title': 'Edges Y $\\theta^{2}$',
                 'axis': 'Y $\\theta^{2}$',
                 'rootaxis': 'Y #Theta^{3}',
                 },
             'meshx': {
                 'text': 'Mesh X 1d',
-                'plottitle': 'Mesh X $\\theta^{2}$ 1d',
+                'plot_title': 'Mesh X $\\theta^{2}$ 1d',
                 },
             'meshy': {
                 'text': 'Mesh Y 1d',
-                'plottitle': 'Mesh Y $\\theta^{2}$ 1d',
+                'plot_title': 'Mesh Y $\\theta^{2}$ 1d',
                 'axis': 'Y $\\theta^{2}$ 1d',
                 'rootaxis': 'Y #Theta^{3}  1d',
                 },
             'mesh2x': {
                 'text': 'Mesh X 2d',
-                'plottitle': 'Mesh X $\\theta^{2}$ 2d',
+                'plot_title': 'Mesh X $\\theta^{2}$ 2d',
                 },
             'mesh2y': {
                 'text': 'Mesh Y 2d',
-                'plottitle': 'Mesh Y $\\theta^{2}$ 2d',
+                'plot_title': 'Mesh Y $\\theta^{2}$ 2d',
                 'axis': 'Y $\\theta^{2}$ 2d',
                 'rootaxis': 'Y #Theta^{3}  2d',
                 },
             'array_edges': {
                 'text': 'Histogram 1d',
-                'plottitle': 'Histogram 1d $\\theta^{2}$',
+                'plot_title': 'Histogram 1d $\\theta^{2}$',
                 },
             'array_mesh': {
                 'text': 'Graph 1d',
-                'plottitle': 'Graph 1d $\\theta^{2}$',
+                'plot_title': 'Graph 1d $\\theta^{2}$',
                 },
             'case_2d': {
                 'both': {
                     'array_2d_both': {
                         'text': 'Graph 2d',
-                        'plottitle': 'Graph 2d $\\theta^{2}$',
-                        'roottitle': 'LaTeX Graph 2d #Theta^{3}',
+                        'plot_title': 'Graph 2d $\\theta^{2}$',
+                        'root_title': 'LaTeX Graph 2d #Theta^{3}',
                         },
                     },
                 'array_2d_edges': {
                     'text': 'Histogram 2d',
-                    'plottitle': 'Histogram 2d $\\theta^{2}$',
+                    'plot_title': 'Histogram 2d $\\theta^{2}$',
                     },
                 'array_2d_mesh': {
                     'text': 'Graph 2d',
-                    'plottitle': 'Graph 2d $\\theta^{2}$',
+                    'plot_title': 'Graph 2d $\\theta^{2}$',
                     },
                 }
             }

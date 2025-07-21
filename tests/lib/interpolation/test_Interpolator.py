@@ -34,7 +34,7 @@ def test_Interpolator(debug_graph, testname, dtype):
         yc = Array("yc", ycX, dtype=dtype, mode="fill")
         metaint = Interpolator(
             method="linear",
-            labels={"interpolator": {"plottitle": "Interpolator", "axis": "y"}},
+            labels={"interpolator": {"plot_title": "Interpolator", "axis": "y"}},
         )
         coarse >> metaint.inputs["coarse"]
         yc >> metaint.inputs[0]

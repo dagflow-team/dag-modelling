@@ -347,7 +347,9 @@ def _load_parameters(
             )
             varcfg_sub = varcfg.copy()
             varcfg_sub["label"] = label
-            label["paths"] = [".".join(path + (key_str,))]
+            pname = ".".join(path + (key_str,))
+            label["name"] = pname
+            label["paths"] = [pname]
             label["index_values"] = key
             label.setdefault("text", key_str)
 

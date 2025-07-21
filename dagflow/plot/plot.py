@@ -2,33 +2,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any
 
 from matplotlib import colormaps
+from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.pyplot import close as closefig
-from matplotlib.pyplot import cm
-from matplotlib.pyplot import colorbar as plot_colorbar
-from matplotlib.pyplot import (
-    errorbar,
-    gca,
-    gcf,
-    imshow,
-    matshow,
-    pcolor,
-    pcolormesh,
-    plot,
-    savefig,
-    sca,
-)
-from matplotlib.pyplot import show as showfig
-from matplotlib.pyplot import stairs
 from numpy import asanyarray, meshgrid, zeros_like
 from numpy.ma import array as masked_array
 
-from ..tools.logger import INFO1, logger
 from ..core.node_base import NodeBase
 from ..core.output import Output
+from ..tools.logger import INFO1, logger
 
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, NDArray
@@ -43,25 +28,28 @@ class plot_auto:
         "_array",
         "_edges",
         "_meshes",
-        "_plotmethod",
+        "_plotoptions",
         "_ret",
         "_title",
         "_xlabel",
         "_ylabel",
         "_zlabel",
+        "_latex_substitutions",
     )
     _object: NodeBase | Output | ArrayLike
     _output: Output | None
     _array: NDArray
     _edges: EdgesLike
     _meshes: MeshesLike
-    _plotmethod: str | None
+    _plotoptions: Mapping[str, Any]
     _ret: tuple
 
     _title: str | None
     _xlabel: str | None
     _ylabel: str | None
     _zlabel: str | None
+
+    _latex_substitutions: Mapping[str, str]
 
     def __init__(
         self,
@@ -72,32 +60,48 @@ class plot_auto:
         save: str | None = None,
         close: bool = False,
         show: bool = False,
-        save_kw: dict = {},
+        savefig_kw: dict = {},
+        latex_substitutions: Mapping[str, str] = {},
+        plotoptions: Mapping[str, Any] | str = {},
         **kwargs,
     ):
+        match plotoptions:
+            case str():
+                self._plotoptions = {"method": plotoptions}
+            case Mapping():
+                self._plotoptions = deepcopy(plotoptions)
+            case _:
+                raise ValueError(plotoptions)
+
         self._object = object
         self._output = None
-        self._plotmethod = None
+        self._latex_substitutions = latex_substitutions
         self._ret = ()
         self._get_data(**filter_kw)
         self._get_labels()
 
-        if self._plotmethod:
-            kwargs.setdefault("method", self._plotmethod)
+        if (kwargs_extra := self._plotoptions.get("kwargs")) is not None:
+            kwargs = dict(kwargs, **kwargs_extra)
 
         ndim = len(self._array.shape)
         if ndim == 1:
             self._edges = self._edges[0] if self._edges else None
             self._meshes = self._meshes[0] if self._meshes else None
             self._ret = plot_array_1d(
-                self._array, self._edges, self._meshes, *args, plotter=self, **kwargs
+                self._array,
+                self._edges,
+                self._meshes,
+                *args,
+                plotter=self,
+                **kwargs,
             )
         elif ndim == 2:
             colorbar = kwargs.pop("colorbar", {})
             if colorbar is True:
                 colorbar = {}
+            kwargs.setdefault("rasterized", self._plotoptions.get("rasterized", True))
             if self._output and isinstance(colorbar, Mapping):
-                colorbar.setdefault("label", self._output.labels.axis)
+                colorbar.setdefault("label", self._output.labels.axis_unit)
             self._ret = plot_array_2d(
                 self._array,
                 self._edges,
@@ -105,6 +109,7 @@ class plot_auto:
                 *args,
                 plotter=self,
                 colorbar=colorbar,
+                plotoptions=self._plotoptions,
                 **kwargs,
             )
         else:
@@ -116,21 +121,23 @@ class plot_auto:
 
         if save:
             logger.log(INFO1, f"Write: {save}")
-            savefig(save, **save_kw)
+            plt.savefig(save, **savefig_kw)
         if show:
-            showfig()
+            plt.show()
         if close:
-            closefig()
+            plt.close()
 
     def _get_output_data(self, *args, **kwargs):
+        if plotoptions := self._output.labels.plotoptions:
+            self._plotoptions = dict(plotoptions, **self._plotoptions)
+
+        if (masked_value := self._plotoptions.get("mask_value", None)) is not None:
+            kwargs = dict(kwargs, masked_value=masked_value)
+
         data = _mask_if_needed(self._output.data, *args, **kwargs)
         self._array = data
         self._edges = self._output.dd.edges_arrays
         self._meshes = self._output.dd.meshes_arrays
-
-        self._plotmethod = self._output.labels.plotmethod
-        if self._plotmethod in ("none", "auto"):
-            self._plotmethod = None
 
     def _get_array_data(self, *args, **kwargs):
         self._array = _mask_if_needed(self._object, *args, **kwargs)
@@ -143,6 +150,8 @@ class plot_auto:
         elif isinstance(self._object, NodeBase):
             self._output = self._object.outputs[0]
         else:
+            if masked_value := self._plotoptions.get("mask_value", None):
+                kwargs = dict(kwargs, masked_value=masked_value)
             self._get_array_data(*args, **kwargs)
             return
 
@@ -158,19 +167,22 @@ class plot_auto:
 
         labels = self._output.labels
 
-        self._title = labels.plottitle
-        self._xlabel = self._output.dd.axis_label(0) or labels.xaxis or "Index"
+        self._title = labels.get_plot_title(substitutions=self._latex_substitutions)
+        self._xlabel = self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
+        self._ylabel = labels.axis_unit
 
-        self._ylabel = labels.axis
         if self._output.dd.dim == 2:
-            if self._plotmethod == "slicesx":
-                self._xlabel = self._output.dd.axis_label(1) or labels.xaxis or "Index"
-                self._zlabel = self._output.dd.axis_label(0) or labels.xaxis or "Index"
-            elif self._plotmethod == "slicesy":
-                self._zlabel = self._output.dd.axis_label(1) or labels.xaxis or "Index"
+            method = self._plotoptions.get("method")
+
+            self._zlabel = self._ylabel
+            if method == "slicesx":
+                self._xlabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
+                self._zlabel = self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
+            elif method == "slicesy":
+                self._zlabel = self._output.dd.axis_label(1) or "Index [#]"
             else:
                 self._zlabel = self._ylabel
-                self._ylabel = self._output.dd.axis_label(1)
+                self._ylabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
 
     def annotate_axes(
         self,
@@ -180,11 +192,18 @@ class plot_auto:
         legend: bool = False,
         show_path: bool = True,
     ) -> None:
-        ax = ax or gca()
+        ax = ax or plt.gca()
         labels = self._output.labels
 
         if self._title and not ax.get_title():
-            ax.set_title(self._title)
+            if self._array.ndim > 1:
+                nlines = self._title.count("\n") + 1
+                fontsize = nlines > 1 and "x-small" or "medium"
+            else:
+                fontsize = "medium"
+
+            ax.set_title(self._title, size=fontsize)
+
         if self._xlabel and not ax.get_xlabel():
             ax.set_xlabel(self._xlabel)
         if self._ylabel and not ax.get_ylabel():
@@ -197,19 +216,38 @@ class plot_auto:
             with suppress(AttributeError):
                 ax.set_zlabel(self._zlabel)
 
+        if aspect := self._plotoptions.get("aspect"):
+            ax.set_aspect(aspect)
+
+        if xscale := self._plotoptions.get("xscale"):
+            ax.set_xscale(xscale)
+
+        if yscale := self._plotoptions.get("yscale"):
+            ax.set_yscale(yscale)
+
         if legend:
             ax.legend()
+
+        if (plot_diagonal := self._plotoptions.get("plot_diagonal")) is not None:
+            xlim = ax.get_xlim()
+            ax.plot(xlim, xlim, **plot_diagonal)
+
+        if subplots_adjust_kw := self._plotoptions.get("subplots_adjust"):
+            plt.subplots_adjust(**subplots_adjust_kw)
 
         if show_path:
             path = labels.paths
             if not path:
                 return
 
-            fig = gcf()
+            fig = plt.gcf()
             try:
                 ax.text2D(0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="small")
             except AttributeError:
                 ax.text(0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="x-small")
+
+        if self._plotoptions.get("show"):
+            plt.show()
 
     @property
     def zlabel(self) -> str | None:
@@ -253,7 +291,7 @@ def plot_array_1d_hist(
     plotter: plot_auto | None = None,
     **kwargs,
 ) -> tuple:
-    return stairs(array, edges, *args, **kwargs)
+    return plt.stairs(array, edges, *args, **kwargs)
 
 
 def plot_array_1d_errors(
@@ -265,7 +303,7 @@ def plot_array_1d_errors(
     plotter: plot_auto | None = None,
     **kwargs,
 ) -> tuple:
-    return errorbar(x, y, yerr=yerr, xerr=xerr, *args, **kwargs)
+    return plt.errorbar(x, y, yerr=yerr, xerr=xerr, *args, **kwargs)
 
 
 def plot_array_1d_vs(
@@ -275,20 +313,26 @@ def plot_array_1d_vs(
     plotter: plot_auto | None = None,
     **kwargs,
 ) -> tuple:
-    return plot(meshes, array, *args, **kwargs)
+    return plt.plot(meshes, array, *args, **kwargs)
 
 
 def plot_array_1d_array(array: NDArray, *args, plotter: plot_auto | None = None, **kwargs) -> tuple:
-    return plot(array, *args, **kwargs)
+    return plt.plot(array, *args, **kwargs)
 
 
 def plot_array_2d(
-    array: NDArray, edges: EdgesLike, meshes: MeshesLike, *args, **kwargs
+    array: NDArray,
+    edges: EdgesLike,
+    meshes: MeshesLike,
+    *args,
+    plotoptions: Mapping[str, Any] = {},
+    **kwargs,
 ) -> tuple[tuple, ...]:
     if edges:
-        return plot_array_2d_hist(array, edges, *args, **kwargs)
+
+        return plot_array_2d_hist(array, edges, *args, plotoptions=plotoptions, **kwargs)
     elif meshes:
-        return plot_array_2d_vs(array, meshes, *args, **kwargs)
+        return plot_array_2d_vs(array, meshes, *args, plotoptions=plotoptions, **kwargs)
     else:
         return plot_array_2d_array(array, *args, **kwargs)
 
@@ -320,7 +364,7 @@ def plot_array_2d_hist_bar3d(
     apply_colors(dZ, cmap, kwargs, "color")
     colorbar = kwargs.pop("colorbar", False)
 
-    ax = gca()
+    ax = plt.gca()
     res = ax.bar3d(X, Y, Z, dX, dY, dZ, *args, **kwargs)
 
     return _colorbar_or_not_3d(res, colorbar, dZ)
@@ -400,15 +444,15 @@ plot_array_2d_hist_methods = {
 
 
 def plot_array_2d_hist(
-    dZ: NDArray, edges: list[NDArray], *args, method: str | None = None, **kwargs
+    dZ: NDArray, edges: list[NDArray], *args, plotoptions: Mapping[str, Any] = {}, **kwargs
 ) -> tuple:
     smethod: str = (
-        "pcolormesh" if method in {"auto", None} else method
-    )  # pyright: ignore [reportGeneralTypeIssues]
+        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
+    )
     try:
         function = plot_array_2d_hist_methods[smethod]
     except KeyError as e:
-        raise RuntimeError(f"Invlid 2d hist method: {method}") from e
+        raise RuntimeError(f"Invlid 2d hist plotoptions: {plotoptions}") from e
 
     return function(dZ, edges, *args, **kwargs)
 
@@ -448,17 +492,18 @@ def plot_array_2d_vs_slicesx(
     haslabels = False
     zlabel = plotter and plotter.zlabel or "value"
 
+    legtitle = f"Slice {zlabel}:"
     for data, slicey, slicex in zip(Z, x, y):
         if (slicey[0] == slicey).all():
-            label = f"slice {zlabel}={slicey[0]:.2g}"
+            label = f"${slicey[0]:.2g}$"
             haslabels = True
         else:
             label = None
-        plot(slicex, data, label=label)
+        plt.plot(slicex, data, label=label)
 
     if haslabels is not None:
-        ax = gca()
-        ax.legend()
+        ax = plt.gca()
+        ax.legend(title=legtitle)
 
 
 def plot_array_2d_vs_slicesy(Z: NDArray, meshes: list[NDArray], *args, **kwargs):
@@ -487,7 +532,7 @@ def plot_array_2d_vs_wireframe(
 ) -> tuple:
     X, Y = meshes
 
-    ax = gca()
+    ax = plt.gca()
     if cmap is not None:
         colors, _ = apply_colors(Z, cmap, kwargs, "facecolors")
         if colors is not None:
@@ -513,10 +558,14 @@ plot_array_2d_vs_methods = {
 
 
 def plot_array_2d_vs(
-    array: NDArray, meshes: list[NDArray], *args, method: str | None = None, **kwargs
+    array: NDArray,
+    meshes: list[NDArray],
+    *args,
+    plotoptions: Mapping[str, Any] = {},
+    **kwargs,
 ) -> tuple:
     smethod: str = (
-        "pcolormesh" if method in {"auto", None} else method
+        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
     )  # pyright: ignore [reportGeneralTypeIssues]
     try:
         function = plot_array_2d_vs_methods[smethod]
@@ -536,7 +585,8 @@ def _mask_if_needed(datain: ArrayLike, /, *, masked_value: float | None = None) 
 
 
 def _patch_with_colorbar(function, mode3d=False):
-    """Patch pyplot.function or ax.method by adding a "colorbar" option"""
+    """Patch pyplot.function or ax.plotoptions by adding a "colorbar"
+    option."""
     returner = mode3d and _colorbar_or_not_3d or _colorbar_or_not
     if isinstance(function, str):
 
@@ -546,7 +596,7 @@ def _patch_with_colorbar(function, mode3d=False):
             colorbar: bool | None = None,
             **kwargs,
         ):
-            ax = gca()
+            ax = plt.gca()
             actual_fcn = getattr(ax, function)
             kwargs["cmap"] = cmap is True and "viridis" or cmap
             res = actual_fcn(*args, **kwargs)
@@ -590,13 +640,13 @@ def add_colorbar(
     label: str | None = None,
     **kwargs,
 ):
-    """Add a colorbar to the axis with height aligned to the axis"""
-    ax = gca()
+    """Add a colorbar to the axis with height aligned to the axis."""
+    ax = plt.gca()
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)
-    cbar = gcf().colorbar(colormapable, cax=cax, **kwargs)
+    cbar = plt.gcf().colorbar(colormapable, cax=cax, **kwargs)
 
     if minorticks:
         if isinstance(minorticks, str):
@@ -618,21 +668,21 @@ def add_colorbar(
 
     if label is not None:
         cbar.set_label(label, rotation=270, labelpad=15)
-    sca(ax)
+    plt.sca(ax)
     return cbar
 
 
 def add_colorbar_3d(res, cbaropt: dict = {}, mappable=None):
-    """Add a colorbar to the 3d axis with height aligned to the axis"""
+    """Add a colorbar to the 3d axis with height aligned to the axis."""
     cbaropt.setdefault("aspect", 4)
     cbaropt.setdefault("shrink", 0.5)
 
     if mappable is None:
-        cbar = plot_colorbar(res, **cbaropt)
+        cbar = plt.colorbar(res, **cbaropt)
     else:
-        colourMap = cm.ScalarMappable()
+        colourMap = plt.cm.ScalarMappable()
         colourMap.set_array(mappable)
-        cbar = plot_colorbar(colourMap, **cbaropt)
+        cbar = plt.colorbar(colourMap, **cbaropt)
 
     return res, cbar
 
@@ -660,18 +710,18 @@ def _colorbar_or_not_3d(res, cbaropt: Mapping | bool | None, mappable=None):
     cbaropt.setdefault("shrink", 0.5)
 
     if mappable is None:
-        cbar = plot_colorbar(res, ax=gca(), **cbaropt)
+        cbar = plt.colorbar(res, ax=plt.gca(), **cbaropt)
     else:
-        colourMap = cm.ScalarMappable()
+        colourMap = plt.cm.ScalarMappable()
         colourMap.set_array(mappable)
-        cbar = plot_colorbar(colourMap, ax=gca(), **cbaropt)
+        cbar = plt.colorbar(colourMap, ax=plt.gca(), **cbaropt)
 
     return res, cbar
 
 
 pcolorfast = _patch_with_colorbar("pcolorfast")
-pcolor = _patch_with_colorbar(pcolor)
-pcolormesh = _patch_with_colorbar(pcolormesh)
-imshow = _patch_with_colorbar(imshow)
-matshow = _patch_with_colorbar(matshow)
+pcolor = _patch_with_colorbar(plt.pcolor)
+pcolormesh = _patch_with_colorbar(plt.pcolormesh)
+imshow = _patch_with_colorbar(plt.imshow)
+matshow = _patch_with_colorbar(plt.matshow)
 plot_surface = _patch_with_colorbar("plot_surface", mode3d=True)

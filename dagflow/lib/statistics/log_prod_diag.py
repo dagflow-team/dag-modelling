@@ -2,20 +2,19 @@ from numpy import diag, empty, log
 from numpy.typing import NDArray
 
 from ...core.input_strategy import AddNewInputAddNewOutput
-from ...core.node import Node
 from ...core.type_functions import (
     AllPositionals,
-    check_node_has_inputs,
     check_inputs_are_matrices_or_diagonals,
+    check_node_has_inputs,
     copy_dtype_from_inputs_to_outputs,
 )
+from ..abstract import OneToOneNode
 
 
-class LogProdDiag(Node):
-    """
-    Compute the LogProdDiag of a matrix log|V|=log|LL̃ᵀ|=2Σlog(Lᵢᵢ)
-    based on Cholesky decomposition of matrix V
-    1d input is considered to be a squared root diagonal of square matrix
+class LogProdDiag(OneToOneNode):
+    """Compute the LogProdDiag of a matrix log|V|=log|LL̃ᵀ|=2Σlog(Lᵢᵢ) based on
+    Cholesky decomposition of matrix V 1d input is considered to be a squared
+    root diagonal of square matrix.
 
     inputs:
         `matrix`: cholesky decomposition of matrix
@@ -38,16 +37,21 @@ class LogProdDiag(Node):
         self._functions_dict.update({"square": self._fcn_square, "diagonal": self._fcn_diagonal})
 
     def _fcn_square(self):
-        """Compute logarithm of determinant of matrix using Cholesky decomposition"""
-        self.inputs.touch()
+        """Compute logarithm of determinant of matrix using Cholesky
+        decomposition."""
+        for callback in self._input_nodes_callbacks:
+            callback()
 
-        for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
+        for indata, outdata in self._input_output_data:
             log(diag(indata), out=self._buffer)
             outdata[0] = 2 * self._buffer.sum()
 
     def _fcn_diagonal(self):
         """Compute "LogProdDiag" using of a diagonal of a square matrix."""
-        for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
+        for callback in self._input_nodes_callbacks:
+            callback()
+
+        for indata, outdata in self._input_output_data:
             log(indata, out=self._buffer)
             outdata[0] = 2 * self._buffer.sum()
 
@@ -64,5 +68,6 @@ class LogProdDiag(Node):
             self.function = self._functions_dict["diagonal"]
 
     def _post_allocate(self) -> None:
+        super()._post_allocate()
         inpdd = self.inputs[0].dd
         self._buffer = empty(shape=(inpdd.shape[0],), dtype=inpdd.dtype)

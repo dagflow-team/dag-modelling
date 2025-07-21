@@ -28,6 +28,38 @@ def test_LogProdDiag_00(testname, debug_graph, dtype):
 
     assert V1.tainted == True
     assert V2.tainted == True
+    assert D.tainted == True
+    assert log_prod_diag2d.tainted == True
+    assert log_prod_diag1d.tainted == True
+
+    result2d1 = log_prod_diag2d.get_data(0)
+    result2d2 = log_prod_diag2d.get_data(1)
+    result1d = log_prod_diag1d.get_data(0)
+    assert V1.tainted == False
+    assert V2.tainted == False
+    assert D.tainted == False
+    assert log_prod_diag2d.tainted == False
+    assert log_prod_diag1d.tainted == False
+
+    atol = finfo(dtype).resolution
+    assert allclose(inL2d1, result2d1, atol=atol, rtol=0)
+    assert allclose(inL2d2, result2d2, atol=atol, rtol=0)
+    assert allclose(inL1d, result1d, atol=atol, rtol=0)
+
+    # Change to V1 and D
+    inV1 += diag(range(1,4))
+    inD = diag(inV1)
+
+    assert V1.outputs[0].set(inV1)==True
+    assert D.outputs[0].set(inD)==True
+
+    inL2d1 = 2 * log(diag(inV1)).sum()
+    inL2d2 = 2 * log(diag(inV2)).sum()
+    inL1d = 2 * log(inD).sum()
+
+    assert V1.tainted == False
+    assert V2.tainted == False
+    assert D.tainted == False
     assert log_prod_diag2d.tainted == True
     assert log_prod_diag1d.tainted == True
 

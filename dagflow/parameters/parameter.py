@@ -101,7 +101,7 @@ class Parameter:
         self._stack = []
 
     def __str__(self) -> str:
-        return f"par v={self.value}"
+        return f"par {self.name} v={self.value}"
 
     _repr_pretty_ = repr_pretty
 
@@ -124,6 +124,15 @@ class Parameter:
     @property
     def connectible(self) -> Output | None:
         return self._connectible_output
+
+    @property
+    def name(self) -> str:
+        if not self._connectible_output:
+            return ""
+
+        node = self._connectible_output.node
+        labels = node.labels
+        return labels.path or node.name or ""
 
     def connected(self) -> bool:
         return self._connectible_output and self._connectible_output.connected()

@@ -103,18 +103,18 @@ class DataDescriptor:
         if self.axes_edges and axistype in {"any", "edges"}:
             try:
                 if root:
-                    return self.axes_edges[axis].labels.rootaxis
+                    return self.axes_edges[axis].labels.rootaxis_unit
                 else:
-                    return self.axes_edges[axis].labels.axis
+                    return self.axes_edges[axis].labels.axis_unit
             except IndexError as e:
                 raise RuntimeError(f"Invalid axis index {axis}") from e
 
         if self.axes_meshes and axistype in {"any", "mesh"}:
             try:
                 if root:
-                    return self.axes_meshes[axis].labels.rootaxis
+                    return self.axes_meshes[axis].labels.rootaxis_unit
                 else:
-                    return self.axes_meshes[axis].labels.axis
+                    return self.axes_meshes[axis].labels.axis_unit
             except IndexError as e:
                 raise RuntimeError(f"Invalid axis index {axis}") from e
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING
 
 from ..tools.schema import LoadYaml
 
@@ -101,22 +102,82 @@ def _make_formatter(fmt: str | Callable | dict | None) -> Callable:
     return fmt
 
 
+def apply_substitutions(
+    s: str,
+    substitutions: Mapping[str, str] = {},
+    *,
+    full_string: bool = False,
+) -> str:
+    if not substitutions or not s or not isinstance(s, str):
+        return s
+
+    if substitutions:
+        if full_string:
+            for pattern, substitution in substitutions.items():
+                if s == pattern:
+                    return substitution
+        else:
+            for pattern, substitution in substitutions.items():
+                s = s.replace(pattern, substitution)
+
+    return s
+
+
 class Labels:
+    """A class to treat labels.
+
+    Attributes
+    ----------
+    _text : str
+        for plain text (terminal).
+    _graph : str
+        for the graph, or text_unit.
+    _latex : str
+        for latex output, or to replace plot_title.
+    _mark : str
+        for short mark on the graphiz graph.
+    _axis : str
+        used when the output is associated to the axis.
+    _rootaxis : str
+        used when the output is associated to the axis (root latex).
+    _xaxis : str
+        for own X axis, when it is not provided.
+    _yaxis : str
+        for own Y axis, when it is not provided.
+    _plot_title : str
+        for plot title, will be replaced by latex if not found.
+    _root_title : str
+        for canvas title (root), will be replaced by plot_title with \→# substitution.
+    _unit : str
+        for text unit.
+    _latex_unit : str
+        for latex text unit.
+    _xunit : str
+        for text unit for own X axis.
+    _yunit : str
+        for text unit for own Y axis.
+    """
+
     __slots__ = (
         "_name",
         "_index_values",
         "_index_dict",
-        "_text",       # for terminal
-        "_graph",      # for the graph
-        "_latex",      # for latex output, or to replace plottitle
-        "_mark",       # for short mark on the graphiz graph
-        "_xaxis",      # when object is used as X axis for other object
-        "_axis",       # for the relevant axis, will be replaced with plottitle if not found
-        "_plottitle",  # for plot title, will be replaced by latex if not found
-        "_roottitle",  # for canvas title (root), will be replaced by plottitle with \→# substitution
+        "_text",
+        "_graph",
+        "_latex",
+        "_mark",
+        "_axis",
+        "_xaxis",
+        "_yaxis",
+        "_plot_title",
+        "_root_title",
         "_rootaxis",
+        "_unit",
+        "_latex_unit",
+        "_xunit",
+        "_yunit",
         "_paths",
-        "_plotmethod",
+        "_plotoptions",
         "_node_hidden",
     )
 
@@ -128,21 +189,27 @@ class Labels:
     _latex: str | None
     _axis: str | None
     _xaxis: str | None
-    _plottitle: str | None
-    _roottitle: str | None
+    _yaxis: str | None
+    _plot_title: str | None
+    _root_title: str | None
     _rootaxis: str | None
+    _unit: str | None
+    _latex_unit: str | None
+    _xunit: str | None
+    _yunit: str | None
     _mark: str | None
     _paths: list[str]
-    _plotmethod: str | None
+    _plotoptions: dict[str, Any]
     _node_hidden: bool | None
 
-    def __init__(self, label: dict[str, str] | str | Path | None = None):
+    def __init__(self, label: Mapping[str, str] | str | Path | None = None):
         for slot in self.__slots__:
             setattr(self, slot, None)
         self._paths = []
         self._index_values = []
         self._index_dict = {}
         self._node_hidden = False
+        self._plotoptions = {}
 
         if isinstance(label, str):
             if label.endswith(".yaml"):
@@ -169,7 +236,7 @@ class Labels:
         d = LoadYaml(path)
         self.update(d)
 
-    def update(self, d: dict[str, str | dict[str, str]]):
+    def update(self, d: Mapping[str, str | dict[str, str]]):
         match d:
             case {"group": {} as group, **rest} if not rest:
                 d = group
@@ -186,9 +253,14 @@ class Labels:
             "latex",
             "axis",
             "xaxis",
-            "plottitle",
-            "roottitle",
+            "yaxis",
+            "plot_title",
+            "root_title",
             "rootaxis",
+            "unit",
+            "latex_unit",
+            "xunit",
+            "yunit",
         ):
             aname = f"_{name}"
             oldvalue = getattr(self, aname)
@@ -215,10 +287,10 @@ class Labels:
                 continue
 
             if isinstance(accepted_list, str):
-                if (
-                    idxnum[0] != accepted_list  # key value
-                    and idxnum[1] != accepted_list  # key index
-                ):
+                if idxnum[0] != accepted_list:  # key value
+                    return False
+            elif isinstance(accepted_list, int):
+                if idxnum[1] != accepted_list:  # key index
                     return False
             elif (
                 idxnum[0] not in accepted_list  # key value
@@ -277,8 +349,22 @@ class Labels:
         self._text = value
 
     @property
+    def text_unit(self) -> str | None:
+        if unit := self.unit:
+            text = self._text
+            if isinstance(text, str) and "\n" in text:
+                return text.replace("\n", f"[{unit}] \n", 1)
+            else:
+                return f"{text} [{unit}]"
+
+        return self._text
+
+    @property
     def graph(self) -> str | None:
-        return self._graph or self._text
+        if self._graph:
+            return self._graph
+
+        return self.text_unit
 
     @graph.setter
     def graph(self, value: str | None):
@@ -288,27 +374,49 @@ class Labels:
     def latex(self) -> str | None:
         return self._latex or self._text
 
+    def get_latex(self, *, substitutions: Mapping[str, str] = {}) -> str:
+        if self._latex:
+            return apply_substitutions(self._latex, substitutions)
+
+        return apply_substitutions((self._text or "").replace(r"\n", "\n") or "", substitutions)
+
     @latex.setter
     def latex(self, value: str):
         self._latex = value
 
     @property
-    def plottitle(self) -> str | None:
-        return self._plottitle or self._latex or self._text
+    def latex_unit(self) -> str | None:
+        if unit := self.latex_unit:
+            return f"{self.latex} [{unit}]"
 
-    @plottitle.setter
-    def plottitle(self, value: str | None):
-        self._plottitle = value
+        return self.latex
 
     @property
-    def roottitle(self) -> str | None:
-        if self._roottitle is not None:
-            return self._roottitle
-        return _latex_to_root(self.plottitle)
+    def plot_title(self) -> str | None:
+        return self._plot_title or self._latex or self._text.replace(r"\n", "\n")
 
-    @roottitle.setter
-    def roottitle(self, value: str | None):
-        self._roottitle = value
+    def get_plot_title(self, *, substitutions: Mapping[str, str] = {}) -> str | None:
+        return self._plot_title or self.get_latex(substitutions=substitutions)
+
+    @plot_title.setter
+    def plot_title(self, value: str | None):
+        self._plot_title = value
+
+    @property
+    def root_title(self) -> str | None:
+        if self._root_title is not None:
+            return self._root_title
+        return _latex_to_root(self.plot_title)
+
+    @root_title.setter
+    def root_title(self, value: str | None):
+        self._root_title = value
+
+    def get_root_title(self, **kwargs) -> str | None:
+        if self._root_title is not None:
+            return self._root_title
+
+        return _latex_to_root(self.get_plot_title(**kwargs))
 
     @property
     def rootaxis(self) -> str | None:
@@ -319,20 +427,85 @@ class Labels:
         self._rootaxis = value
 
     @property
+    def rootaxis_unit(self) -> str | None:
+        return _latex_to_root(self.axis_unit) if self._rootaxis is None else self._rootaxis
+
+    @property
     def axis(self) -> str | None:
-        return self._axis or self.plottitle
+        return self._axis or self.plot_title
 
     @axis.setter
     def axis(self, value: str | None):
         self._axis = value
 
     @property
+    def axis_unit(self) -> str | None:
+        if unit := self.latex_unit:
+            return f"{self.axis} [{unit}]"
+
+        return self.axis
+
+    @property
     def xaxis(self) -> str | None:
         return self._xaxis
+
+    @property
+    def xaxis_unit(self) -> str | None:
+        if unit := self.xunit:
+            return f"{self.xaxis} [{unit}]"
+
+        return self.xaxis
 
     @xaxis.setter
     def xaxis(self, value: str | None):
         self._xaxis = value
+
+    @property
+    def yaxis(self) -> str | None:
+        return self._yaxis
+
+    @property
+    def yaxis_unit(self) -> str | None:
+        if unit := self.yunit:
+            return f"{self.yaxis} [{unit}]"
+
+        return self.yaxis
+
+    @yaxis.setter
+    def yaxis(self, value: str | None):
+        self._yaxis = value
+
+    @property
+    def unit(self) -> str | None:
+        return self._unit
+
+    @unit.setter
+    def unit(self, value: str | None):
+        self._unit = value
+
+    @property
+    def latex_unit(self) -> str | None:
+        return self._latex_unit or self.unit
+
+    @latex_unit.setter
+    def latex_unit(self, value: str | None):
+        self._latex_unit = value
+
+    @property
+    def xunit(self) -> str | None:
+        return self._xunit
+
+    @xunit.setter
+    def xunit(self, value: str | None):
+        self._xunit = value
+
+    @property
+    def yunit(self) -> str | None:
+        return self._yunit
+
+    @yunit.setter
+    def yunit(self, value: str | None):
+        self._yunit = value
 
     @property
     def mark(self) -> str | None:
@@ -358,16 +531,25 @@ class Labels:
         self._paths = value
 
     @property
-    def plottable(self) -> bool:
-        return self._plotmethod != "none"
+    def plotable(self) -> bool:
+        if not self._plotoptions:
+            return True
+
+        return self._plotoptions.get("method") != "none"
 
     @property
-    def plotmethod(self) -> str | None:
-        return self._plotmethod
+    def plotoptions(self) -> dict[str, Any]:
+        return self._plotoptions
 
-    @plotmethod.setter
-    def plotmethod(self, value: str):
-        self._plotmethod = value.lower()
+    @plotoptions.setter
+    def plotoptions(self, value: Mapping[str, Any] | str):
+        match value:
+            case str():
+                self._plotoptions = {"method": value.lower()}
+            case Mapping():
+                self._plotoptions = dict(value)
+            case _:
+                raise ValueError(value)
 
     @property
     def node_hidden(self) -> bool:
@@ -384,8 +566,8 @@ class Labels:
     def __getitem__(self, k: str) -> str | None:
         return getattr(self, k)
 
-    def __setitem__(self, k: str, v: str) -> str | None:
-        return setattr(self, k, v)
+    def __setitem__(self, k: str, v: str) -> None:
+        setattr(self, k, v)
 
     def get(self, k: str, default: str) -> str | None:
         return getattr(self, k, default)
@@ -429,7 +611,7 @@ class Labels:
                 "_latex",
                 "_mark",
                 "_axis",
-                "_plottitle",
+                "_plot_title",
                 "_index_values",
                 "_index_dict",
                 "_paths",
@@ -500,4 +682,12 @@ def inherit_labels(
 
 
 def _latex_to_root(text: str | None) -> str | None:
-    return text.replace(r"\rm ", "").replace("\\", "#").replace("$", "") if text else text
+    return (
+        text.replace(r"\rm ", "")
+        .replace(r"\overline", r"\bar")
+        .replace(r"\\", " | ")
+        .replace("\\", "#")
+        .replace("$", "")
+        if text
+        else text
+    )

@@ -1,19 +1,38 @@
-from numpy import allclose, concatenate, exp, finfo, linspace, log, sin, where, zeros_like
+from typing import Literal
+
+from numpy import allclose, arange, concatenate, exp, finfo, linspace, log, sin, where, zeros_like
 from numpy.random import seed, shuffle
 from pytest import mark, raises
 
 from dagflow.core.exception import CalculationError, InitializationError
 from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
 from dagflow.lib.common import Array
 from dagflow.lib.interpolation import InterpolatorCore, SegmentIndex
 from dagflow.lib.trigonometry import Sin
+from dagflow.plot.graphviz import savegraph
 
 
 @mark.parametrize("k", (1.234, -0.578))
 @mark.parametrize("b", (-5.432, 0.742))
-@mark.parametrize("fine_x_mode", ("other", "same"))
-def test_InterpolatorCore_linear_01(debug_graph, testname, k, b, fine_x_mode):
+@mark.parametrize("fine_x_mode", ("other", "same", "subtolerance-", "subtolerance+", +0.01))
+@mark.parametrize("function", ("python", "numba"))
+def test_InterpolatorCore_linear_01(
+    debug_graph,
+    testname: str,
+    k: float | int,
+    b: float | int,
+    fine_x_mode: (
+        Literal[
+            "other",
+            "same",
+            "subtolerance+",
+            "subtolerance-",
+        ]
+        | float
+        | int
+    ),
+    function: Literal["python", "numba"],
+):
     seed(10)
 
     nc, nf = 10, 25
@@ -24,9 +43,19 @@ def test_InterpolatorCore_linear_01(debug_graph, testname, k, b, fine_x_mode):
             fineX = linspace(-2, 12, nf + 1)
         case "same":
             fineX = concatenate((coarseX, coarseX))
+        case "subtolerance+":
+            fineX = coarseX + 1.0e-11
+            tolerance = 1.0e-10
+        case "subtolerance-":
+            fineX = coarseX - 1.0e-11
+            tolerance = 1.0e-10
+        case float() | int():
+            fineX = coarseX + fine_x_mode
         case _:
             raise RuntimeError(fine_x_mode)
-    shuffle(fineX)
+    newidx = arange(fineX.size)
+    shuffle(newidx)
+    fineX = fineX[newidx]
 
     ycX = k * coarseX + b
 
@@ -36,6 +65,7 @@ def test_InterpolatorCore_linear_01(debug_graph, testname, k, b, fine_x_mode):
         yc = Array("yc", ycX, mode="fill")
         segmentIndex = SegmentIndex("indexer")
         interpolator = InterpolatorCore("interpolator", method="linear")
+        interpolator.choose_function(function)
 
         (coarse, fine) >> segmentIndex
         yc >> interpolator
@@ -43,11 +73,13 @@ def test_InterpolatorCore_linear_01(debug_graph, testname, k, b, fine_x_mode):
         fine >> interpolator("fine")
         segmentIndex.outputs[0] >> interpolator("indices")
 
+    res = interpolator.outputs[0].data
+    expect = k * fineX + b
     assert allclose(
-        interpolator.outputs[0].data,
-        k * fineX + b,
-        atol=finfo("d").resolution * 10,
-        rtol=0,
+        res,
+        expect,
+        rtol=finfo("d").resolution * 2,
+        atol=0,
     )
     savegraph(graph, f"output/{testname}.png")
 

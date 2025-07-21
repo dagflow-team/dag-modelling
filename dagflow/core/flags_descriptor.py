@@ -46,11 +46,13 @@ class FlagsDescriptor:
         *,
         children: Outputs,
         parents: Inputs,
+        tainted: bool = True,
+        frozen: bool = False,
     ) -> None:
         self._children = children
         self._parents = parents
-        self.tainted = True
-        self.frozen = False
+        self.tainted = tainted
+        self.frozen = frozen
         self.frozen_tainted = False
         self.invalid = False
         self.closed = False

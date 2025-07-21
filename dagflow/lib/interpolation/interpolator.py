@@ -50,7 +50,6 @@ class Interpolator(MetaNode):
         method: MethodType = "linear",
         *,
         positionals: bool = True,
-        tolerance: float = 1e-10,
         underflow: OutOfBoundsStrategyType = "extrapolate",
         overflow: OutOfBoundsStrategyType = "extrapolate",
         fillvalue: float = 0.0,
@@ -60,7 +59,6 @@ class Interpolator(MetaNode):
             interpolator := InterpolatorCore(
                 name,
                 method=method,
-                tolerance=tolerance,
                 underflow=underflow,
                 overflow=overflow,
                 fillvalue=fillvalue,

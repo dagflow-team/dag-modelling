@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
+from copy import deepcopy
+from os import makedirs
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from numpy import nan, ndarray
 from ordered_set import OrderedSet
 
 from multikeydict.nestedmkdict import NestedMKDict
-from multikeydict.typing import Key, KeyLike, TupleKey, strkey
+from multikeydict.typing import Key, KeyLike, TupleKey, properkey, strkey
 from multikeydict.visitor import NestedMKDictVisitor
 
 from ..tools.logger import DEBUG, INFO1, INFO3, logger
@@ -16,7 +19,7 @@ from .node import Node
 from .output import Output
 
 if TYPE_CHECKING:
-    from collections.abc import Container, Mapping, MutableSet
+    from collections.abc import Container, Iterable, Mapping, MutableSet
     from typing import Any, Literal
 
     from matplotlib.axes import Axes
@@ -79,8 +82,6 @@ class NodeStorage(NestedMKDict):
         accept_index: Mapping[str, str | int | Container[str | int]] | None = None,
         **kwargs,
     ):
-        from os import makedirs
-
         from ..parameters import Parameters
         from ..plot.graphviz import GraphDot
 
@@ -327,10 +328,10 @@ class NodeStorage(NestedMKDict):
     # Converters
     #
     def to_list(self, **kwargs) -> list:
-        return self.visit(ParametersVisitor(kwargs)).data_list
+        return self.visit(ParametersVisitorText(**kwargs)).data_list
 
     def to_dict(self, **kwargs) -> NestedMKDict:
-        return self.visit(ParametersVisitor(kwargs)).data_dict
+        return self.visit(ParametersVisitorText(**kwargs)).data_dict
 
     def to_df(self, *, columns: list[str] | None = None, **kwargs) -> DataFrame:
         from pandas import DataFrame
@@ -349,16 +350,22 @@ class NodeStorage(NestedMKDict):
             ]
         df = DataFrame(dct, columns=columns)
 
-        df.insert(4, "sigma_rel_perc", df["sigma"])
-        sigma_rel_perc = df["sigma"] / df["central"] * 100.0
-        sigma_rel_perc[df["central"] == 0] = nan
-        df["sigma_rel_perc"] = sigma_rel_perc
+        if "sigma" in df.columns:
+            df.insert(4, "sigma_rel_perc", df["sigma"])
+            sigma_rel_perc = df["sigma"] / df["central"] * 100.0
+            sigma_rel_perc[df["central"] == 0] = nan
+            df["sigma_rel_perc"] = sigma_rel_perc
 
         for key in ("count", "shape", "value", "central", "sigma", "sigma_rel_perc"):
+            if key not in df.columns:
+                continue
+
             if df[key].isna().all():
                 del df[key]
             else:
                 _fillna(df, key, "-")
+        if "count" in df.columns:
+            df["count"] = df["count"].map(lambda e: int(e) if isinstance(e, float) else e)
 
         if "value" in df.columns:
             _fillna(df, "value", "-")
@@ -367,8 +374,9 @@ class NodeStorage(NestedMKDict):
             if col in df.columns:
                 _fillna(df, col, "")
 
-        if (df["flags"] == "").all():
-            del df["flags"]
+        if "flags" in df.columns:
+            if (df["flags"] == "").all():
+                del df["flags"]
 
         return df
 
@@ -421,7 +429,7 @@ class NodeStorage(NestedMKDict):
     def to_latex_file(
         self, filename: str | None = None, *, return_df: bool = False, **kwargs
     ) -> str | tuple[str, DataFrame]:
-        df = self.to_df(label_from="latex", **kwargs)
+        df = self.to_df(label_from="latex", group_path_format="group [{nitems}]", **kwargs)
         tex = df.to_latex(escape=False)
 
         if filename:
@@ -429,7 +437,20 @@ class NodeStorage(NestedMKDict):
                 logger.log(INFO1, f"Write: {filename}")
                 out.write(tex)
 
-        return tex, df if return_df else tex
+        if return_df:
+            return tex, df
+
+        return tex
+
+    def to_latex_files_split(self, dirname: str, **kwargs) -> None:
+        visitor = ParametersVisitorLatex(
+            dirname,
+            df_kwargs={
+                "group_path_format": "group [{nitems}]",
+            },
+            **kwargs,
+        )
+        self.visit(visitor)
 
     def to_datax(self, filename: str, **kwargs) -> None:
         from LaTeXDatax import datax
@@ -440,10 +461,10 @@ class NodeStorage(NestedMKDict):
         logger.log(INFO1, f"Write: {filename}")
         datax(filename, **odict)
 
-    def to_root(self, filename: str) -> None:
+    def to_root(self, filename: str, **kwargs) -> None:
         from ..export.to_root import ExportToRootVisitor
 
-        visitor = ExportToRootVisitor(filename)
+        visitor = ExportToRootVisitor(filename, **kwargs)
         self.visit(visitor)
 
     #
@@ -487,22 +508,30 @@ class PlotVisitor(NestedMKDictVisitor):
         "_format",
         "_args",
         "_kwargs",
+        "_i_element",
+        "_n_elements",
         "_minimal_data_size",
         "_active_figures",
         "_overlay_priority",
         "_currently_active_overlay",
         "_close_on_exitdict",
+        "_exact_substitutions",
+        "_savefig_kwargs",
     )
     _show_all: bool
     _folder: str | None
     _format: str | None
     _args: Sequence
-    _kwargs: dict
+    _kwargs: dict[str, Any]
+    _i_element: int
+    _n_elements: int
     _minimal_data_size: int
     _active_figures: dict
     _overlay_priority: Sequence[OrderedSet]
     _currently_active_overlay: OrderedSet | None
     _close_on_exitdict: bool
+    _exact_substitutions: dict[str, str]
+    _savefig_kwargs: Mapping[str, str]
 
     def __init__(
         self,
@@ -512,6 +541,8 @@ class PlotVisitor(NestedMKDictVisitor):
         format: str = "pdf",
         minimal_data_size: int = 1,
         overlay_priority: Sequence[Sequence[str]] = ((),),
+        exact_substitutions: Mapping[str, str] = {},
+        savefig_kwargs: Mapping[str, str] = {},
         **kwargs,
     ):
         self._show_all = show_all
@@ -519,7 +550,12 @@ class PlotVisitor(NestedMKDictVisitor):
         self._format = format
         self._args = args
         self._kwargs = kwargs
-        self._minimal_data_size =  minimal_data_size
+        self._i_element = 0
+        self._n_elements = 0
+        self._minimal_data_size = minimal_data_size
+        self._exact_substitutions = dict(exact_substitutions)
+        self._savefig_kwargs = deepcopy(savefig_kwargs)
+
         self._overlay_priority = tuple(OrderedSet(sq) for sq in overlay_priority)
         self._currently_active_overlay = None
         self._close_on_exitdict = False
@@ -531,49 +567,60 @@ class PlotVisitor(NestedMKDictVisitor):
         elif self._folder is not None:
             self._kwargs["close"] = False
 
-    def _try_start_join(self, key: TupleKey) -> tuple[tuple[str, ...] | None, str | None, bool]:
+    def _try_start_join(
+        self, key: TupleKey
+    ) -> tuple[tuple[str, ...] | None, str | None, bool, bool]:
         key_set = OrderedSet(key)
         need_new_figure = True
+        need_group_figure = False
         if self._currently_active_overlay is None:
             for indices_set in self._overlay_priority:
                 if match := indices_set.intersection(key_set):
                     self._currently_active_overlay = indices_set
                     self._close_on_exitdict = match[0] == key_set[-1]
+                    need_group_figure = True
                     break
             else:
-                return key, None, True
+                return key, None, True, need_group_figure
         elif match := self._currently_active_overlay.intersection(key_set):
             need_new_figure = False
+            need_group_figure = True
         else:
             self._currently_active_overlay = None
-            return key, None, True
+            return key, None, True, need_group_figure
 
-        key_major = key_set.difference(self._currently_active_overlay)
-        return tuple(key_major), match[0], need_new_figure
+        key_group = key_set.difference(self._currently_active_overlay)
+        return tuple(key_group), match[0], need_new_figure, need_group_figure
 
     def _makefigure(
-        self, key: TupleKey, *, force_new: bool = False
-    ) -> tuple[Axes, tuple[str, ...] | None, str | None, bool]:
+        self, key: TupleKey, *, force_new: bool = False, force_group: bool = False, **kwargs
+    ) -> tuple[Axes | None, tuple[str, ...] | None, str | None, bool]:
         from matplotlib.pyplot import sca, subplots
 
         def mkfig(storekey: TupleKey | None = None) -> Axes:
-            fig, ax = subplots(1, 1)
+            fig, ax = subplots(1, 1, **kwargs)
             if storekey is not None:
                 self._active_figures[tuple(storekey)] = fig
             return ax
 
         if force_new:
+            assert not force_group, "arguments force_new and force_group are exclusive"
             return mkfig(), key, None, True
 
-        index_major, index_minor, need_new_figure = self._try_start_join(key)
-        if need_new_figure or (fig := self._active_figures.get(tuple(index_major))) is None:
-            return mkfig(index_major), index_major, index_minor, True
+        index_group, index_item, need_new_figure, need_group_figure = self._try_start_join(key)
+        figure_is_new = False
+        if force_group or not need_group_figure:
+            return None, None, None, figure_is_new
 
-        sca(ax := fig.axes[0])
-        return ax, index_major, index_minor, False
+        if need_new_figure or (fig := self._active_figures.get(tuple(index_group))) is None:
+            figure_is_new = True
+            return mkfig(index_group), index_group, index_item, figure_is_new
 
-    def _savefig(self, key: TupleKey, *, close: bool = True):
-        from os import makedirs
+        ax = fig.axes[0]
+        sca(ax)
+        return ax, index_group, index_item, figure_is_new
+
+    def _savefig(self, key: TupleKey, *, close: bool = True, overlay: bool = False):
         from os.path import dirname
 
         from matplotlib.pyplot import close as closefig
@@ -584,8 +631,8 @@ class PlotVisitor(NestedMKDictVisitor):
             filename = f"{self._folder}/{path}.{self._format}"
             makedirs(dirname(filename), exist_ok=True)
 
-            logger.log(INFO1, f"Write: {filename}")
-            savefig(filename)
+            logger.log(INFO1, f"Write: {filename} [{self._i_element}/{self._n_elements}]")
+            savefig(filename, **self._savefig_kwargs)
 
         if close:
             closefig()
@@ -595,11 +642,12 @@ class PlotVisitor(NestedMKDictVisitor):
 
         for key, fig in self._active_figures.items():
             sca(fig.axes[0])
-            self._savefig(key, close=True)
+            self._savefig(key, close=True, overlay=True)
         self._active_figures = {}
 
     def start(self, dct):
-        pass
+        self._n_elements = dct.len_recursive()
+        self._i_element = 0
 
     def enterdict(self, key, v):
         pass
@@ -616,29 +664,45 @@ class PlotVisitor(NestedMKDictVisitor):
             self._currently_active_overlay = None
 
     def visit(self, key, output):
+        from ..core.labels import apply_substitutions
         from ..plot.plot import plot_auto
 
-        if not isinstance(output, Output) or not output.labels.plottable:
+        self._i_element += 1
+
+        if not isinstance(output, Output):
             logger.log(DEBUG, f"Do not plot {strkey(key)} of not supported type")
             return
-        if not output.labels.plottable:
-            logger.log(DEBUG, f"Do not plot {strkey(key)}, configured to be not plottable")
+        if not output.labels.plotable:
+            logger.log(DEBUG, f"Do not plot {strkey(key)}, configured to be not plotable")
             return
-        if output.dd.size<self._minimal_data_size:
-            logger.log(DEBUG, f"Do not plot {strkey(key)} of size {output.dd.size}<{self._minimal_data_size}")
+        if output.dd.size < self._minimal_data_size:
+            logger.log(
+                DEBUG,
+                f"Do not plot {strkey(key)} of size {output.dd.size}<{self._minimal_data_size}",
+            )
             return
+
+        figure_kw = output.labels.plotoptions.get("figure_kw", {})
 
         nd = output.dd.dim
-        _, index_major, index_minor, newfig = self._makefigure(key, force_new=(nd == 2))
+        ax, index_group, index_item, figure_is_new = self._makefigure(
+            key, force_new=True, **figure_kw
+        )
 
-        kwargs = self._kwargs.copy()
-        if index_minor:
-            kwargs.setdefault("label", index_minor)
-        kwargs.setdefault("show_path", newfig)
-
+        kwargs = dict({"show_path": figure_is_new}, **self._kwargs)
         plot_auto(output, *self._args, **kwargs)
-        if not index_minor:
-            self._savefig(key, close=True)
+        self._savefig(key, close=True)
+
+        if nd == 1:
+            ax, index_group, index_item, figure_is_new = self._makefigure(
+                key, force_group=False, **figure_kw
+            )
+            if not index_item:
+                return
+
+            label = apply_substitutions(index_item, self._exact_substitutions, full_string=True)
+            kwargs = dict({"show_path": figure_is_new, "label": label}, **self._kwargs)
+            plot_auto(output, *self._args, **kwargs)
 
     def stop(self, dct):
         from matplotlib.pyplot import show
@@ -648,19 +712,31 @@ class PlotVisitor(NestedMKDictVisitor):
         self._close_figures()
 
 
-class ParametersVisitor(NestedMKDictVisitor):
-    __slots__ = ("_kwargs", "_data_list", "_localdata", "_path")
+class ParametersVisitorText(NestedMKDictVisitor):
+    __slots__ = (
+        "_kwargs",
+        "_data_list",
+        "_local_data",
+        "_path",
+        "_parent_key",
+        "_group_path_format",
+    )
     _kwargs: dict
     _data_list: list[dict]
     _data_dict: NestedMKDict
-    _localdata: list[dict]
+    _local_data: list[dict]
     _paths: list[tuple[str, ...]]
     _path: tuple[str, ...]
-    # _npars: List[int]
+    _parent_key: tuple[str, ...]
 
-    def __init__(self, kwargs: dict):
+    _group_path_format: str
+
+    def __init__(
+        self, *, parent_key: KeyLike = (), group_path_format: str = "{path} [{nitems}]", **kwargs
+    ):
         self._kwargs = kwargs
-        # self._npars = []
+        self._parent_key = properkey(parent_key)
+        self._group_path_format = group_path_format
 
     @property
     def data_list(self) -> list[dict]:
@@ -675,13 +751,13 @@ class ParametersVisitor(NestedMKDictVisitor):
         self._data_dict = NestedMKDict({}, sep=".")
         self._path = ()
         self._paths = []
-        self._localdata = []
+        self._local_data = []
 
     def enterdict(self, k, v):
         self._store()
         self._path = k
         self._paths.append(self._path)
-        self._localdata = []
+        self._local_data = []
 
     def visit(self, key, value):
         match value:
@@ -702,7 +778,7 @@ class ParametersVisitor(NestedMKDictVisitor):
         subkeystr = ".".join(subkey)
 
         dct["path"] = self._path and f".. {subkeystr}" or subkeystr
-        self._localdata.append(dct)
+        self._local_data.append(dct)
 
         self._data_dict[key] = dct
 
@@ -715,18 +791,113 @@ class ParametersVisitor(NestedMKDictVisitor):
             self._path = self._paths[-1] if self._paths else ()
 
     def _store(self):
-        if not self._localdata:
+        if not self._local_data:
             return
 
+        strkey = ".".join(self._parent_key + self._path)
+        nitems = len(self._local_data)
         self._data_list.append(
             {
-                "path": f"group: {'.'.join(self._path)} [{len(self._localdata)}]",
-                "count": len(self._localdata),
-                "label": "[group]",
+                "path": self._group_path_format.format(path=strkey, nitems=nitems),
+                "count": nitems,
+                "label": strkey,
             }
         )
-        self._data_list.extend(self._localdata)
-        self._localdata = []
+        self._data_list.extend(self._local_data)
+        self._local_data = []
 
     def stop(self, dct):
         pass
+
+
+class ParametersVisitorLatex(NestedMKDictVisitor):
+    __slots__ = (
+        "_dirname",
+        "_df_kwargs",
+        "_to_latex_kwargs",
+        "_filter_columns",
+        "_column_labels",
+        "_column_formats",
+        "_latex_substitutions",
+    )
+    _dirname: Path
+    _df_kwargs: Mapping[str, Any]
+    _to_latex_kwargs: Mapping[str, Any]
+    _filter_columns: list[str]
+    _column_labels: dict[str, str]
+    _column_formats: dict[str, str]
+    _latex_substitutions: dict[str, str]
+
+    def __init__(
+        self,
+        dirname: str,
+        *,
+        filter_columns: Iterable[str] = (),
+        df_kwargs: dict[str, Any] = {},
+        to_latex_kwargs: Mapping[str, str] = {},
+        latex_substitutions: Mapping[str, str] = {},
+    ):
+        self._dirname = Path(dirname)
+        self._df_kwargs = deepcopy(df_kwargs)
+        self._to_latex_kwargs = deepcopy(to_latex_kwargs)
+
+        self._filter_columns = list(filter_columns)
+
+        self._column_labels = {
+            "path": "Name",
+            "value": "Value $v$",
+            "central": "$v_0$",
+            "sigma": r"$\sigma$",
+            "sigma_rel_perc": r"$\sigma/v$, \%",
+            "flags": "Flag",
+            "count": "Count",
+            "label": "Description",
+        }
+
+        self._column_formats = {
+            "path": "l",
+            "value": "r",
+            "central": "r",
+            "sigma": "r",
+            "sigma_rel_perc": "r",
+            "flags": "r",
+            "count": "r",
+            "label": r"m{0.5\linewidth}",
+        }
+
+        self._latex_substitutions = dict(latex_substitutions)
+
+    def _write(self, key, mapping: NodeStorage) -> None:
+        from ..core.labels import apply_substitutions
+
+        if not key:
+            key = ("__self__",)
+            parent_key = ()
+        else:
+            parent_key = key
+        filename = self._dirname / ("/".join(key).replace(".", "_") + ".tex")
+        makedirs(filename.parent, exist_ok=True)
+
+        df = mapping.to_df(label_from="latex", parent_key=parent_key, **self._df_kwargs)
+        df.drop(columns=self._filter_columns, inplace=True, errors="ignore")
+        header = self._make_header(df)
+        column_format = self._make_column_format(df)
+
+        df["path"] = df["path"].map(lambda s: s.replace("_", r"\_") if isinstance(s, str) else s)
+        df["label"] = df["label"].map(lambda s: apply_substitutions(s, self._latex_substitutions))
+        tex = df.to_latex(
+            escape=False, header=header, column_format=column_format, **self._to_latex_kwargs
+        )
+
+        with open(filename, "w") as out:
+            logger.log(INFO1, f"Write: {filename}")
+            out.write(tex)
+
+    def _make_header(self, df: DataFrame) -> list[str]:
+        return [self._column_labels.get(s, s) for s in df.columns]
+
+    def _make_column_format(self, df: DataFrame) -> str:
+        return "".join(self._column_formats.get(s, "l") for s in df.columns)
+
+    def enterdict(self, k, v: NodeStorage):
+        self._write(k, v)

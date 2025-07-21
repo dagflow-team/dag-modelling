@@ -27,6 +27,7 @@ class WeightedSumArgs(ManyToOneNode):
     def __init__(self, *args, weight: ArrayLike, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._weight = array(weight)
+        self._labels.setdefault("mark", "Σᵢwᵢa⃗ᵢ")
         assert len(self._weight.shape) == 1, "Array of weights should be 1d"
         self._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
 

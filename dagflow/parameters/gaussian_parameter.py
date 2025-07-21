@@ -33,11 +33,11 @@ class GaussianParameter(Parameter):
         self.central
         if self.central != 0:
             return (
-                f"gpar v={self.value} ({self.normvalue}σ):"
+                f"gpar {self.name} v={self.value} ({self.normvalue}σ):"
                 f" {self.central}±{self.sigma} ({self.sigma_percent:.2g}%)"
             )
         else:
-            return f"gpar v={self.value} ({self.normvalue}σ): {self.central}±{self.sigma}"
+            return f"gpar {self.name} v={self.value} ({self.normvalue}σ): {self.central}±{self.sigma}"
 
     @property
     def central(self) -> float:
@@ -108,7 +108,7 @@ class NormalizedGaussianParameter(Parameter):
         super().__init__(*args, make_view=False, **kwargs)
 
     def __str__(self) -> str:
-        return f"ngpar v={self.value}"
+        return f"ngpar {self.name} v={self.value}"
 
     @property
     def central(self) -> float:

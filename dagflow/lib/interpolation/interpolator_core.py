@@ -10,11 +10,11 @@ from ...core.exception import InitializationError
 from ...core.node import Node
 from ...core.type_functions import (
     assign_axes_from_inputs_to_outputs,
-    check_node_has_inputs,
     check_dimension_of_inputs,
     check_dtype_of_inputs,
-    check_shape_of_inputs,
+    check_node_has_inputs,
     check_number_of_inputs,
+    check_shape_of_inputs,
     copy_from_inputs_to_outputs,
 )
 
@@ -39,11 +39,12 @@ OutOfBoundsStrategyType = Literal["constant", "nearestedge", "extrapolate"]
 
 class InterpolatorCore(Node):
     """
+
     self.inputs:
         `0` or `y`: array of the `y=f(coarse)`
         `coarse`: array of the coarse x points
         `fine`: array of the fine x points
-        `indices`: array of the indices of the coarse segments for every fine point
+        `indices`: array of the indices of the coarse segments for every fine point.
 
     self.outputs:
         `0` or `result`: array of the `y≈f(fine)`
@@ -51,8 +52,6 @@ class InterpolatorCore(Node):
     extra arguments:
         `method`: defines an interpolation method ("linear", "log", "logx", "exp", "left", "right", "nearest");
         default: `linear`
-        `tolerance`: determines the accuracy with which the point will be identified
-        with the segment boundary; default: `1e-10`
         `underflow`: defines the underflow strategy: `constant`, `nearestedge`, or `extrapolate`;
         default: `extrapolate`
         `overflow`: defines the overflow strategy: `constant`, `nearestedge`, or `extrapolate`;
@@ -69,7 +68,6 @@ class InterpolatorCore(Node):
         "_methods",
         "_method",
         "_methodname",
-        "_tolerance",
         "_underflow",
         "_overflow",
         "_fillvalue",
@@ -105,7 +103,6 @@ class InterpolatorCore(Node):
         self,
         *args,
         method: MethodType = "linear",
-        tolerance: float = 1e-10,
         underflow: OutOfBoundsStrategyType = "extrapolate",
         overflow: OutOfBoundsStrategyType = "extrapolate",
         fillvalue: float = 0.0,
@@ -130,7 +127,6 @@ class InterpolatorCore(Node):
             )
         self._method = self._methods[method]
         self._strategies = {"constant": 0, "nearestedge": 1, "extrapolate": 2}
-        self._tolerance = tolerance
         slist = self.strategies.keys()
         if underflow not in slist:
             raise InitializationError(
@@ -152,6 +148,14 @@ class InterpolatorCore(Node):
         self._indices_input = self._add_input("indices", positional=False)
         self._result_output = self._add_output("result")
 
+        self._functions_dict.update(
+            {
+                "python": self._function_python,
+                "numba": self._function_numba,
+            }
+        )
+        self.choose_function("numba")
+
     @property
     def methods(self) -> dict:
         return self._methods
@@ -159,10 +163,6 @@ class InterpolatorCore(Node):
     @property
     def strategies(self) -> dict:
         return self._strategies
-
-    @property
-    def tolerance(self) -> float:
-        return self._tolerance
 
     @property
     def underflow(self) -> str:
@@ -177,10 +177,10 @@ class InterpolatorCore(Node):
         return self._fillvalue
 
     def _type_function(self) -> None:
-        """
-        The function to determine the dtype and shape.
-        Checks self.inputs dimension and, selects an interpolation algorithm,
-        determines dtype and shape for self.outputs
+        """The function to determine the dtype and shape.
+
+        Checks self.inputs dimension and, selects an interpolation
+        algorithm, determines dtype and shape for self.outputs
         """
         check_number_of_inputs(self, 1)
         check_node_has_inputs(self, ("coarse", "y", "fine", "indices"))
@@ -224,35 +224,50 @@ class InterpolatorCore(Node):
         self._indices = self._indices_input._data.ravel()
         self._result = self._result_output._data.ravel()
 
-    def _function(self):
-        """Runs interpolation method chosen within `method` arg"""
+    def _function_numba(self):
+        """Runs interpolation method chosen within `method` arg."""
         # TODO: inherit from OneToOneNode, loop inputs
         for callback in self._input_nodes_callbacks:
             callback()
 
-        _interpolation(
+        _interpolation_numba(
             self._method,
             self._coarse,
             self._y,
             self._fine,
             self._indices,
             self._result,
-            self.tolerance,
+            self.strategies[self.underflow],
+            self.strategies[self.overflow],
+            self.fillvalue,
+        )
+
+    def _function_python(self):
+        """Runs interpolation method chosen within `method` arg."""
+        # TODO: inherit from OneToOneNode, loop inputs
+        for callback in self._input_nodes_callbacks:
+            callback()
+
+        _interpolation_python(
+            self._method,
+            self._coarse,
+            self._y,
+            self._fine,
+            self._indices,
+            self._result,
             self.strategies[self.underflow],
             self.strategies[self.overflow],
             self.fillvalue,
         )
 
 
-@njit(cache=True)
-def _interpolation(
+def _interpolation_python(
     method: Callable[[float, float, float, float, float], float],
     coarse: NDArray[double],
     yc: NDArray[double],
     fine: NDArray[double],
     indices: NDArray[integer],
     result: NDArray[double],
-    tolerance: float,
     underflow: int,
     overflow: int,
     fillvalue: float,
@@ -260,10 +275,7 @@ def _interpolation(
     nseg = coarse.size - 1
     has_last_y_input = coarse.size == yc.size
     for i, j in enumerate(indices):
-        if abs(fine[i] - coarse[j]) < tolerance:
-            # get precise value from coarse
-            result[i] = yc[j]
-        elif j > nseg:  # overflow
+        if j > nseg:  # overflow
             if overflow == ExtrapolationStrategy.constant:  # constant
                 result[i] = fillvalue
             elif overflow == ExtrapolationStrategy.nearestedge:  # nearestedge
@@ -301,6 +313,9 @@ def _interpolation(
             result[i] = method(coarse[j - 1], coarse[j], yc[j - 1], yc[j], fine[i])
         else:  # interpolate
             result[i] = method(coarse[j - 1], coarse[j], yc[j - 1], yc[j - 1], fine[i])
+
+
+_interpolation_numba: Callable = njit(cache=True)(_interpolation_python)
 
 
 @njit(cache=True, inline="always")
@@ -344,7 +359,7 @@ def _exp_interpolation(
     yc1: float,
     fine: float,
 ) -> float:
-    return yc0 * exp((coarse0 - fine) * log(yc0 / yc1) / (coarse1 - coarse0))
+    return yc0 * exp((fine - coarse0) * log(yc1 / yc0) / (coarse1 - coarse0))
 
 
 @njit(cache=True, inline="always")
