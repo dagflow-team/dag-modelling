@@ -38,9 +38,13 @@ OutOfBoundsStrategyType = Literal["constant", "nearestedge", "extrapolate"]
 
 
 class InterpolatorCore(Node):
-    """self.inputs: `0` or `y`: array of the `y=f(coarse)` `coarse`: array of
-    the coarse x points `fine`: array of the fine x points `indices`: array of
-    the indices of the coarse segments for every fine point.
+    """
+
+    self.inputs:
+        `0` or `y`: array of the `y=f(coarse)`
+        `coarse`: array of the coarse x points
+        `fine`: array of the fine x points
+        `indices`: array of the indices of the coarse segments for every fine point.
 
     self.outputs:
         `0` or `result`: array of the `y≈f(fine)`

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
+from copy import deepcopy
 from os import makedirs
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -356,7 +357,7 @@ class NodeStorage(NestedMKDict):
             df["sigma_rel_perc"] = sigma_rel_perc
 
         for key in ("count", "shape", "value", "central", "sigma", "sigma_rel_perc"):
-            if not key in df.columns:
+            if key not in df.columns:
                 continue
 
             if df[key].isna().all():
@@ -553,7 +554,7 @@ class PlotVisitor(NestedMKDictVisitor):
         self._n_elements = 0
         self._minimal_data_size = minimal_data_size
         self._exact_substitutions = dict(exact_substitutions)
-        self._savefig_kwargs = savefig_kwargs
+        self._savefig_kwargs = deepcopy(savefig_kwargs)
 
         self._overlay_priority = tuple(OrderedSet(sq) for sq in overlay_priority)
         self._currently_active_overlay = None
@@ -607,15 +608,17 @@ class PlotVisitor(NestedMKDictVisitor):
             return mkfig(), key, None, True
 
         index_group, index_item, need_new_figure, need_group_figure = self._try_start_join(key)
+        figure_is_new = False
         if force_group or not need_group_figure:
-            return None, None, None, False
+            return None, None, None, figure_is_new
 
         if need_new_figure or (fig := self._active_figures.get(tuple(index_group))) is None:
-            return mkfig(index_group), index_group, index_item, True
+            figure_is_new = True
+            return mkfig(index_group), index_group, index_item, figure_is_new
 
         ax = fig.axes[0]
         sca(ax)
-        return ax, index_group, index_item, False
+        return ax, index_group, index_item, figure_is_new
 
     def _savefig(self, key: TupleKey, *, close: bool = True, overlay: bool = False):
         from os.path import dirname
@@ -818,8 +821,8 @@ class ParametersVisitorLatex(NestedMKDictVisitor):
         "_latex_substitutions",
     )
     _dirname: Path
-    _df_kwargs: dict[str, Any]
-    _to_latex_kwargs: dict[str, Any]
+    _df_kwargs: Mapping[str, Any]
+    _to_latex_kwargs: Mapping[str, Any]
     _filter_columns: list[str]
     _column_labels: dict[str, str]
     _column_formats: dict[str, str]
@@ -830,13 +833,13 @@ class ParametersVisitorLatex(NestedMKDictVisitor):
         dirname: str,
         *,
         filter_columns: Iterable[str] = (),
-        df_kwargs: Mapping[str, Any] = {},
-        to_latex_kwargs: dict = {},
+        df_kwargs: dict[str, Any] = {},
+        to_latex_kwargs: Mapping[str, str] = {},
         latex_substitutions: Mapping[str, str] = {},
     ):
         self._dirname = Path(dirname)
-        self._df_kwargs = dict(df_kwargs)
-        self._to_latex_kwargs = dict(to_latex_kwargs)
+        self._df_kwargs = deepcopy(df_kwargs)
+        self._to_latex_kwargs = deepcopy(to_latex_kwargs)
 
         self._filter_columns = list(filter_columns)
 

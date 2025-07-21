@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import suppress
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
 from matplotlib import colormaps
@@ -40,7 +41,7 @@ class plot_auto:
     _array: NDArray
     _edges: EdgesLike
     _meshes: MeshesLike
-    _plotoptions: dict[str, Any]
+    _plotoptions: Mapping[str, Any]
     _ret: tuple
 
     _title: str | None
@@ -68,7 +69,7 @@ class plot_auto:
             case str():
                 self._plotoptions = {"method": plotoptions}
             case Mapping():
-                self._plotoptions = dict(plotoptions)
+                self._plotoptions = deepcopy(plotoptions)
             case _:
                 raise ValueError(plotoptions)
 
@@ -79,7 +80,7 @@ class plot_auto:
         self._get_data(**filter_kw)
         self._get_labels()
 
-        if (kwargs_extra:=self._plotoptions.get("kwargs")) is not None:
+        if (kwargs_extra := self._plotoptions.get("kwargs")) is not None:
             kwargs = dict(kwargs, **kwargs_extra)
 
         ndim = len(self._array.shape)

@@ -249,7 +249,7 @@ class Labels:
         d = LoadYaml(path)
         self.update(d)
 
-    def update(self, d: dict[str, str | dict[str, str]]):
+    def update(self, d: dict[str, str] | dict[str, str | dict[str, str]]):
         match d:
             case {"group": {} as group, **rest} if not rest:
                 d = group
@@ -300,10 +300,10 @@ class Labels:
                 continue
 
             if isinstance(accepted_list, str):
-                if (
-                    idxnum[0] != accepted_list  # key value
-                    and idxnum[1] != accepted_list  # key index
-                ):
+                if idxnum[0] != accepted_list:  # key value
+                    return False
+            elif isinstance(accepted_list, int):
+                if idxnum[1] != accepted_list:  # key index
                     return False
             elif (
                 idxnum[0] not in accepted_list  # key value
@@ -579,8 +579,8 @@ class Labels:
     def __getitem__(self, k: str) -> str | None:
         return getattr(self, k)
 
-    def __setitem__(self, k: str, v: str) -> str | None:
-        return setattr(self, k, v)
+    def __setitem__(self, k: str, v: str) -> None:
+        setattr(self, k, v)
 
     def get(self, k: str, default: str) -> str | None:
         return getattr(self, k, default)

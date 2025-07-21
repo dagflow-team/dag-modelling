@@ -52,7 +52,6 @@ class FlagsDescriptor:
         self._children = children
         self._parents = parents
         self.tainted = tainted
-        self.frozen = False
         self.frozen = frozen
         self.frozen_tainted = False
         self.invalid = False
