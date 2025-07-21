@@ -81,12 +81,12 @@ class MemoryProfiler(Profiler):
             else:
                 estimations[inp] = 0
         for out in node.outputs.iter_all():
+            # If there is an _allocating_input,
+            #  the `out.data` refers to the child `Input` data.
+            # However if there is no `_allocating_input`
+            #  and owns_buffer=False (and `out.data` is not `None` of course)
+            #  then it means there is allocated memory for this Output.
             if out.has_data and (out.owns_buffer or out._allocating_input is None):
-                # If there is an _allocating_input,
-                #  the `out.data` refers to the child `Input` data.
-                # However if there is no `_allocating_input`
-                #  and owns_buffer=False (and `out.data` is not `None` of course)
-                #  then it means there is allocated memory for this Output.
                 estimations[out] = out._data.nbytes
             else:
                 estimations[out] = 0
@@ -132,14 +132,14 @@ class MemoryProfiler(Profiler):
     ) -> DataFrame:
         return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
 
-    def _present_in_units(self, value, separator="\n\t") -> str:
+    def _present_in_units(self, value, float_bytes=False, separator="\n\t") -> str:
         """Convert the `value` in bytes to kilobytes, and megabytes.
 
         Return formatted string, where the values separated by `separator`:
         """
         return separator.join(
             (
-                f"{value:.1f} bytes",
+                f"{value:.{1 if float_bytes else 0}f} bytes",
                 f"{value / 2**10:.1f} KB",
                 f"{value / 2**20:.1f} MB",
             )
@@ -148,7 +148,7 @@ class MemoryProfiler(Profiler):
     def print_report(
         self,
         *,
-        rows: int | None = 40,
+        rows: int | None = 100,
         group_by: str | Sequence[str] | None = "type",
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
@@ -156,6 +156,7 @@ class MemoryProfiler(Profiler):
         report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nMemory Profiling {hex(id(self))}, "
+            f"nodes in subgraph: {len(self._target_nodes)}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
@@ -167,5 +168,5 @@ class MemoryProfiler(Profiler):
         print(f"\t{self._present_in_units(size_bytes)}")
         s_node = size_bytes / len(self._target_nodes)
         print("TOTAL SIZE / node count:")
-        print(f"\t{self._present_in_units(s_node)}")
+        print(f"\t{self._present_in_units(s_node, float_bytes=True)}")
         return report

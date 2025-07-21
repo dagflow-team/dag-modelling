@@ -23,7 +23,7 @@ try:
 except ImportError:
     GraphDot = None
 
-    def savegraph(args, **kwargs):
+    def savegraph(*args, **kwargs):
         pass
 
 else:

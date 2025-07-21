@@ -5,6 +5,7 @@ from dagflow.tools.profiling import (
     FrameworkProfiler,
     MemoryProfiler,
     NodeProfiler,
+    gather_related_nodes
 )
 
 
@@ -42,6 +43,13 @@ def test_full_guide(graph_0):
     # this works for all profiler classes
     _ = NodeProfiler(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
 
+    # If you are going to use the same subgraph for all profiling types
+    #  or plan to modify the found set of related nodes,
+    #  you can call `gather_related_nodes` directrly
+    node_subgraph = gather_related_nodes(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
+    #       * do something with `node_subgraph` here *
+    _ = NodeProfiler(list(node_subgraph))
+
     # estimate all target nodes and keep estimations
     node_profiler.estimate_target_nodes()
 
@@ -68,7 +76,7 @@ def test_full_guide(graph_0):
     #  or by first column of aggregation function
 
     # Saving results is pretty easy, because it's just a pandas.DataFrame
-    report.to_csv("output/test_report.csv")
+    report.to_csv("output/test_report.tsv", sep='\t', index=False)
     report.to_json("output/test_report.json")
 
     # Sometimes it could be helpful to directly estimate one node
@@ -92,11 +100,11 @@ def test_full_guide(graph_0):
     #  was executed during the fit of the model.
     calls_profiler = CountCallsProfiler(nodes)
 
-    # just an example of one-liner:
-    # 1. estimate
-    # 2. make report
-    # 3. print report
-    # 4. save to some format
+    # Example of one-liner to:
+    # 1. Estimate
+    # 2. Make report
+    # 3. Print report
+    # 4. Save to some format
     calls_profiler.estimate_calls().print_report().to_csv("output/test_report.csv")
 
     calls_profiler.print_report(group_by=None, sort_by="calls", rows=10)
