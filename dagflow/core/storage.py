@@ -899,20 +899,5 @@ class ParametersVisitorLatex(NestedMKDictVisitor):
     def _make_column_format(self, df: DataFrame) -> str:
         return "".join(self._column_formats.get(s, "l") for s in df.columns)
 
-    def start(self, dct):
-        pass
-
     def enterdict(self, k, v: NodeStorage):
         self._write(k, v)
-
-    def visit(self, k, v):
-        pass
-
-    def exitdict(self, k, v):
-        pass
-
-    def _store(self):
-        pass
-
-    def stop(self, dct):
-        pass
