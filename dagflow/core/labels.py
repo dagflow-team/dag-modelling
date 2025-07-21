@@ -129,46 +129,33 @@ class Labels:
     Attributes
     ----------
     _text : str
-        for plain text (terminal)
-
+        for plain text (terminal).
     _graph : str
-        for the graph, or text_unit
-
+        for the graph, or text_unit.
     _latex : str
-        for latex output, or to replace plot_title
-
+        for latex output, or to replace plot_title.
     _mark : str
-        for short mark on the graphiz graph
-
+        for short mark on the graphiz graph.
     _axis : str
-        used when the output is associated to the axis
-
+        used when the output is associated to the axis.
     _rootaxis : str
-        used when the output is associated to the axis (root latex)
-
+        used when the output is associated to the axis (root latex).
     _xaxis : str
-        for own X axis, when it is not provided
-
+        for own X axis, when it is not provided.
     _yaxis : str
-        for own Y axis, when it is not provided
-
+        for own Y axis, when it is not provided.
     _plot_title : str
-        for plot title, will be replaced by latex if not found
-
+        for plot title, will be replaced by latex if not found.
     _root_title : str
-        for canvas title (root), will be replaced by plot_title with \→# substitution
-
+        for canvas title (root), will be replaced by plot_title with \→# substitution.
     _unit : str
-        for text unit
-
+        for text unit.
     _latex_unit : str
-        for latex text unit
-
+        for latex text unit.
     _xunit : str
-        for text unit for own X axis
-
+        for text unit for own X axis.
     _yunit : str
-        for text unit for own Y axis
+        for text unit for own Y axis.
     """
 
     __slots__ = (
