@@ -215,7 +215,7 @@ class Labels:
     _plotoptions: dict[str, Any]
     _node_hidden: bool | None
 
-    def __init__(self, label: dict[str, str] | str | Path | None = None):
+    def __init__(self, label: Mapping[str, str] | str | Path | None = None):
         for slot in self.__slots__:
             setattr(self, slot, None)
         self._paths = []
@@ -249,7 +249,7 @@ class Labels:
         d = LoadYaml(path)
         self.update(d)
 
-    def update(self, d: dict[str, str] | dict[str, str | dict[str, str]]):
+    def update(self, d: Mapping[str, str | dict[str, str]]):
         match d:
             case {"group": {} as group, **rest} if not rest:
                 d = group
