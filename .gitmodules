@@ -1,3 +1,0 @@
-[submodule "submodules/dictwrapper"]
-	path = submodules/dictwrapper
-	url = https://git.jinr.ru/dag-computing/dictwrapper.py.git
