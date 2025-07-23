@@ -1,11 +1,48 @@
-[tool.black]
-line-length = 100
-target-version = ['py38']
-preview = true
+[project]
+name = "dagmodelling"
+version = "0.9.4"
+description = "The DAGFlow package is a python implementation of the dataflow programming with the lazy graph evaluation."
+authors = [{ name = "DAGFlow Team", email = "dagflow@jinr.ru" }]
+maintainers = [{ name = "DAGFlow Team", email = "dagflow@jinr.ru" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "contextlib2",
+  "h5py",
+  "latexdatax",
+  "matplotlib",
+  "numba",
+  "numpy",
+  "ordered-set",
+  "pandas",
+  "pygraphviz",
+  "pyyaml",
+  "schema",
+  "scipy",
+  "tabulate",
+  "uproot",
+  "plotille",
+  "nested-mapping",
+]
 
-[tool.isort]
-atomic = true
-profile = "black"
-line_length = 100
-skip_gitignore = true
-known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
+[project.urls]
+homepage = "https://github.com/dagflow-team/dag-flow"
+repository = "https://github.com/dagflow-team/dag-flow"
+documentation = "https://github.com/dagflow-team/dag-flow/wiki"
+"DAGFlow Team" = "https://github.com/dagflow-team"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "coverage"]
+
+[build-system]
+requires = ["setuptools", "wheel", "packaging"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = [
+  "tests*",
+  "docs*",
+  "example*",
+] # Исключает целые папки при необходимости
