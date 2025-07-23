@@ -15,7 +15,7 @@ _loggers = {}
 
 
 def get_logger(
-    name="dagflow",
+    name="dag_modelling",
     *,
     filename: str | None = None,
     debug: bool = False,
@@ -44,7 +44,7 @@ def get_logger(
     return logger
 
 
-def set_level(level, name="dagflow"):
+def set_level(level, name="dag_modelling"):
     logger = _loggers[name]
     for handler in logger.handlers:
         handler.setLevel(level)

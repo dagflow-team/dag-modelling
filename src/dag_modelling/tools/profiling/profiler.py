@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
     from pandas.api.typing import DataFrameGroupBy
 
-    from dagflow.core.node import Node
+    from dag_modelling.core.node import Node
 
 
 class Profiler(metaclass=ABCMeta):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
-from dagflow.core.input_strategy import InheritInputStrategy, InputStrategyBase
+from dag_modelling.core.input_strategy import InheritInputStrategy, InputStrategyBase
 
 from .exception import CriticalError, InitializationError
 from .node_base import NodeBase

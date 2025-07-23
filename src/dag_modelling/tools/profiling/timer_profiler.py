@@ -7,14 +7,14 @@ from time import perf_counter_ns
 from numpy import sum as npsum, empty, ndarray
 from pandas import DataFrame, Series
 
-from dagflow.core.node import Node
+from dag_modelling.core.node import Node
 
 from .profiler import Profiler
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from dagflow.core.node import Node
+    from dag_modelling.core.node import Node
 
 
 # prefix `t_` - time notation

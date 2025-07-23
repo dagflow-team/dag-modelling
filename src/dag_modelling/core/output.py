@@ -13,7 +13,7 @@ from .exception import (
     CalculationError,
     ClosedGraphError,
     ConnectionError,
-    DagflowError,
+    DagModellingError,
     InitializationError,
     UnclosedGraphError,
 )
@@ -226,7 +226,7 @@ class Output:
             elif size == 1:
                 try:
                     data = self.data
-                except DagflowError:
+                except DagModellingError:
                     ret["value"] = "???"
                 else:
                     ret["value"] = float(data.ravel()[0])

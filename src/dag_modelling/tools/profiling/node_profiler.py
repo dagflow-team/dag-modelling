@@ -9,7 +9,7 @@ from .timer_profiler import TimerProfiler
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from dagflow.core.node import Node
+    from dag_modelling.core.node import Node
 
 _ALLOWED_GROUPBY = ("node", "type", "name")
 

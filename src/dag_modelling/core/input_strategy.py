@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dagflow.core.exception import InitializationError
+from dag_modelling.core.exception import InitializationError
 
 from ..tools.formatter import Formattable, LimbNameFormatter, SimpleLimbNameFormatter
 

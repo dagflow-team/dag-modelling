@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy import zeros
 
-from dagflow.core.input_strategy import InputStrategyViewConcat
+from dag_modelling.core.input_strategy import InputStrategyViewConcat
 
 from ...core.node import Node
 from ...core.type_functions import check_dimension_of_inputs, check_dtype_of_inputs

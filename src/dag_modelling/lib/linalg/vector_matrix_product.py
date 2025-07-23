@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy import matmul, multiply
 
-from dagflow.core.input_strategy import AddNewInputAddNewOutput
+from dag_modelling.core.input_strategy import AddNewInputAddNewOutput
 
 from ...core.exception import TypeFunctionError
 from ...core.node import Node

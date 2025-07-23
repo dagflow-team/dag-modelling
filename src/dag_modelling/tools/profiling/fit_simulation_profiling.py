@@ -5,7 +5,7 @@ from typing import Literal
 
 from pandas import DataFrame
 
-from dagflow.core.node import Node
+from dag_modelling.core.node import Node
 
 from .timer_profiler import TimerProfiler
 

@@ -9,7 +9,7 @@ def pytest_sessionstart(session):
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
 
-    Automatic change path to the `dag-flow/tests` and create `tests/output` dir
+    Automatic change path to the `dag-modelling/tests` and create `tests/output` dir
     """
     while path := getcwd():
         if (lastdir := path.split("/")[-1]) == "tests":

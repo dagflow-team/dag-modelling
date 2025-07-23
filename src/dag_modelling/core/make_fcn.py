@@ -40,9 +40,9 @@ def make_fcn(
     and retruns the result of the node evaluation.
 
     :param node: A node (or output), depending (explicitly or implicitly) on the parameters
-    :type node: class:`dagflow.core.node.Node` | class:`dagflow.core.output.Output`
+    :type node: class:`dag_modelling.core.node.Node` | class:`dag_modelling.core.output.Output`
     :param storage: A storage with parameters
-    :type storage: class:`dagflow.core.storage.NodeStorage`
+    :type storage: class:`dag_modelling.core.storage.NodeStorage`
     :param safe: If `safe=True`, the parameters will be resetted to old values after evaluation.
     If `safe=False`, the parameters will be setted to the new values
     :type safe: bool

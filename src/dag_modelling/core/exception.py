@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from .output import Output
 
 
-class DagflowError(RuntimeError):
+class DagModellingError(RuntimeError):
     node: NodeBase | None
     input: Input | None
     output: Output | None
@@ -37,11 +37,11 @@ class DagflowError(RuntimeError):
             node._exception = message if args is None else "\\n".join((message,) + args)
 
 
-class CriticalError(DagflowError):
+class CriticalError(DagModellingError):
     pass
 
 
-class NoncriticalError(DagflowError):
+class NoncriticalError(DagModellingError):
     pass
 
 

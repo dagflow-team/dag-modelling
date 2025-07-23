@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 from weakref import ref as weakref
 
-from dagflow.core.input_strategy import InputStrategyBase
+from dag_modelling.core.input_strategy import InputStrategyBase
 from nested_mapping.typing import KeyLike, properkey
 
 from ..core.labels import Labels
@@ -12,7 +12,7 @@ from .exception import (
     ClosedGraphError,
     ClosingError,
     CriticalError,
-    DagflowError,
+    DagModellingError,
     InitializationError,
     OpeningError,
     ReconnectionError,
@@ -282,7 +282,7 @@ class Node(NodeBase):
         if graph is None:
             return
         if self._graph is not None:
-            raise DagflowError("Graph is already defined")
+            raise DagModellingError("Graph is already defined")
         self._graph = graph
         self._graph.register_node(self)
 
@@ -596,7 +596,7 @@ class Node(NodeBase):
 
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        raise DagflowError("Unimplemented method: the method must be overridden!")
+        raise DagModellingError("Unimplemented method: the method must be overridden!")
 
     def _post_allocate(self):
         self._input_nodes_callbacks = []
