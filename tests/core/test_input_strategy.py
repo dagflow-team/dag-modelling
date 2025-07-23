@@ -2,8 +2,8 @@
 
 from pytest import mark, raises
 
-from dagflow.core.graph import Graph
-from dagflow.core.input_strategy import (
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.input_strategy import (
     AddNewInput,
     AddNewInputAddAndKeepSingleOutput,
     AddNewInputAddNewOutput,
@@ -11,8 +11,8 @@ from dagflow.core.input_strategy import (
     AddNewInputAddNewOutputForNInputs,
     InputStrategyBase,
 )
-from dagflow.lib.common import Dummy
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.lib.common import Dummy
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("strategy", (None, InputStrategyBase))

@@ -1,6 +1,6 @@
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import GraphDot
-from dagflow.lib.common import Dummy
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import GraphDot
+from dag_modelling.lib.common import Dummy
 
 
 def test_01():

@@ -1,10 +1,10 @@
 from numpy import arange, sum
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.summation import SumSq
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.summation import SumSq
 
 debug = False
 

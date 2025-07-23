@@ -5,11 +5,11 @@ from numpy import linspace
 from numpy.random import seed, shuffle
 from pytest import mark, raises
 
-from dagflow.core.exception import InitializationError
-from dagflow.core.graph import Graph
-from dagflow.lib.common import Array
-from dagflow.lib.interpolation import SegmentIndex
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.core.exception import InitializationError
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.interpolation import SegmentIndex
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("mode", ("left", "right"))

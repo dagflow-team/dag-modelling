@@ -1,7 +1,7 @@
 from types import MethodType
 from collections import Counter
 
-from dagflow.tools.profiling import FrameworkProfiler
+from dag_modelling.tools.profiling import FrameworkProfiler
 
 
 def test_init_g0(graph_0):

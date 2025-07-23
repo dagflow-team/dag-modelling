@@ -1,11 +1,11 @@
 from numpy import allclose, array, diag, finfo, log
 from pytest import mark, raises
 
-from dagflow.core.exception import TypeFunctionError
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.statistics import LogProdDiag
+from dag_modelling.core.exception import TypeFunctionError
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.statistics import LogProdDiag
 
 
 @mark.parametrize("dtype", ("d", "f"))

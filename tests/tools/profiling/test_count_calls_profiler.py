@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pandas import DataFrame
 
-from dagflow.tools.profiling import CountCallsProfiler
+from dag_modelling.tools.profiling import CountCallsProfiler
 
 
 def eval_n_times(node, n):

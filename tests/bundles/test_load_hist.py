@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import uproot
 
-from dagflow.bundles.load_hist import load_hist
+from dag_modelling.bundles.load_hist import load_hist
 
 
 def _save_data(filename, object_name, hist):

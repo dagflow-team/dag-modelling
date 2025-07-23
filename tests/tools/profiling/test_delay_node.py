@@ -2,10 +2,10 @@ from sys import argv
 
 from pytest import mark
 
-from dagflow.core.graph import Graph
+from dag_modelling.core.graph import Graph
 
-from dagflow.tools.profiling import NodeProfiler, FrameworkProfiler
-from dagflow.tools.profiling import DelayNode
+from dag_modelling.tools.profiling import NodeProfiler, FrameworkProfiler
+from dag_modelling.tools.profiling import DelayNode
 
 EPS = 0.05
 

@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 import pytest
 
-from dagflow.bundles.load_array import load_array
+from dag_modelling.bundles.load_array import load_array
 
 
 def _save_data(filename, object_name, data):

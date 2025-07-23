@@ -7,12 +7,12 @@ from itertools import chain
 
 from pandas import DataFrame
 
-from dagflow.tools.profiling import MemoryProfiler
-from dagflow.core.input import Input
+from dag_modelling.tools.profiling import MemoryProfiler
+from dag_modelling.core.input import Input
 
 if TYPE_CHECKING:
-    from dagflow.core.output import Output
-    from dagflow.core.input import Input
+    from dag_modelling.core.output import Output
+    from dag_modelling.core.input import Input
     from numpy.typing import NDArray
 
 

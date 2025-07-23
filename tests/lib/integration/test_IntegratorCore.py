@@ -2,14 +2,14 @@ from matplotlib.pyplot import close, subplots
 from numpy import allclose, linspace, meshgrid, pi, vectorize
 from pytest import mark, raises
 
-from dagflow.core.exception import CalculationError, CriticalError, TypeFunctionError
-from dagflow.core.graph import Graph
-from dagflow.lib.abstract import ManyToOneNode, OneToOneNode
-from dagflow.lib.common import Array
-from dagflow.lib.integration import IntegratorCore, IntegratorSampler
-from dagflow.lib.trigonometry import Cos, Sin
-from dagflow.plot.graphviz import savegraph
-from dagflow.plot.plot import plot_auto
+from dag_modelling.core.exception import CalculationError, CriticalError, TypeFunctionError
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.abstract import ManyToOneNode, OneToOneNode
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.integration import IntegratorCore, IntegratorSampler
+from dag_modelling.lib.trigonometry import Cos, Sin
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.plot.plot import plot_auto
 
 
 @mark.parametrize("align", ("left", "center", "right"))

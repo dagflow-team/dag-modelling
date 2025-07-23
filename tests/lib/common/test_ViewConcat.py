@@ -1,11 +1,11 @@
 from numpy import arange, concatenate, ones, zeros
 from pytest import mark, raises
 
-from dagflow.core.exception import ConnectionError
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array, View, ViewConcat
-from dagflow.lib.statistics import NormalizeCorrelatedVarsTwoWays
+from dag_modelling.core.exception import ConnectionError
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array, View, ViewConcat
+from dag_modelling.lib.statistics import NormalizeCorrelatedVarsTwoWays
 
 debug = False
 

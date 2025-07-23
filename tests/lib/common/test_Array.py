@@ -1,10 +1,10 @@
 from numpy import arange
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.arithmetic import Sum
-from dagflow.lib.common import Array
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.arithmetic import Sum
+from dag_modelling.lib.common import Array
 
 
 @mark.parametrize("dtype", ("d", "f"))

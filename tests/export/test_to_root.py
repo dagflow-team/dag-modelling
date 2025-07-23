@@ -1,10 +1,10 @@
 from numpy import arange, meshgrid
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.core.storage import NodeStorage
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.core.storage import NodeStorage
 
 @mark.skip(reason="no way of currently testing this")
 @mark.parametrize('dtype', ('d', 'f',))

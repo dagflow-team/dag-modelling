@@ -2,7 +2,7 @@ from collections import Counter
 
 from pytest import raises
 
-from dagflow.tools.profiling.profiler import Profiler
+from dag_modelling.tools.profiling.profiler import Profiler
 
 
 def test_init_g0(monkeypatch, graph_0):

@@ -1,9 +1,9 @@
 from numpy import arange
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.arithmetic import Product, Sum
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.arithmetic import Product, Sum
 
 
 def test_graph_small(testname, debug_graph):

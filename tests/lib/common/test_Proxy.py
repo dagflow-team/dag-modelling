@@ -1,10 +1,10 @@
 from numpy import allclose, arange, array
 from pytest import raises
 
-from dagflow.core.exception import ClosedGraphError
-from dagflow.core.graph import Graph
-from dagflow.lib.common import Array, Proxy
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.core.exception import ClosedGraphError
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Array, Proxy
+from dag_modelling.plot.graphviz import savegraph
 
 
 def test_Proxy_several_inputs(testname, debug_graph):

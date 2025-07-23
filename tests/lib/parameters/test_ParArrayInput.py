@@ -1,11 +1,11 @@
 from numpy import allclose, arange, ones
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.parameters import ParArrayInput
-from dagflow.parameters import Parameters
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.parameters import ParArrayInput
+from dag_modelling.parameters import Parameters
 
 
 @mark.parametrize("dtype", ("d", "f"))

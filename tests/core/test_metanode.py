@@ -1,12 +1,12 @@
 from numpy import linspace, pi, sin, cos
 from pytest import raises
 
-from dagflow.core.exception import CriticalError
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.trigonometry import Cos, Sin
-from dagflow.core.meta_node import MetaNode
+from dag_modelling.core.exception import CriticalError
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.trigonometry import Cos, Sin
+from dag_modelling.core.meta_node import MetaNode
 
 
 def test_meta_node_strategy_leading_node(testname):

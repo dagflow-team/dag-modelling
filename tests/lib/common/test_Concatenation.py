@@ -1,8 +1,8 @@
 from numpy import concatenate, linspace
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array, Concatenation
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array, Concatenation
 
 
 def test_Concatenation_00(debug_graph):

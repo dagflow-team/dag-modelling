@@ -1,6 +1,6 @@
 # NOTE: consider to run pytest with "-s" flag to see outputs from this tests
 
-from dagflow.tools.profiling import (
+from dag_modelling.tools.profiling import (
     CountCallsProfiler,
     FrameworkProfiler,
     MemoryProfiler,

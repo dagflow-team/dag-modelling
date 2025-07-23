@@ -1,12 +1,12 @@
 from numpy import array
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.core.input_strategy import AddNewInputAddAndKeepSingleOutput
-from dagflow.lib.common import Array
-from dagflow.lib.common import Dummy
-from dagflow.core.type_functions import (
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.core.input_strategy import AddNewInputAddAndKeepSingleOutput
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.common import Dummy
+from dag_modelling.core.type_functions import (
     AllPositionals,
     check_edges_consistency_with_array,
     check_dtype_of_edges,

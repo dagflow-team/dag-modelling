@@ -9,16 +9,16 @@ from copy import deepcopy
 
 from pytest import mark, raises
 
-from dagflow.core.exception import ClosedGraphError, ConnectionError, UnclosedGraphError
-from dagflow.core.graph import Graph
-from dagflow.core.input import Input, Inputs
-from dagflow.core.node import Node
-from dagflow.core.output import Output
-from dagflow.core.storage import NodeStorage
-from dagflow.lib.abstract import BlockToOneNode, OneToOneNode
-from dagflow.lib.common import Dummy
-from dagflow.parameters import Parameter
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.core.exception import ClosedGraphError, ConnectionError, UnclosedGraphError
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.input import Input, Inputs
+from dag_modelling.core.node import Node
+from dag_modelling.core.output import Output
+from dag_modelling.core.storage import NodeStorage
+from dag_modelling.lib.abstract import BlockToOneNode, OneToOneNode
+from dag_modelling.lib.common import Dummy
+from dag_modelling.parameters import Parameter
+from dag_modelling.plot.graphviz import savegraph
 from nested_mapping import NestedMapping
 
 

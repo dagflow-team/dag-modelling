@@ -1,12 +1,12 @@
 from numpy import array, floating, integer, linspace, newaxis
 from pytest import mark, raises
 
-from dagflow.core.exception import TypeFunctionError
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.core.input_strategy import AddNewInputAddAndKeepSingleOutput
-from dagflow.lib.common import Array, Dummy
-from dagflow.core.type_functions import (
+from dag_modelling.core.exception import TypeFunctionError
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.core.input_strategy import AddNewInputAddAndKeepSingleOutput
+from dag_modelling.lib.common import Array, Dummy
+from dag_modelling.core.type_functions import (
     AllPositionals,
     check_dimension_of_inputs,
     check_dtype_of_inputs,

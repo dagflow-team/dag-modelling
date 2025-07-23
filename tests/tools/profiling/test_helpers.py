@@ -1,6 +1,6 @@
 import numpy as np
 
-from dagflow.plot.graphviz import GraphDot
+from dag_modelling.plot.graphviz import GraphDot
 
 
 def test_exec_graph_0(graph_0):

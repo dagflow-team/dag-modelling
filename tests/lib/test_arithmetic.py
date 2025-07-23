@@ -3,8 +3,8 @@ from numpy import array as np_array
 from numpy import linspace, sqrt, square, sum
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.lib.arithmetic import (
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.arithmetic import (
     Abs,
     Difference,
     Division,
@@ -15,8 +15,8 @@ from dagflow.lib.arithmetic import (
     Square,
     Sum,
 )
-from dagflow.lib.common import Array
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("dtype", ("d", "f"))

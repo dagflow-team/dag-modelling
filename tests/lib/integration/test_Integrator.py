@@ -1,13 +1,13 @@
 from matplotlib.pyplot import close, gca
 from numpy import allclose, linspace, pi
 
-from dagflow.core.graph import Graph
-from dagflow.core.meta_node import MetaNode
-from dagflow.lib.common import Array
-from dagflow.lib.integration import Integrator
-from dagflow.lib.trigonometry import Cos, Sin
-from dagflow.plot.graphviz import savegraph
-from dagflow.plot.plot import plot_auto
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.meta_node import MetaNode
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.integration import Integrator
+from dag_modelling.lib.trigonometry import Cos, Sin
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.plot.plot import plot_auto
 
 
 def test_Integrator_trap(debug_graph):

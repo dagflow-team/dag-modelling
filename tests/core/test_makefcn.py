@@ -1,13 +1,13 @@
 from numpy import arange
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.linalg import LinearFunction
-from dagflow.core.make_fcn import make_fcn
-from dagflow.parameters import Parameters
-from dagflow.core.storage import NodeStorage
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.linalg import LinearFunction
+from dag_modelling.core.make_fcn import make_fcn
+from dag_modelling.parameters import Parameters
+from dag_modelling.core.storage import NodeStorage
 
 
 @mark.parametrize("pass_params", (False, True))

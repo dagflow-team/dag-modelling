@@ -2,11 +2,11 @@ from matplotlib.pyplot import close
 from numpy import allclose, exp, expm1, finfo, linspace, log, log1p, log10
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.exponential import Exp, Expm1, Log, Log1p, Log10
-from dagflow.plot.plot import plot_auto
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.exponential import Exp, Expm1, Log, Log1p, Log10
+from dag_modelling.plot.plot import plot_auto
 
 fcnnames = ("exp", "expm1", "log", "log1p", "log10")
 fcns = (exp, expm1, log, log1p, log10)

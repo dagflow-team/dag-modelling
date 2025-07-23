@@ -4,12 +4,12 @@ from numpy import allclose, arange, concatenate, exp, finfo, linspace, log, sin,
 from numpy.random import seed, shuffle
 from pytest import mark, raises
 
-from dagflow.core.exception import CalculationError, InitializationError
-from dagflow.core.graph import Graph
-from dagflow.lib.common import Array
-from dagflow.lib.interpolation import InterpolatorCore, SegmentIndex
-from dagflow.lib.trigonometry import Sin
-from dagflow.plot.graphviz import savegraph
+from dag_modelling.core.exception import CalculationError, InitializationError
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.interpolation import InterpolatorCore, SegmentIndex
+from dag_modelling.lib.trigonometry import Sin
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("k", (1.234, -0.578))

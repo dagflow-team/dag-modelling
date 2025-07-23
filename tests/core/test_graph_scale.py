@@ -10,14 +10,14 @@ from numpy.random import uniform
 from plotille import Figure
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.lib.arithmetic import Sum
-from dagflow.lib.common import Array
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.arithmetic import Sum
+from dag_modelling.lib.common import Array
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from dagflow.core.node import Node
+    from dag_modelling.core.node import Node
 
 
 def _make_data(datasize: int) -> NDArray:
@@ -114,7 +114,7 @@ def test_graph_scale_01(testname, width: int = 6, length: int = 7):
 
     print(f"Minimal time per sum: {min(time_rel_μs)} μs")
 
-    # from dagflow.plot.graphviz import GraphDot
+    # from dag_modelling.plot.graphviz import GraphDot
     # d = GraphDot(g)
     # ofile = f"output/{testname}.dot"
     # d.savegraph(ofile)

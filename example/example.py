@@ -2,14 +2,14 @@ from numpy import arange
 from numpy import copyto
 from numpy import result_type
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.core.input_strategy import AddNewInputAddNewOutputForBlock
-from dagflow.lib.common import Array
-from dagflow.lib.arithmetic import Product
-from dagflow.lib.arithmetic import Sum
-from dagflow.lib.summation import WeightedSum
-from dagflow.core.node import Node
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.core.input_strategy import AddNewInputAddNewOutputForBlock
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.arithmetic import Product
+from dag_modelling.lib.arithmetic import Sum
+from dag_modelling.lib.summation import WeightedSum
+from dag_modelling.core.node import Node
 
 array = arange(3, dtype="d")
 debug = False
@@ -55,7 +55,7 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", m.outputs["result"].data)
-    savegraph(graph, "dagflow_example_1a.png")
+    savegraph(graph, "dag_modelling_example_1a.png")
 
 # Check random generated Array, Sum and Product
 with Graph(debug=debug) as graph:
@@ -68,7 +68,7 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", m.outputs["result"].data)
-    savegraph(graph, "dagflow_example_1b.png")
+    savegraph(graph, "dag_modelling_example_1b.png")
 
 # Check predefined Array, two Sum's and Product
 with Graph(debug=debug) as graph:
@@ -83,7 +83,7 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", m.outputs["result"].data)
-    savegraph(graph, "dagflow_example_2.png")
+    savegraph(graph, "dag_modelling_example_2.png")
 
 # Check predefined Array, Sum, WeightedSum and Product
 with Graph(debug=debug) as graph:
@@ -104,7 +104,7 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", m.outputs["result"].data)
-    savegraph(graph, "dagflow_example_3.png")
+    savegraph(graph, "dag_modelling_example_3.png")
 
 
 with Graph(debug=debug) as graph:
@@ -118,4 +118,4 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", s.result)
-    savegraph(graph, "dagflow_example_4.png")
+    savegraph(graph, "dag_modelling_example_4.png")

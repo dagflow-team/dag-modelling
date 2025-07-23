@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from pytest import raises
 
-from dagflow.tools.profiling import FitSimulationProfiler
+from dag_modelling.tools.profiling import FitSimulationProfiler
 
 
 def test_estimate_separately(graph_0):
