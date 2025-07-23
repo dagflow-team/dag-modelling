@@ -10,11 +10,12 @@ tests:
     - apt-get -y install libgraphviz-dev graphviz
     - python3 -m venv venv
     - source venv/bin/activate
-    - git submodule sync
-    - git submodule update --init --recursive --depth=1
-    - python3 -m pip install --upgrade pip
-    - python3 -m pip install -r requirements.txt
-    - coverage run --source=dagflow --omit=submodules/* -m pytest --include-long-time-tests
+    - pip install --upgrade wheel setuptools pip
+    - pip install cython
+    # nested-dict is yet in testing
+    - pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple -e ".[dev]"
+    # - pip install -e ".[dev]"
+    - coverage run --source=. -m pytest --include-long-time-tests
     - coverage report
     - coverage xml
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
