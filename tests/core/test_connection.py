@@ -19,7 +19,7 @@ from dagflow.lib.abstract import BlockToOneNode, OneToOneNode
 from dagflow.lib.common import Dummy
 from dagflow.parameters import Parameter
 from dagflow.plot.graphviz import savegraph
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 
 
 def check_connection(obj):
@@ -88,14 +88,14 @@ def test_Output_or_Parameter_to_Input_or_Node_or_Sequence(LHS, RHS):
         {f"n{i}": [OneToOneNode(f"node_{j}{i}") for j in range(3)] for i in range(3)},
     ),
 )
-@mark.parametrize("rhscls", (dict, NestedMKDict, NodeStorage))
+@mark.parametrize("rhscls", (dict, NestedMapping, NodeStorage))
 def test_Output_or_Parameter_to_Mapping(LHS, RHS, rhscls):
     """
     Test of a connection in the following cases:
       * `Output | Parameter >> Mapping[Input | Sequence[Input] | Inputs]`;
       * `Output | Parameter >> Mapping[Node | Sequence[Node]]`.
 
-    Here `Mapping` is `dict | NestedMKDict | NodeStorage`.
+    Here `Mapping` is `dict | NestedMapping | NodeStorage`.
     """
     # NOTE: LHS and RHS are initialized only once for all the test cases,
     #       so we need to create their copies to avoid reconnections!
@@ -105,7 +105,7 @@ def test_Output_or_Parameter_to_Mapping(LHS, RHS, rhscls):
     lhs >> rhs
 
     assert lhs.connected()
-    for obj in NestedMKDict(dic=rhs).walkvalues():
+    for obj in NestedMapping(dic=rhs).walkvalues():
         assert check_connection(obj)
 
 

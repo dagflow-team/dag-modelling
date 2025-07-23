@@ -135,7 +135,7 @@ def MakeLoaderPy(variable: str):
     return lambda fname: LoadPy(fname, variable)
 
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 
 
 class NestedSchema:
@@ -154,8 +154,8 @@ class NestedSchema:
         if self._processdicts:
             return {key: self._process_dict((key,), subdata) for key, subdata in data.items()}
 
-        dtin = NestedMKDict(data)
-        dtout = NestedMKDict({})
+        dtin = NestedMapping(data)
+        dtout = NestedMapping({})
         for key, subdata in dtin.walkitems():
             dtout[key] = self._process_element(key, subdata)
 

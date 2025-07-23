@@ -21,7 +21,7 @@ from .exception import (
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 
-    from nested_mapping.nested_mapping import NestedMapping
+    from nested_mapping import NestedMapping
 
     from ..tools.logger import Logger
     from .input import Input, Inputs
@@ -460,23 +460,23 @@ class Output:
             | NodeBase
             | Sequence[NodeBase]
             | Mapping[str, NodeBase]
-            | NestedMKDict
+            | NestedMapping
             | Generator
         ),
     ) -> None:
         """
         `self >> other`
 
-        Connects `Output` to `Input | Node | MetaNode | Inputs | Sequence| Generator | Mapping | NestedMKDict`.
+        Connects `Output` to `Input | Node | MetaNode | Inputs | Sequence| Generator | Mapping | NestedMapping`.
 
         For `Node` and `MetaNode` iterates `idx_scope` and then connects with reassigning the idx_scope.
         It is done to work with certain `InputStrategy`.
 
-        Connection of `Mapping` is the same as connection of `NestedMKDict`.
+        Connection of `Mapping` is the same as connection of `NestedMapping`.
 
         Sequences are connected simply by iteration over them.
         """
-        from nested_mapping.nested_mapping import NestedMapping
+        from nested_mapping import NestedMapping
 
         from .input import Input, Inputs
         from .meta_node import MetaNode
@@ -508,11 +508,11 @@ class Output:
             case Sequence() | Inputs() | Generator():
                 for subother in other:
                     self >> subother
-            case NestedMKDict():
+            case NestedMapping():
                 for subother in other.walkvalues():
                     self >> subother
             case Mapping():
-                self >> NestedMKDict(dic=other)
+                self >> NestedMapping(dic=other)
             case _:
                 raise ConnectionError(
                     f"Unable to connect the input to {other=}!",

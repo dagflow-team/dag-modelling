@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from schema import And, Optional, Or, Schema, SchemaError, Use
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 from nested_mapping.typing import properkey
 
 from ..core.exception import InitializationError
@@ -29,7 +29,7 @@ class ParsCfgHasProperFormat:
         form = data["format"]
         nelements = 1 if isinstance(form, str) else len(form)
 
-        dtin = NestedMKDict(data)
+        dtin = NestedMapping(data)
         for key, subdata in dtin("parameters").walkitems():
             if isinstance(subdata, tuple):
                 if len(subdata) == nelements:
@@ -185,14 +185,14 @@ def get_format_processor(format):
         return process_var_percent
 
 
-def get_label(key: tuple, labelscfg: dict | NestedMKDict, *, group_only: bool = False) -> dict:
+def get_label(key: tuple, labelscfg: dict | NestedMapping, *, group_only: bool = False) -> dict:
     if not group_only:
         try:
             ret = labelscfg.get_any(key)
         except KeyError:
             pass
         else:
-            if isinstance(ret, NestedMKDict):
+            if isinstance(ret, NestedMapping):
                 ret = ret.object
             return dict(ret)
 
@@ -227,7 +227,7 @@ def get_label(key: tuple, labelscfg: dict | NestedMKDict, *, group_only: bool = 
     return {}
 
 
-def _add_paths_from_labels(paths: list, cfg: NestedMKDict):
+def _add_paths_from_labels(paths: list, cfg: NestedMapping):
     for _, cfg_label in cfg.walkdicts(
         ignorekeys=("value", "central", "sigma", "sigma_percent", "variable")
     ):
@@ -235,8 +235,8 @@ def _add_paths_from_labels(paths: list, cfg: NestedMKDict):
 
 
 def iterate_varcfgs(
-    cfg: NestedMKDict,
-) -> Generator[tuple[tuple[str, ...], NestedMKDict], None, None]:
+    cfg: NestedMapping,
+) -> Generator[tuple[tuple[str, ...], NestedMapping], None, None]:
     parameterscfg = cfg.get_dict("parameters")
     labelscfg = cfg.get_dict("labels")
     form = cfg["format"]
@@ -250,7 +250,7 @@ def iterate_varcfgs(
         yield key, varcfg
 
 
-def check_correlations_consistent(cfg: NestedMKDict) -> None:
+def check_correlations_consistent(cfg: NestedMapping) -> None:
     parscfg = cfg.get_dict("parameters")
     for key, corrcfg in cfg.get_dict("correlations").walkdicts():
         # processed_cfgs.add(varcfg)
@@ -272,25 +272,25 @@ def load_parameters(
     *,
     nuisance_location: str | Sequence[str] | None = "statistic.nuisance.parts",
     **kwargs,
-) -> NestedMKDict:
+) -> NestedMapping:
     acfg = dict(acfg or {}, **kwargs)
     cfg = ValidateParsCfg(acfg)
-    cfg = NestedMKDict(cfg)
+    cfg = NestedMapping(cfg)
 
     return _load_parameters(cfg, nuisance_location=nuisance_location)
 
 
 def _load_parameters(
-    cfg: NestedMKDict,
+    cfg: NestedMapping,
     *,
     nuisance_location: str | Sequence[str] | None = "statistic.nuisance.parts",
-) -> NestedMKDict:
+) -> NestedMapping:
     pathstr = cfg["path"]
     path = tuple(pathstr.split(".")) if pathstr else ()
 
     state = cfg["state"]
 
-    ret = NestedMKDict(
+    ret = NestedMapping(
         {
             "parameters": {
                 "all": {},
@@ -320,12 +320,12 @@ def _load_parameters(
 
     reorder_key = make_reorder_function(cfg["keys_order"])
 
-    varcfgs = NestedMKDict({})
+    varcfgs = NestedMapping({})
     normpars = {}
     for key_general, varcfg in iterate_varcfgs(cfg):
         varcfg.setdefault(state, True)
 
-        label_general = NestedMKDict(varcfg["label"])
+        label_general = NestedMapping(varcfg["label"])
 
         for subkey in subkeys:
             key = reorder_key(key_general + subkey)
@@ -356,7 +356,7 @@ def _load_parameters(
             varcfgs[key] = varcfg_sub
 
     processed_cfgs = set()
-    pars = NestedMKDict({})
+    pars = NestedMapping({})
     for key, corrcfg in cfg.get_dict("correlations").walkdicts():
         label = get_label(key, cfg.get_dict("labels"))
         label_mat0 = get_label(key, cfg.get_dict("labels"), group_only=True)

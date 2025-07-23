@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from numpy import array as nparray
 from numpy import full
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 
 from ...core.exception import InitializationError
 from ...core.node import Node
@@ -123,7 +123,7 @@ class Array(Node):
     def from_storage(
         cls,
         path: str,
-        storage: NestedMKDict,
+        storage: NestedMapping,
         *,
         edgesname: str | Sequence[str] = [],
         meshname: str | Sequence[str] = [],
@@ -131,7 +131,7 @@ class Array(Node):
         **kwargs,
     ):
         localstorage = storage(path)
-        tmpstorage = NestedMKDict(sep=".")
+        tmpstorage = NestedMapping(sep=".")
         used_array_keys = set()
         for key, data in localstorage.walkitems():
             skey = ".".join((path,) + key)

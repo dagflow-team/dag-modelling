@@ -34,7 +34,9 @@ class LogProdDiag(OneToOneNode):
         super().__init__(*args, **kwargs)
         self._labels.setdefault("mark", r"2log\|L\|")
 
-        self._functions_dict.update({"square": self._fcn_square, "diagonal": self._fcn_diagonal})
+        self._functions_dict.update(
+            {"square": self._fcn_square, "diagonal": self._fcn_diagonal}
+        )
 
     def _fcn_square(self):
         """Compute logarithm of determinant of matrix using Cholesky
@@ -57,7 +59,9 @@ class LogProdDiag(OneToOneNode):
 
     def _type_function(self) -> None:
         check_node_has_inputs(self, AllPositionals)
-        ndim = check_inputs_are_matrices_or_diagonals(self, AllPositionals, check_square=True)
+        ndim = check_inputs_are_matrices_or_diagonals(
+            self, AllPositionals, check_square=True
+        )
         copy_dtype_from_inputs_to_outputs(self, AllPositionals, AllPositionals)
         for out in self.outputs:
             out.dd.shape = (1,)

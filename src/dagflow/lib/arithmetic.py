@@ -1,4 +1,4 @@
-from numpy import add, abs, copyto, divide, multiply, sqrt, square, subtract
+from numpy import abs, add, copyto, divide, multiply, sqrt, square, subtract
 
 from .abstract import ManyToOneNode, OneToOneNode
 

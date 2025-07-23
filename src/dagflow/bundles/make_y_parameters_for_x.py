@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy import ndarray
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 
 from ..core.labels import format_dict
 from ..core.output import Output
@@ -28,8 +28,8 @@ def make_y_parameters_for_x(
     disable_last_one: bool = False,
     hide_nodes = False,
     **kwargs
-) -> NestedMKDict:
-    parcfg = NestedMKDict({})
+) -> NestedMapping:
+    parcfg = NestedMapping({})
     parcfg[key] = values
 
     data = _get_array(array)
@@ -38,7 +38,7 @@ def make_y_parameters_for_x(
     npars = len(data)
     index = tuple(namefmt.format(i) for i in range(npars))
 
-    labels_storage = NestedMKDict({})
+    labels_storage = NestedMapping({})
     labels_loc = labels_storage.create_child(key)
     for i, (key, value) in enumerate(zip(index, data)):
         labels_loc[key] = (label_loc:=format_dict(

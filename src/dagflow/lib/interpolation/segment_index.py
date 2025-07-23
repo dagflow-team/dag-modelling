@@ -118,7 +118,9 @@ class SegmentIndex(Node):
         """The function to determine the dtype and shape of the ouput."""
         check_dimension_of_inputs(self, ("coarse",), 1)
         check_number_of_inputs(self, 2)
-        copy_from_inputs_to_outputs(self, 1, 0, dtype=False, shape=True, edges=False, meshes=False)
+        copy_from_inputs_to_outputs(
+            self, 1, 0, dtype=False, shape=True, edges=False, meshes=False
+        )
         self._indices.dd.dtype = "i"
 
         dtype = result_type(*(inp.dd.dtype for inp in self.inputs))
@@ -131,7 +133,9 @@ class SegmentIndex(Node):
         coarse = self._coarse.data.ravel()
         fine = self._fine.data.ravel()
         if not _is_sorted(coarse):
-            raise CalculationError("Coarse array is not sorted", node=self, input=self._coarse)
+            raise CalculationError(
+                "Coarse array is not sorted", node=self, input=self._coarse
+            )
         out[:] = coarse.searchsorted(fine, side=self.mode)
         if self.mode == "right":
             _shift_last_edge_inside_right(fine, out, coarse, self._tolerance)

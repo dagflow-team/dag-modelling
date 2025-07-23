@@ -27,6 +27,11 @@ cov.*
 *.bak
 *.backup
 
+# build
+dist
+build
+*.egg*
+
 # vim
 UltiSnips/*
 .viminfo

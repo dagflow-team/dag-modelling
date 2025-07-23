@@ -171,7 +171,7 @@ class BlockToOneNode(Node):
         def fcn_outer_after(_):
             outputs[outname] = instance.outputs[-1]
 
-        from nested_mapping.nested_mapping import walkkeys
+        from nested_mapping import walkkeys
         from nested_mapping.tools import match_keys
 
         keys_left = tuple(tuple(walkkeys(arg)) for arg in args)

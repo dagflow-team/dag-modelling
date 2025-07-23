@@ -38,7 +38,7 @@ OutOfBoundsStrategyType = Literal["constant", "nearestedge", "extrapolate"]
 
 
 class InterpolatorCore(Node):
-    """
+    """Interpolator core class.
 
     self.inputs:
         `0` or `y`: array of the `y=f(coarse)`
@@ -108,7 +108,9 @@ class InterpolatorCore(Node):
         fillvalue: float = 0.0,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs, allowed_kw_inputs=("y", "coarse", "fine", "indices"))
+        super().__init__(
+            *args, **kwargs, allowed_kw_inputs=("y", "coarse", "fine", "indices")
+        )
         self._labels.setdefault("mark", "~")
         self._methodname = method
         self._methods = {
@@ -337,7 +339,9 @@ def _log_interpolation(
     yc1: float,
     fine: float,
 ) -> float:
-    return log(exp(yc0) + (fine - coarse0) * (exp(yc1) - exp(yc0)) / (coarse1 - coarse0))
+    return log(
+        exp(yc0) + (fine - coarse0) * (exp(yc1) - exp(yc0)) / (coarse1 - coarse0)
+    )
 
 
 @njit(cache=True, inline="always")

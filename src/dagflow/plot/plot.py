@@ -176,13 +176,19 @@ class plot_auto:
 
             self._zlabel = self._ylabel
             if method == "slicesx":
-                self._xlabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
-                self._zlabel = self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
+                self._xlabel = (
+                    self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
+                )
+                self._zlabel = (
+                    self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
+                )
             elif method == "slicesy":
                 self._zlabel = self._output.dd.axis_label(1) or "Index [#]"
             else:
                 self._zlabel = self._ylabel
-                self._ylabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
+                self._ylabel = (
+                    self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
+                )
 
     def annotate_axes(
         self,
@@ -242,9 +248,17 @@ class plot_auto:
 
             fig = plt.gcf()
             try:
-                ax.text2D(0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="small")
+                ax.text2D(
+                    0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="small"
+                )
             except AttributeError:
-                ax.text(0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="x-small")
+                ax.text(
+                    0.02,
+                    0.02,
+                    path[0],
+                    transform=fig.dpi_scale_trans,
+                    fontsize="x-small",
+                )
 
         if self._plotoptions.get("show"):
             plt.show()
@@ -278,7 +292,9 @@ def plot_array_1d(
         return plot_array_1d_hist(array, edges, *args, **kwargs)
     elif meshes is not None:
         if yerr is not None or xerr is not None:
-            return plot_array_1d_errors(meshes, array, yerr=yerr, xerr=xerr, *args, **kwargs)
+            return plot_array_1d_errors(
+                meshes, array, yerr=yerr, xerr=xerr, *args, **kwargs
+            )
         return plot_array_1d_vs(array, meshes, *args, **kwargs)
     else:
         return plot_array_1d_array(array, *args, **kwargs)
@@ -316,7 +332,9 @@ def plot_array_1d_vs(
     return plt.plot(meshes, array, *args, **kwargs)
 
 
-def plot_array_1d_array(array: NDArray, *args, plotter: plot_auto | None = None, **kwargs) -> tuple:
+def plot_array_1d_array(
+    array: NDArray, *args, plotter: plot_auto | None = None, **kwargs
+) -> tuple:
     return plt.plot(array, *args, **kwargs)
 
 
@@ -330,14 +348,18 @@ def plot_array_2d(
 ) -> tuple[tuple, ...]:
     if edges:
 
-        return plot_array_2d_hist(array, edges, *args, plotoptions=plotoptions, **kwargs)
+        return plot_array_2d_hist(
+            array, edges, *args, plotoptions=plotoptions, **kwargs
+        )
     elif meshes:
         return plot_array_2d_vs(array, meshes, *args, plotoptions=plotoptions, **kwargs)
     else:
         return plot_array_2d_array(array, *args, **kwargs)
 
 
-def plot_array_2d_array(array: NDArray, *args, plotter: plot_auto | None = None, **kwargs) -> tuple:
+def plot_array_2d_array(
+    array: NDArray, *args, plotter: plot_auto | None = None, **kwargs
+) -> tuple:
     kwargs.setdefault("aspect", "auto")
     return plot_array_2d_hist_matshow(array, None, *args, **kwargs)
 
@@ -444,10 +466,16 @@ plot_array_2d_hist_methods = {
 
 
 def plot_array_2d_hist(
-    dZ: NDArray, edges: list[NDArray], *args, plotoptions: Mapping[str, Any] = {}, **kwargs
+    dZ: NDArray,
+    edges: list[NDArray],
+    *args,
+    plotoptions: Mapping[str, Any] = {},
+    **kwargs,
 ) -> tuple:
     smethod: str = (
-        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
+        "pcolormesh"
+        if (method := plotoptions.get("method", "auto")) == "auto"
+        else method
     )
     try:
         function = plot_array_2d_hist_methods[smethod]
@@ -507,7 +535,9 @@ def plot_array_2d_vs_slicesx(
 
 
 def plot_array_2d_vs_slicesy(Z: NDArray, meshes: list[NDArray], *args, **kwargs):
-    return plot_array_2d_vs_slicesx(Z.T, [mesh.T for mesh in reversed(meshes)], *args, **kwargs)
+    return plot_array_2d_vs_slicesx(
+        Z.T, [mesh.T for mesh in reversed(meshes)], *args, **kwargs
+    )
 
 
 def plot_array_2d_vs_surface(
@@ -565,7 +595,9 @@ def plot_array_2d_vs(
     **kwargs,
 ) -> tuple:
     smethod: str = (
-        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
+        "pcolormesh"
+        if (method := plotoptions.get("method", "auto")) == "auto"
+        else method
     )  # pyright: ignore [reportGeneralTypeIssues]
     try:
         function = plot_array_2d_vs_methods[smethod]
@@ -575,7 +607,9 @@ def plot_array_2d_vs(
     return function(array, meshes, *args, **kwargs)
 
 
-def _mask_if_needed(datain: ArrayLike, /, *, masked_value: float | None = None) -> NDArray:
+def _mask_if_needed(
+    datain: ArrayLike, /, *, masked_value: float | None = None
+) -> NDArray:
     data = asanyarray(datain)
     if masked_value is None:
         return data
@@ -617,7 +651,9 @@ def _patch_with_colorbar(function, mode3d=False):
     return newfcn
 
 
-def apply_colors(buf: NDArray, cmap: str | bool | None, kwargs: dict, colorsname: str) -> tuple:
+def apply_colors(
+    buf: NDArray, cmap: str | bool | None, kwargs: dict, colorsname: str
+) -> tuple:
     if cmap is True:
         cmap = "viridis"
     elif not cmap:

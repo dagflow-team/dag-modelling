@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Generator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 
 from ..core.labels import repr_pretty
 from ..tools.logger import logger  # TODO: bad thing due to Node has logger
@@ -143,13 +143,13 @@ class NodeBase:
                 )
         self._input_strategy._idx_scope = idx_scope
 
-    def __lshift__(self, storage: Mapping[str, Output | Parameter] | NestedMKDict) -> None:
+    def __lshift__(self, storage: Mapping[str, Output | Parameter] | NestedMapping) -> None:
         """
         self << other
 
         For each not connected input try to find output with the same name in storage, then connect.
         """
-        if not isinstance(storage, (Mapping, NestedMKDict)):
+        if not isinstance(storage, (Mapping, NestedMapping)):
             raise ConnectionError(
                 f"Cannot connect `Node << {type(storage)}` due to such connection is not supported!",
                 node=self,

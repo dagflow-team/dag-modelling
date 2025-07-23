@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from numpy import nan, ndarray
 from ordered_set import OrderedSet
 
-from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping import NestedMapping
 from nested_mapping.typing import Key, KeyLike, TupleKey, properkey, strkey
-from nested_mapping.visitor import nested_mappingVisitor
+from nested_mapping.visitor import NestedMappingVisitor
 
 from ..tools.logger import DEBUG, INFO1, INFO3, logger
 from .input import Input
@@ -49,7 +49,7 @@ def _fillna(df: DataFrame, columnname: str, replacement: str):
     df[columnname] = newcol
 
 
-class NodeStorage(NestedMKDict):
+class NodeStorage(NestedMapping):
     __slots__ = ("_remove_connected_inputs",)
     _remove_connected_inputs: bool
 
@@ -141,16 +141,16 @@ class NodeStorage(NestedMKDict):
     #
     # Connectors
     #
-    def __rshift__(self, other: NestedMKDict):
+    def __rshift__(self, other: NestedMapping):
         """`self >> other`
 
-        The connection is allowed only with `NestedMKDict`.
+        The connection is allowed only with `NestedMapping`.
         It is done within strict matching (by names) of objects in the two dicts.
         """
-        if not isinstance(other, NestedMKDict):
-            raise RuntimeError("Operator >> RHS should be NestedMKDict")
+        if not isinstance(other, NestedMapping):
+            raise RuntimeError("Operator >> RHS should be NestedMapping")
 
-        from nested_mapping.nested_mapping import walkkeys
+        from nested_mapping import walkkeys
         from nested_mapping.tools import match_keys
 
         keys_left = list(walkkeys(self))
@@ -184,15 +184,15 @@ class NodeStorage(NestedMKDict):
         for key in to_remove:
             del other[key]
 
-    def __lshift__(self, other: NestedMKDict):
+    def __lshift__(self, other: NestedMapping):
         """`self << other`
 
         Such connection iterates over child objects and attemps
         to use `<<` operator implemented inside them. Usually, such child objects are `Node`,
         where non-strict pattern matching is used for connection.
         """
-        if not isinstance(other, NestedMKDict):
-            raise RuntimeError("Operator >> RHS should be NestedMKDict")
+        if not isinstance(other, NestedMapping):
+            raise RuntimeError("Operator >> RHS should be NestedMapping")
 
         for keyleft, node in self.walkitems():
             try:
@@ -232,12 +232,12 @@ class NodeStorage(NestedMKDict):
 
     def read_labels(
         self,
-        source: NestedMKDict | dict,
+        source: NestedMapping | dict,
         *,
         strict: bool = False,
         processed_keys_set: MutableSet[Key] | None = None,
     ) -> None:
-        source = NestedMKDict(source, sep=".")
+        source = NestedMapping(source, sep=".")
 
         if processed_keys_set is None:
             processed_keys_set = set()
@@ -282,7 +282,7 @@ class NodeStorage(NestedMKDict):
             labels, subkey = get_label(key)
             if labels is None:
                 continue
-            if isinstance(labels, NestedMKDict):
+            if isinstance(labels, NestedMapping):
                 labels = labels.object
             logger.log(DEBUG, "... found")
 
@@ -330,7 +330,7 @@ class NodeStorage(NestedMKDict):
     def to_list(self, **kwargs) -> list:
         return self.visit(ParametersVisitorText(**kwargs)).data_list
 
-    def to_dict(self, **kwargs) -> NestedMKDict:
+    def to_dict(self, **kwargs) -> NestedMapping:
         return self.visit(ParametersVisitorText(**kwargs)).data_dict
 
     def to_df(self, *, columns: list[str] | None = None, **kwargs) -> DataFrame:
@@ -483,7 +483,7 @@ class NodeStorage(NestedMKDict):
             raise RuntimeError("NodeStorage: invalid context exit")
 
     @classmethod
-    def update_current(cls, storage: NestedMKDict, *, strict: bool = True, verbose: bool = False):
+    def update_current(cls, storage: NestedMapping, *, strict: bool = True, verbose: bool = False):
         if (common_storage := cls.current()) is None:
             return
 
@@ -501,7 +501,7 @@ class NodeStorage(NestedMKDict):
 _context_storage: list[NodeStorage] = []
 
 
-class PlotVisitor(NestedMKDictVisitor):
+class PlotVisitor(NestedMappingVisitor):
     __slots__ = (
         "_show_all",
         "_folder",
@@ -712,7 +712,7 @@ class PlotVisitor(NestedMKDictVisitor):
         self._close_figures()
 
 
-class ParametersVisitorText(NestedMKDictVisitor):
+class ParametersVisitorText(NestedMappingVisitor):
     __slots__ = (
         "_kwargs",
         "_data_list",
@@ -723,7 +723,7 @@ class ParametersVisitorText(NestedMKDictVisitor):
     )
     _kwargs: dict
     _data_list: list[dict]
-    _data_dict: NestedMKDict
+    _data_dict: NestedMapping
     _local_data: list[dict]
     _paths: list[tuple[str, ...]]
     _path: tuple[str, ...]
@@ -743,12 +743,12 @@ class ParametersVisitorText(NestedMKDictVisitor):
         return self._data_list
 
     @property
-    def data_dict(self) -> NestedMKDict:
+    def data_dict(self) -> NestedMapping:
         return self._data_dict
 
     def start(self, dct):
         self._data_list = []
-        self._data_dict = NestedMKDict({}, sep=".")
+        self._data_dict = NestedMapping({}, sep=".")
         self._path = ()
         self._paths = []
         self._local_data = []
@@ -810,7 +810,7 @@ class ParametersVisitorText(NestedMKDictVisitor):
         pass
 
 
-class ParametersVisitorLatex(NestedMKDictVisitor):
+class ParametersVisitorLatex(NestedMappingVisitor):
     __slots__ = (
         "_dirname",
         "_df_kwargs",

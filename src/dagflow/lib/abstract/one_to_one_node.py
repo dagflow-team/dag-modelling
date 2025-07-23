@@ -136,7 +136,7 @@ class OneToOneNode(Node):
         inputs = storage("inputs")
         outputs = storage("outputs")
 
-        from nested_mapping.nested_mapping import walkitems
+        from nested_mapping import walkitems
 
         nobjects = 0
         tuplename = (name,)

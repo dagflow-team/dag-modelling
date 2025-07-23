@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ..parameters import Parameter
 from .node import Node
 from .output import Output
-from .storage import NestedMKDict, NodeStorage
+from .storage import NestedMapping, NodeStorage
 
 if TYPE_CHECKING:
     from collections.abc import Callable, KeysView
@@ -13,14 +13,14 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def _find_par_permissive(storage: NodeStorage | NestedMKDict, name: str) -> Parameter | None:
+def _find_par_permissive(storage: NodeStorage | NestedMapping, name: str) -> Parameter | None:
     for key, par in storage.walkitems():
         if key[-1] == name and isinstance(par, Parameter):
             return par
 
 
 def _collect_pars_permissive(
-    storage: NodeStorage | NestedMKDict, par_names: list[str] | tuple[str, ...] | KeysView
+    storage: NodeStorage | NestedMapping, par_names: list[str] | tuple[str, ...] | KeysView
 ) -> dict[str, Parameter]:
     res = {}
     for name in par_names:
@@ -31,7 +31,7 @@ def _collect_pars_permissive(
 
 def make_fcn(
     node: Node | Output,
-    storage: NodeStorage | NestedMKDict,
+    storage: NodeStorage | NestedMapping,
     safe: bool = True,
     par_names: list[str] | tuple[str, ...] | None = None,
 ) -> Callable:
@@ -50,9 +50,9 @@ def make_fcn(
     :type par_names: list[str] | tuple[str,...] | None
     :rtype: function
     """
-    if not isinstance(storage, (NodeStorage, NestedMKDict)):
+    if not isinstance(storage, (NodeStorage, NestedMapping)):
         raise ValueError(
-            f"`storage` must be NodeStorage | NestedMKDict, but given {storage}, {type(storage)=}!"
+            f"`storage` must be NodeStorage | NestedMapping, but given {storage}, {type(storage)=}!"
         )
 
     # to avoid extra checks in the function, we prepare the corresponding getter here

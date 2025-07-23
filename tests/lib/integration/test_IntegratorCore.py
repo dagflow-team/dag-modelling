@@ -1,4 +1,4 @@
-from matplotlib.pyplot import close, subplots, show
+from matplotlib.pyplot import close, subplots
 from numpy import allclose, linspace, meshgrid, pi, vectorize
 from pytest import mark, raises
 
@@ -199,7 +199,6 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
     subplots(1, 1)
     plot_auto(integrator, plotoptions="matshow", extent=None, colorbar=True)
 
-    # show()
     for _ in range(7):
         close()
 

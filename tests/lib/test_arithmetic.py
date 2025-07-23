@@ -1,4 +1,4 @@
-from numpy import abs, allclose, arange
+from numpy import allclose, arange
 from numpy import array as np_array
 from numpy import linspace, sqrt, square, sum
 from pytest import mark
@@ -25,7 +25,8 @@ def test_Sum_01(testname, debug_graph, dtype):
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arrays = tuple(
-            Array(f"arr_{i}", array_in, mode="fill") for i, array_in in enumerate(arrays_in)
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
         )
         sm = Sum("sum")
         arrays >> sm
@@ -55,7 +56,8 @@ def test_Difference_01(testname, debug_graph, dtype):
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arrays = tuple(
-            Array(f"arr_{i}", array_in, mode="fill") for i, array_in in enumerate(arrays_in)
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
         )
         sm = Difference("sum")
         arrays >> sm
@@ -85,7 +87,8 @@ def test_Product_01(testname, debug_graph, dtype):
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arrays = tuple(
-            Array(f"arr_{i}", array_in, mode="fill") for i, array_in in enumerate(arrays_in)
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
         )
         prod = Product("prod")
         arrays >> prod
@@ -116,7 +119,8 @@ def test_ProductShifted_01(testname, debug_graph, dtype: str, scaled: bool):
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arrays = tuple(
-            Array(f"arr_{i}", array_in, mode="fill") for i, array_in in enumerate(arrays_in)
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
         )
         if scaled:
             prod = ProductShiftedScaled("prod", shift=shift)
@@ -155,7 +159,8 @@ def test_Division_01(testname, debug_graph, dtype):
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arrays = tuple(
-            Array(f"arr_{i}", array_in, mode="fill") for i, array_in in enumerate(arrays_in)
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
         )
         div = Division("division")
         arrays >> div
