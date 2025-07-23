@@ -1,9 +1,9 @@
 [project]
 name = "dag-modelling"
 version = "0.10"
-description = "The DAGFlow package is a python implementation of the dataflow programming with the lazy graph evaluation."
-authors = [{ name = "DAGFlow Team", email = "dagflow@jinr.ru" }]
-maintainers = [{ name = "DAGFlow Team", email = "dagflow@jinr.ru" }]
+description = "The DAGModelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
+authors = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
+maintainers = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,10 +27,10 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/dagflow-team/dag-flow"
-repository = "https://github.com/dagflow-team/dag-flow"
-documentation = "https://github.com/dagflow-team/dag-flow/wiki"
-"DAGFlow Team" = "https://github.com/dagflow-team"
+homepage = "https://github.com/dagflow-team/dag-modelling"
+repository = "https://github.com/dagflow-team/dag-modelling"
+documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
+"DAGModelling Team" = "https://github.com/dagflow-team"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "coverage"]
