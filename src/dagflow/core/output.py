@@ -21,7 +21,7 @@ from .exception import (
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 
-    from multikeydict.nestedmkdict import NestedMKDict
+    from nested_mapping.nested_mapping import NestedMapping
 
     from ..tools.logger import Logger
     from .input import Input, Inputs
@@ -476,7 +476,7 @@ class Output:
 
         Sequences are connected simply by iteration over them.
         """
-        from multikeydict.nestedmkdict import NestedMKDict
+        from nested_mapping.nested_mapping import NestedMapping
 
         from .input import Input, Inputs
         from .meta_node import MetaNode

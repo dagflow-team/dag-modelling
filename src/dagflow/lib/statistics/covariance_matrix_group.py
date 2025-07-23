@@ -5,8 +5,8 @@ from collections.abc import Generator
 from contextlib import suppress
 from typing import TYPE_CHECKING, Sequence
 
-from multikeydict.nestedmkdict import NestedMKDict
-from multikeydict.typing import KeyLike, TupleKey, properkey
+from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping.typing import KeyLike, TupleKey, properkey
 
 from ...core.exception import ConnectionError
 from ...core.meta_node import MetaNode

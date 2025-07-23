@@ -135,7 +135,7 @@ def MakeLoaderPy(variable: str):
     return lambda fname: LoadPy(fname, variable)
 
 
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 
 class NestedSchema:

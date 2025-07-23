@@ -1,4 +1,4 @@
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 from .iter import IsIterable, StopNesting
 

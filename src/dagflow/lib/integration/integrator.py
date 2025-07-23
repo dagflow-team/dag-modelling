@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from multikeydict.typing import KeyLike, properkey, strkey
+from nested_mapping.typing import KeyLike, properkey, strkey
 
 from ...core.meta_node import MetaNode
 from ...core.storage import NodeStorage
@@ -12,7 +12,7 @@ from .integrator_sampler import IntegratorSampler
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from multikeydict.typing import Key
+    from nested_mapping.typing import Key
 
     from .integrator_sampler import ModeType
 

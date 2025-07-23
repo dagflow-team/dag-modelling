@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy.typing import NDArray
 
-from multikeydict.typing import properkey
+from nested_mapping.typing import properkey
 
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.node import Node
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    from multikeydict.typing import KeyLike
+    from nested_mapping.typing import KeyLike
 
 
 class OneToOneNode(Node):
@@ -136,7 +136,7 @@ class OneToOneNode(Node):
         inputs = storage("inputs")
         outputs = storage("outputs")
 
-        from multikeydict.nestedmkdict import walkitems
+        from nested_mapping.nested_mapping import walkitems
 
         nobjects = 0
         tuplename = (name,)

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy import ndarray
 
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 from ..core.labels import format_dict
 from ..core.output import Output

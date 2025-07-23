@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from multikeydict.typing import properkey
+from nested_mapping.typing import properkey
 
 from ...core.input_strategy import AddNewInputAddAndKeepSingleOutput
 from ...core.node import Node
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from multikeydict.typing import KeyLike, TupleKey
+    from nested_mapping.typing import KeyLike, TupleKey
 
 
 class ManyToOneNode(Node):
@@ -169,8 +169,8 @@ class ManyToOneNode(Node):
         def fcn_outer_after(_):
             outputs[outname] = instance.outputs[0]
 
-        from multikeydict.nestedmkdict import walkkeys
-        from multikeydict.tools import match_keys
+        from nested_mapping.nested_mapping import walkkeys
+        from nested_mapping.tools import match_keys
 
         keys_left = tuple(tuple(walkkeys(arg)) for arg in args)
         match_keys(
@@ -228,7 +228,7 @@ class ManyToOneNode(Node):
             nonlocal outputs, outname, instance
             outputs[outname] = instance.outputs[0]
 
-        from multikeydict.tools import match_keys
+        from nested_mapping.tools import match_keys
 
         match_keys(
             (replicate_inputs,),

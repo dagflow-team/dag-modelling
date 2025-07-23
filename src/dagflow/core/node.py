@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 from weakref import ref as weakref
 
 from dagflow.core.input_strategy import InputStrategyBase
-from multikeydict.typing import KeyLike, properkey
+from nested_mapping.typing import KeyLike, properkey
 
 from ..core.labels import Labels
 from ..tools.logger import Logger, get_logger

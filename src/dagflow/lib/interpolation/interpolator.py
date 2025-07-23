@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from multikeydict.typing import properkey
+from nested_mapping.typing import properkey
 
 from ...core.meta_node import MetaNode
 from ...core.node import Node
@@ -13,7 +13,7 @@ from .segment_index import SegmentIndex
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from multikeydict.typing import KeyLike
+    from nested_mapping.typing import KeyLike
 
     from .interpolator_core import MethodType, OutOfBoundsStrategyType
 

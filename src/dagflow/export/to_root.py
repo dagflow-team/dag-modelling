@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from numpy import allclose, array, dtype, frombuffer
 from numpy.typing import NDArray
 
-from multikeydict.visitor import NestedMKDictVisitor
+from nested_mapping.visitor import nested_mappingVisitor
 
 from ..core.output import Output
 from ..tools.logger import INFO1, INFO2, logger

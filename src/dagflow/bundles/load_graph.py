@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from numpy import allclose, asarray
 from schema import And, Optional, Or, Schema, Use
 
-from multikeydict.tools.map import make_reorder_function
-from multikeydict.typing import strkey
+from nested_mapping.tools.map import make_reorder_function
+from nested_mapping.typing import strkey
 
 from ..core.storage import NodeStorage
 from ..lib.common import Array
@@ -25,7 +25,7 @@ from .file_reader import FileReader, file_readers, iterate_filenames_and_objectn
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from multikeydict.typing import TupleKey
+    from nested_mapping.typing import TupleKey
 
 _schema_cfg = Schema(
     {

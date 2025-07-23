@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Generator, Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 from ..core.labels import repr_pretty
 from ..tools.logger import logger  # TODO: bad thing due to Node has logger

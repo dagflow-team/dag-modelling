@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from numpy import nan, ndarray
 from ordered_set import OrderedSet
 
-from multikeydict.nestedmkdict import NestedMKDict
-from multikeydict.typing import Key, KeyLike, TupleKey, properkey, strkey
-from multikeydict.visitor import NestedMKDictVisitor
+from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping.typing import Key, KeyLike, TupleKey, properkey, strkey
+from nested_mapping.visitor import nested_mappingVisitor
 
 from ..tools.logger import DEBUG, INFO1, INFO3, logger
 from .input import Input
@@ -150,8 +150,8 @@ class NodeStorage(NestedMKDict):
         if not isinstance(other, NestedMKDict):
             raise RuntimeError("Operator >> RHS should be NestedMKDict")
 
-        from multikeydict.nestedmkdict import walkkeys
-        from multikeydict.tools import match_keys
+        from nested_mapping.nested_mapping import walkkeys
+        from nested_mapping.tools import match_keys
 
         keys_left = list(walkkeys(self))
         keys_right = walkkeys(other)

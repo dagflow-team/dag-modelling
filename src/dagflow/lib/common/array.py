@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from numpy import array as nparray
 from numpy import full
 
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 from ...core.exception import InitializationError
 from ...core.node import Node

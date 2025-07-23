@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 from schema import And, Optional, Or, Schema, SchemaError, Use
 
-from multikeydict.nestedmkdict import NestedMKDict
-from multikeydict.typing import properkey
+from nested_mapping.nested_mapping import NestedMapping
+from nested_mapping.typing import properkey
 
 from ..core.exception import InitializationError
 from ..core.labels import format_dict, inherit_labels, mapping_append_lists
@@ -316,7 +316,7 @@ def _load_parameters(
     check_correlations_consistent(cfg)
 
     subkeys = cfg["replicate"]
-    from multikeydict.tools.map import make_reorder_function
+    from nested_mapping.tools.map import make_reorder_function
 
     reorder_key = make_reorder_function(cfg["keys_order"])
 

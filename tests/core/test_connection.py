@@ -19,7 +19,7 @@ from dagflow.lib.abstract import BlockToOneNode, OneToOneNode
 from dagflow.lib.common import Dummy
 from dagflow.parameters import Parameter
 from dagflow.plot.graphviz import savegraph
-from multikeydict.nestedmkdict import NestedMKDict
+from nested_mapping.nested_mapping import NestedMapping
 
 
 def check_connection(obj):
