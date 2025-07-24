@@ -1,6 +1,6 @@
 [project]
 name = "dag-modelling"
-version = "0.10"
+version = "0.10.1"
 description = "The DAGModelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
 authors = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
 maintainers = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
@@ -45,4 +45,4 @@ exclude = [
   "tests*",
   "docs*",
   "example*",
-] # Исключает целые папки при необходимости
+]

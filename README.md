@@ -72,8 +72,12 @@ The printed result must be `[0. 3. 12.]`, and the created image looks as
 
 For more examples see [example/example.py](https://github.com/dagmodelling-team/dag-modelling/blob/master/example/example.py) or [tests](https://github.com/dagmodelling-team/dag-modelling/tree/master/tests).
 
-## Additional modules
+## Repositories and additional modules
 
+- Main repo:
+    * Development/CI: https://git.jinr.ru/dag-computing/dag-flow
+    * Contact/pypi/mirror: https://github.com/dagflow-team/dag-modelling
+    * PYPI: https://test.pypi.org/project/dag-modelling
 - Supplementary python modules:
     * [dgm-reactor-neutrino](https://git.jinr.ru/dag-computing/dgm-reactorenueosc) — nodes related to reactor neutrino oscillations
 - [Daya Bay model](https://git.jinr.ru/dag-computing/dayabay-model) — test implementation of the Daya Bay oscillation analysis
