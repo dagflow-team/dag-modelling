@@ -75,8 +75,6 @@ For more examples see [example/example.py](https://github.com/dagmodelling-team/
 ## Additional modules
 
 - Supplementary python modules:
-    * [dagmodelling-reactornueosc](https://git.jinr.ru/dag-computing/dagmodelling-reactorenueosc) — nodes related to reactor neutrino oscillations
-    * [dagmodelling-detector](https://git.jinr.ru/dag-computing/dagmodelling-detector) — nodes for the detector responce modelling
-    * [dagmodelling-statistics](https://git.jinr.ru/dag-computing/dagmodelling-statistics) — statistical analysis and MC
+    * [dgm-reactor-neutrino](https://git.jinr.ru/dag-computing/dgm-reactorenueosc) — nodes related to reactor neutrino oscillations
 - [Daya Bay model](https://git.jinr.ru/dag-computing/dayabay-model) — test implementation of the Daya Bay oscillation analysis
 
