@@ -1,6 +1,6 @@
 # Summary
 
-[![python](https://img.shields.io/badge/python-3.10-purple.svg)](https://www.python.org/)
+[![python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/)
 [![pipeline](https://git.jinr.ru/dag-computing/dag-flow/badges/master/pipeline.svg)](https://git.jinr.ru/dag-computing/dag-flow/commits/master)
 [![coverage report](https://git.jinr.ru/dag-computing/dag-flow/badges/master/coverage.svg)](https://git.jinr.ru/dag-computing/dag-flow/-/commits/master)
 <!--- Uncomment here after adding docs!
