@@ -24,7 +24,9 @@ _COLUMN_ALIASES: dict[str | Callable, str] = {
     "single": "t_single",
     "t_mean": "t_single",
     "median": "t_median",
-    "sum": "t_sum",
+    "sum": "t_total",
+    "total": "t_total",
+    "t_sum": "t_total",
     "std": "t_std",
     "t_count": "count",
     "min": "t_min",
@@ -37,6 +39,8 @@ _AGGREGATE_ALIASES: dict[str, str | Callable] = {
     "t_mean": "mean",
     "t_median": "median",
     "t_sum": "sum",
+    "total": "sum",
+    "t_total": "sum",
     "t_std": "std",
     "t_count": "count",
     "t_min": "min",
@@ -44,7 +48,7 @@ _AGGREGATE_ALIASES: dict[str, str | Callable] = {
     "t_var": "var",
 }
 
-_DEFAULT_AGGREGATIONS = ("count", "single", "sum", "%_of_total")
+_DEFAULT_AGGREGATIONS = ("count", "single", "total", "fraction_percent")
 
 SOURCE_COL_WIDTH = 32
 SINK_COL_WIDTH = 32
@@ -53,8 +57,11 @@ SINK_COL_WIDTH = 32
 class TimerProfiler(Profiler):
     """Base class for time-related profiling.
 
+    The `"time"` column is used to store the measured values.
+
     It is not designed to be used directly,
-    you should consider `NodeProfiler` or `FrameworkProfiler`.
+    you should consider `NodeProfiler`,
+    `FrameworkProfiler` or `FitSimulationProfiler`
     """
 
     __slots__ = ("_n_runs", "_timer")
@@ -73,10 +80,11 @@ class TimerProfiler(Profiler):
         self._n_runs = n_runs
         self.register_aggregate_func(
             func=self._t_percentage,
-            aliases=["%_of_total", "percentage", "t_percentage"],
-            column_name="%_of_total",
+            aliases=["fraction_percent", "%_of_total", "percentage", "t_percentage"],
+            column_name="fraction_percent",
         )
         super().__init__(target_nodes, sources, sinks)
+        self._primary_col = "time"
 
     @property
     def n_runs(self) -> int:
@@ -87,9 +95,7 @@ class TimerProfiler(Profiler):
         self._n_runs = value
 
     @classmethod
-    def _timeit_all_runs(
-        cls, stmt: Callable, n_runs: int, setup: Callable | None = None
-    ) -> float:
+    def _timeit_all_runs(cls, stmt: Callable, n_runs: int, setup: Callable | None = None) -> float:
         """Estimate total time of the statement running multiple times.
         Use `time.perf_counter_ns` internally to measure time in nanoseconds
         and then convert it to seconds by dividing the total time by 1 billion.

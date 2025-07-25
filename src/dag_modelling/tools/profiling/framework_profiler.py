@@ -44,15 +44,12 @@ class FrameworkProfiler(TimerProfiler):
         self.register_aggregate_func(
             func=self._t_single_node,
             aliases=[
-                "t_single_by_node",
-                "single_by_node",
-                "mean_by_node",
-                "t_mean_by_node",
+                "t_node_average",
+                "node_average",
             ],
-            column_name="t_single_by_node",
+            column_name="t_node_average",
         )
-        self._default_aggregations = ("count", "single", "sum", "t_single_by_node")
-        self._primary_col = "time"
+        self._default_aggregations = ("count", "single", "sum", "t_node_average")
         self._replaced_fcns = {}
         if not (self._sources and self._sinks):
             self._reveal_source_sink()
@@ -62,7 +59,7 @@ class FrameworkProfiler(TimerProfiler):
 
         This as also an example of user-defined aggregate function
         """
-        return Series({"t_single_by_node": mean(_s) / len(self._target_nodes)})
+        return Series({"t_node_average": mean(_s) / len(self._target_nodes)})
 
     def _taint_nodes(self):
         for node in self._target_nodes:
@@ -124,7 +121,7 @@ class FrameworkProfiler(TimerProfiler):
     def print_report(
         self,
         *,
-        rows: int | None = 40,
+        rows: int | None = 100,
         group_by: str | Sequence[str] | None = ("source nodes", "sink nodes"),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
@@ -132,8 +129,9 @@ class FrameworkProfiler(TimerProfiler):
         report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nFramework Profiling {hex(id(self))}, "
-            f"n_runs for given subgraph: {self._n_runs}, "
-            f"nodes in subgraph: {len(self._target_nodes)}\n"
+            f"n_runs for given subgraph: {self._n_runs},\n"
+            f"nodes in subgraph: {len(self._target_nodes)}, "
+            f"sources: {len(self._sources)}, sinks: {len(self._sinks)},\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )

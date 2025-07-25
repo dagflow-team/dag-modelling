@@ -25,11 +25,43 @@ class NodeProfiler(TimerProfiler):
         *,
         sources: Sequence[Node] = (),
         sinks: Sequence[Node] = (),
+        filter_types: Sequence[type[Node] | str] | None = None,
         n_runs: int = 10_000,
     ):
+        """
+        Initialize a NodeProfiler.
+
+        Parameters
+        ----------
+        target_nodes : Sequence[Node], optional
+            The collection of nodes to profile. If `filter_types` is provided,
+            only nodes matching the specified types or type names will be retained.
+        sources : Sequence[Node], optional
+            A collection of nodes used as starting points to find the subgraph of target_nodes,
+            if target_nodes is not specified.
+        sinks : Sequence[Node], optional
+            A collection of nodes used as ending points to find the subgraph of target nodes,
+            if target_nodes is not specified.
+        filter_types : Sequence[type[Node] | str], optional
+            A list of node classes or their class names. When specified, `target_nodes`
+            will be filtered to include only nodes matching these types.
+        n_runs : int, default=10000
+            The number of times each node's function will be executed.
+        """
+        if filter_types:
+            target_nodes = self._filter_nodes(target_nodes, filter_types)
         super().__init__(target_nodes, sources, sinks, n_runs)
         self._allowed_groupby = _ALLOWED_GROUPBY
-        self._primary_col = "time"
+
+    def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
+        def condition(node: Node):
+            for t in node_types:
+                if type(node).__name__ == t:
+                    return True
+                if isinstance(t, type) and isinstance(node, t):
+                    return True
+
+        return list(filter(condition, nodes))
 
     @classmethod
     def estimate_node(cls, node: Node, n_runs: int = 10_000):
@@ -74,7 +106,7 @@ class NodeProfiler(TimerProfiler):
     def print_report(
         self,
         *,
-        rows: int | None = 40,
+        rows: int | None = 100,
         group_by: str | Sequence[str] | None = "type",
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
@@ -83,6 +115,7 @@ class NodeProfiler(TimerProfiler):
         print(
             f"\nNode Profiling {hex(id(self))}, "
             f"n_runs for each node: {self._n_runs}\n"
+            f"nodes in subgraph: {len(self._target_nodes)}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
