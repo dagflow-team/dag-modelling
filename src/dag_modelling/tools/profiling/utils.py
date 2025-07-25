@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
-    from dagflow.core.node import Node
+    from dag_modelling.core.node import Node
 
 
 def __child_nodes_gen(node: Node) -> Generator[Node, None, None]:

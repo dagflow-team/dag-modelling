@@ -1,9 +1,9 @@
 from collections import Counter
 
-from dagflow.core.node import Node
-from dagflow.lib.arithmetic import Product, Sum
-from dagflow.lib.common import Array
-from dagflow.tools.profiling import NodeProfiler
+from dag_modelling.core.node import Node
+from dag_modelling.lib.arithmetic import Product, Sum
+from dag_modelling.lib.common import Array
+from dag_modelling.tools.profiling import NodeProfiler
 from pandas import Series
 from pytest import raises
 
