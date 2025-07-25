@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from pandas import DataFrame, Index
 from tabulate import tabulate
 
+from .utils import gather_related_nodes, reveal_source_sink
+
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterable
+    from collections.abc import Callable, Iterable
 
     from pandas.api.typing import DataFrameGroupBy
 
@@ -51,7 +52,7 @@ class Profiler(metaclass=ABCMeta):
         if target_nodes:
             self._target_nodes = target_nodes
         elif sources and sinks:
-            self._target_nodes = list(self._gather_related_nodes())
+            self._target_nodes = self._gather_related_nodes()
         else:
             raise ValueError(
                 "You shoud provide profiler with `target_nodes` "
@@ -59,76 +60,16 @@ class Profiler(metaclass=ABCMeta):
                 "to automatically find the target nodes"
             )
 
-    def __child_nodes_gen(self, node: Node) -> Generator[Node, None, None]:
-        """Access to the child nodes of the given node via the generator."""
-        for output in node.outputs.iter_all():
-            for child_input in output.child_inputs:
-                yield child_input.node
-
-    def __parent_nodes_gen(self, node: Node) -> Generator[Node, None, None]:
-        """Access to the parent nodes of the given node via the generator."""
-        for input in node.inputs.iter_all():
-            yield input.parent_node
-
-    def __check_reachable(self, nodes_gathered):
-        for sink in self._sinks:
-            if sink not in nodes_gathered:
-                raise ValueError(
-                    f"One of the `sinks` nodes is unreachable: {sink} " "(no paths from sources)"
-                )
-
-    def _gather_related_nodes(self) -> set[Node]:
+    def _gather_related_nodes(self) -> list[Node]:
         """Find all nodes that lie on all possible paths between
         `self._sources` and `self._sinks`
-
-        Modified Depth-first search (DFS) algorithm for multiple sources
-        and sinks
         """
-        related_nodes = set(self._sources)
-        # Deque works well as Stack
-        stack = deque()
-        visited = set()
-        for start_node in self._sources:
-            cur_node = start_node
-            while True:
-                last_in_path = True
-                for ch in self.__child_nodes_gen(cur_node):
-                    if ch in self._sinks:
-                        related_nodes.add(ch)
-                    # If `_sinks` contains child node it would be already in `related_nodes`
-                    if ch in related_nodes:
-                        related_nodes.update(stack)
-                        related_nodes.add(cur_node)
-                    elif ch not in visited:
-                        stack.append(cur_node)
-                        cur_node = ch
-                        last_in_path = False
-                        break
-                # No unvisited childs found (`for` loop did not encounter a `break`)
-                else:
-                    visited.add(cur_node)
-                if len(stack) == 0:
-                    break
-                if last_in_path:
-                    cur_node = stack.pop()
-        self.__check_reachable(related_nodes)
-        return related_nodes
+        related_nodes = gather_related_nodes(self._sources, self._sinks)
+        return list(related_nodes)
 
-    def _reveal_source_sink(self):
+    def _reveal_source_sink(self) -> None:
         """Find sources and sinks for self._target_nodes."""
-        sources = []
-        sinks = []
-        for node in self._target_nodes:
-            have_parents = any(n in self._target_nodes for n in self.__parent_nodes_gen(node))
-            have_childs = any(n in self._target_nodes for n in self.__child_nodes_gen(node))
-            if have_parents and have_childs:
-                continue
-            elif have_parents:
-                sinks.append(node)
-            else:
-                sources.append(node)
-        self._sources = sources
-        self._sinks = sinks
+        self._sources, self._sinks = reveal_source_sink(self._target_nodes)
 
     def register_aggregate_func(
         self, func: Callable, aliases: Sequence[str], column_name: str
@@ -279,6 +220,4 @@ class Profiler(metaclass=ABCMeta):
         Return `Pandas.DataPrame` as report
         ( See: `make_report()` method )
         """
-        report = self.make_report(group_by, aggregations, sort_by)
-        self._print_table(report, rows)
         raise NotImplementedError("You must override `print_report` in subclass")

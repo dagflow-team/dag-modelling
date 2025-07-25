@@ -3,10 +3,17 @@ from collections import Counter
 from pandas import Series
 from pytest import raises
 
+from dagflow.lib.arithmetic import Product, Sum
+from dagflow.lib.common import Array
 from dagflow.tools.profiling import NodeProfiler
 from dagflow.core.node import Node
 
 n_runs = 1000
+
+
+
+def check_inputs_taint(node: Node):
+    return any(inp.tainted for inp in node.inputs)
 
 
 def test_init(graph_0):
@@ -21,8 +28,20 @@ def test_init(graph_0):
     profiling = NodeProfiler(target_nodes, sources=sources, sinks=sinks)
 
 
-def check_inputs_taint(node: Node):
-    return any(inp.tainted for inp in node.inputs)
+def test_filter_nodes(graph_0):
+    _, nodes = graph_0
+
+    node_types = (Product, Sum)
+    profiling = NodeProfiler(nodes, filter_types=node_types)
+    assert all(isinstance(n, node_types) for n in profiling._target_nodes)
+
+    node_types_str = ("Product", "Sum")
+    profiling = NodeProfiler(nodes, filter_types=node_types_str)
+    assert all(n.__class__.__name__ in node_types_str for n in profiling._target_nodes)
+
+    node_types_mixed = ("Array", Sum)
+    profiling = NodeProfiler(nodes, filter_types=node_types_mixed)
+    assert all(isinstance(n, (Array, Sum)) for n in profiling._target_nodes)
 
 
 def test_estimate_node_g0(graph_0):
@@ -89,13 +108,14 @@ def test_make_report_g1(graph_1):
     profiling.make_report(aggregations=["min", "std", "count"])
     profiling.make_report(aggregations=["t_min", "t_std", "t_count"])
     profiling.make_report(aggregations=["t_mean", "t_percentage", "t_count"])
+    profiling.make_report(aggregations=["t_mean", "fraction_percent", "t_count"])
     profiling.make_report(aggregations=["median", "%_of_total"])
     profiling.make_report(aggregations=["count", "min", "std"])
 
     report = profiling.make_report(aggregations=["count", "min", "percentage"])
-    assert "t_sum" not in report.columns
+    assert "t_total" not in report.columns
     report = profiling.make_report(aggregations=["sum", "percentage"])
-    assert "t_sum" in report.columns
+    assert "t_total" in report.columns
 
     with raises(ValueError) as excinfo:
         profiling.make_report(aggregations=["bad_function"])
@@ -128,7 +148,7 @@ def test_print_report_g1_2(graph_1):
         n_runs = 10**i
         profiling = NodeProfiler(target_nodes, n_runs=n_runs)
         profiling.estimate_target_nodes()
-        profiling.print_report(aggregations=["single", "count", "sum", "percentage"])
+        profiling.print_report(aggregations=["single", "count", "sum", "fraction_percent"])
 
 
 def test_print_report_g1_3(graph_1):
