@@ -21,7 +21,7 @@ class FitSimulationProfiler(TimerProfiler):
     as tweakable parameters to imitate model fit process.
     """
 
-    __slots__ = ("_fit_step", "_mode", "_n_points")
+    __slots__ = ("_fit_step", "_mode", "_n_derivative_points")
 
     def __init__(
         self,
@@ -30,7 +30,7 @@ class FitSimulationProfiler(TimerProfiler):
         parameters: Sequence[Node] = (),
         endpoints: Sequence[Node] = (),
         n_runs: int = 10_000,
-        derivative_points: int = 4,
+        n_derivative_points: int = 4,
     ):
         """
         Initializes the FitSimulationProfiler, which simulates model fit.
@@ -43,9 +43,9 @@ class FitSimulationProfiler(TimerProfiler):
 
         The `parameters` and `endpoints` must each contain at least one node.
 
-        The `derivative_points` specifies the number of points for derivative estimation
+        The `n_derivative_points` specifies the number of points for derivative estimation
         for `mode="parameter-wise"`. Defaults to `4`.
-        When the user sets `mode="simultaneous"` it is assumed that `derivative_points=0`
+        When the user sets `mode="simultaneous"` it is assumed that `n_derivative_points=0`
         """
         if not parameters or not endpoints:
             raise ValueError("There must be at least one parameter and at least one endpoint")
@@ -53,13 +53,13 @@ class FitSimulationProfiler(TimerProfiler):
         if mode == "parameter-wise":
             self._fit_step = self._separate_step
             # TODO: add tests
-            if derivative_points < 2:
+            if n_derivative_points < 2:
                 raise ValueError("Number of derivative points cannot be less than 2")
-            self._n_points = derivative_points
+            self._n_derivative_points = n_derivative_points
             self._default_aggregations = ("step", "call", "total", "n_steps", "n_calls")
         elif mode == "simultaneous":
             self._fit_step = self._together_step
-            self._n_points = 0
+            self._n_derivative_points = 0
             self._default_aggregations = ("call", "total", "n_calls")
         else:
             raise ValueError(f"Unknown mode: {mode}")
@@ -110,7 +110,7 @@ class FitSimulationProfiler(TimerProfiler):
     def _separate_step(self):
         for parameter in self._sources:
             # simulate finding derivative by N points
-            for _ in range(self._n_points):
+            for _ in range(self._n_derivative_points):
                 parameter.taint()
                 self.__call_endpoints()
             # simulate reverting to the initial state
@@ -148,7 +148,7 @@ class FitSimulationProfiler(TimerProfiler):
         Return number of calls for each "point" in derivative estimation for given group
         """
         # TODO: add tests
-        return Series({"n_calls": (self._n_points + 1) * len(_s.index)})
+        return Series({"n_calls": (self._n_derivative_points + 1) * len(_s.index)})
 
     def _t_call(self, _s: Series) -> Series:
         """User-defined aggregate function.
@@ -157,7 +157,7 @@ class FitSimulationProfiler(TimerProfiler):
         """
         if len(_s.index) == 0:
             raise ZeroDivisionError("An empty group is received for t_call computation!")
-        return Series({"t_call": npsum(_s) / ((self._n_points + 1) * len(_s.index))})
+        return Series({"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))})
 
     def make_report(
         self,
@@ -183,7 +183,7 @@ class FitSimulationProfiler(TimerProfiler):
             f"nodes in subgraph: {len(self._target_nodes)}, "
             f"parameters: {len(self._sources)}, endpoints: {len(self._sinks)},\n"
             f"eval mode: {self.mode}, "
-            f"{f'derivative points: {self._n_points}' if self._mode == 'parameter-wise' else ''}\n"
+            f"{f'derivative points: {self._n_derivative_points}' if self._mode == 'parameter-wise' else ''}\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
