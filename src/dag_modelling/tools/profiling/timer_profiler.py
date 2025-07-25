@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from textwrap import shorten
-from typing import TYPE_CHECKING
 from time import perf_counter_ns
+from typing import TYPE_CHECKING
 
-from numpy import sum as npsum, empty, ndarray
+from numpy import empty, ndarray
+from numpy import sum as npsum
 from pandas import DataFrame, Series
 
 from dag_modelling.core.node import Node
@@ -95,10 +96,12 @@ class TimerProfiler(Profiler):
         self._n_runs = value
 
     @classmethod
-    def _timeit_all_runs(cls, stmt: Callable, n_runs: int, setup: Callable | None = None) -> float:
-        """Estimate total time of the statement running multiple times.
-        Use `time.perf_counter_ns` internally to measure time in nanoseconds
-        and then convert it to seconds by dividing the total time by 1 billion.
+    def _timeit_all_runs(
+        cls, stmt: Callable, n_runs: int, setup: Callable | None = None
+    ) -> float:
+        """Estimate total time of the statement running multiple times. Use
+        `time.perf_counter_ns` internally to measure time in nanoseconds and
+        then convert it to seconds by dividing the total time by 1 billion.
 
         Args:
             stmt (Callable): The function/method whose execution time is measured.
@@ -124,9 +127,9 @@ class TimerProfiler(Profiler):
     def _timeit_each_run(
         cls, stmt: Callable, n_runs: int, setup: Callable | None = None
     ) -> ndarray:
-        """Estimate execution time of the statement for each run.
-        Similar to `self.estimate_runs`, but returns a `numpy.ndarray` where each
-        value is the execution time of the i-th run.
+        """Estimate execution time of the statement for each run. Similar to
+        `self.estimate_runs`, but returns a `numpy.ndarray` where each value is
+        the execution time of the i-th run.
 
         Args:
             stmt (Callable): The function/method whose execution time is measured.
@@ -167,8 +170,8 @@ class TimerProfiler(Profiler):
         return df
 
     def _shorten_names(self, nodes, max_length) -> str:
-        """Get a string representation of names of the `nodes`,
-        truncated to not exceed `max_length`.
+        """Get a string representation of names of the `nodes`, truncated to
+        not exceed `max_length`.
 
         Note: This implementation is generally faster than directly applying
         `shorten(str([n.name for n in nodes]), max_length)`.
@@ -186,7 +189,8 @@ class TimerProfiler(Profiler):
         """Get a short string representation of `sources` and `sinks` names
         with truncation by `SOURCE_COL_WIDTH`, `SINK_COL_WIDTH` lengths.
 
-        Return pair (short names of __sources__, short names of __sinks__)
+        Return pair (short names of __sources__, short names of
+        __sinks__)
         """
         return (
             self._shorten_names(self._sources, SOURCE_COL_WIDTH),

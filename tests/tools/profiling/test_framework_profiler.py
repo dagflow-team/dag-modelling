@@ -1,5 +1,5 @@
-from types import MethodType
 from collections import Counter
+from types import MethodType
 
 from dag_modelling.tools.profiling import FrameworkProfiler
 
@@ -51,7 +51,9 @@ def test_make_fcns_empty_g0(graph_0):
 
     profiling = FrameworkProfiler(nodes)
     profiling._set_functions_empty()
-    assert all(n.function == MethodType(FrameworkProfiler.function_stub, n) for n in nodes)
+    assert all(
+        n.function == MethodType(FrameworkProfiler.function_stub, n) for n in nodes
+    )
 
     profiling._taint_nodes()
     assert a2.tainted == a1.tainted == p1.tainted == s2.tainted == True

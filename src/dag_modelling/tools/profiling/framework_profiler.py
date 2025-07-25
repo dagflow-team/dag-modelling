@@ -67,9 +67,8 @@ class FrameworkProfiler(TimerProfiler):
 
     @staticmethod
     def function_stub(node: Node):
-        """An empty function stub of the Node that touches parent nodes
-        to start a recursive execution of a graph (without computations)
-        """
+        """An empty function stub of the Node that touches parent nodes to
+        start a recursive execution of a graph (without computations)"""
         for input in node.inputs.iter_all():
             input.touch()
 
@@ -116,7 +115,9 @@ class FrameworkProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        return super().make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
 
     def print_report(
         self,
@@ -126,7 +127,9 @@ class FrameworkProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        report = self.make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
         print(
             f"\nFramework Profiling {hex(id(self))}, "
             f"n_runs for given subgraph: {self._n_runs},\n"

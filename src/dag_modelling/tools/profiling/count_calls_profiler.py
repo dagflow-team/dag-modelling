@@ -68,7 +68,9 @@ class CountCallsProfiler(Profiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        return super().make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
 
     def calls_by_node(self):
         if not hasattr(self, "_estimations_table"):
@@ -85,7 +87,9 @@ class CountCallsProfiler(Profiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        report = self.make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
         print(
             f"\nCounts of calls profiling {hex(id(self))}, "
             f"sort by: `{sort_by or 'default sorting'}`, "

@@ -5,7 +5,7 @@ from dag_modelling.tools.profiling import (
     FrameworkProfiler,
     MemoryProfiler,
     NodeProfiler,
-    gather_related_nodes
+    gather_related_nodes,
 )
 
 
@@ -46,7 +46,9 @@ def test_full_guide(graph_0):
     # If you are going to use the same subgraph for all profiling types
     #  or plan to modify the found set of related nodes,
     #  you can call `gather_related_nodes` directrly
-    node_subgraph = gather_related_nodes(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
+    node_subgraph = gather_related_nodes(
+        sources=(nodes[0], nodes[1]), sinks=(nodes[-1],)
+    )
     #       * do something with `node_subgraph` here *
     _ = NodeProfiler(list(node_subgraph))
 
@@ -76,7 +78,7 @@ def test_full_guide(graph_0):
     #  or by first column of aggregation function
 
     # Saving results is pretty easy, because it's just a pandas.DataFrame
-    report.to_csv("output/test_report.tsv", sep='\t', index=False)
+    report.to_csv("output/test_report.tsv", sep="\t", index=False)
     report.to_json("output/test_report.json")
 
     # Sometimes it could be helpful to directly estimate one node

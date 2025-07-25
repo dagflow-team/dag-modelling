@@ -26,16 +26,17 @@ def __check_reachable(nodes_gathered, sinks):
     for sink in sinks:
         if sink not in nodes_gathered:
             raise ValueError(
-                f"One of the `sinks` nodes is unreachable: {sink} " "(no paths from sources)"
+                f"One of the `sinks` nodes is unreachable: {sink} "
+                "(no paths from sources)"
             )
 
 
 def gather_related_nodes(sources: Sequence[Node], sinks: Sequence[Node]) -> set[Node]:
-    """Find all nodes that lie on all possible paths between
-    `sources` and `sinks`
+    """Find all nodes that lie on all possible paths between `sources` and
+    `sinks`
 
-    Modified Depth-first search (DFS) algorithm for multiple sources
-    and sinks
+    Modified Depth-first search (DFS) algorithm for multiple sources and
+    sinks
     """
     related_nodes = set(sources)
     # Deque works well as Stack
@@ -69,7 +70,7 @@ def gather_related_nodes(sources: Sequence[Node], sinks: Sequence[Node]) -> set[
 
 
 def reveal_source_sink(nodes: Sequence[Node]) -> tuple[list[Node], list[Node]]:
-    """Find sources and sinks for given list of nodes"""
+    """Find sources and sinks for given list of nodes."""
     sources = []
     sinks = []
     for node in nodes:

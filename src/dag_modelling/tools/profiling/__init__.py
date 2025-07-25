@@ -1,9 +1,9 @@
-from .node_profiler import NodeProfiler
+from .count_calls_profiler import CountCallsProfiler
+from .delay_node import DelayNode
+from .fit_simulation_profiling import FitSimulationProfiler
 from .framework_profiler import FrameworkProfiler
 from .memory_profiler import MemoryProfiler
-from .count_calls_profiler import CountCallsProfiler
-from .fit_simulation_profiling import FitSimulationProfiler
-from .delay_node import DelayNode
+from .node_profiler import NodeProfiler
 from .utils import gather_related_nodes, reveal_source_sink
 
 __all__ = [

@@ -14,8 +14,8 @@ _ALLOWED_GROUPBY = (("parameters", "endpoints", "eval mode"),)
 
 
 class FitSimulationProfiler(TimerProfiler):
-    """Profiler class for estimating the time of model fitting.
-    The fitting is simulated by touching different nodes (depending on the `mode`).
+    """Profiler class for estimating the time of model fitting. The fitting is
+    simulated by touching different nodes (depending on the `mode`).
 
     NOTE: This class inherits from `TimerProfiler` and uses `source_nodes`
     as tweakable parameters to imitate model fit process.
@@ -32,8 +32,7 @@ class FitSimulationProfiler(TimerProfiler):
         n_runs: int = 10_000,
         n_derivative_points: int = 4,
     ):
-        """
-        Initializes the FitSimulationProfiler, which simulates model fit.
+        """Initializes the FitSimulationProfiler, which simulates model fit.
 
         There are two different `mode`:
            - `"parameter-wise"` - calculate n points for the parameter
@@ -48,7 +47,9 @@ class FitSimulationProfiler(TimerProfiler):
         When the user sets `mode="simultaneous"` it is assumed that `n_derivative_points=0`
         """
         if not parameters or not endpoints:
-            raise ValueError("There must be at least one parameter and at least one endpoint")
+            raise ValueError(
+                "There must be at least one parameter and at least one endpoint"
+            )
         super().__init__(sources=parameters, sinks=endpoints, n_runs=n_runs)
         if mode == "parameter-wise":
             self._fit_step = self._separate_step
@@ -145,19 +146,26 @@ class FitSimulationProfiler(TimerProfiler):
 
     def _n_calls(self, _s: Series) -> Series:
         """User-defined aggregate function.
-        Return number of calls for each "point" in derivative estimation for given group
+
+        Return number of calls for each "point" in derivative estimation
+        for given group
         """
         # TODO: add tests
         return Series({"n_calls": (self._n_derivative_points + 1) * len(_s.index)})
 
     def _t_call(self, _s: Series) -> Series:
         """User-defined aggregate function.
-        Return [total time] divided by [number of calls
-        for each point in derivative computation + 1].
+
+        Return [total time] divided by [number of calls for each point
+        in derivative computation + 1].
         """
         if len(_s.index) == 0:
-            raise ZeroDivisionError("An empty group is received for t_call computation!")
-        return Series({"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))})
+            raise ZeroDivisionError(
+                "An empty group is received for t_call computation!"
+            )
+        return Series(
+            {"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))}
+        )
 
     def make_report(
         self,
@@ -166,7 +174,9 @@ class FitSimulationProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        return super().make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
 
     def print_report(
         self,
@@ -176,7 +186,9 @@ class FitSimulationProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        report = self.make_report(
+            group_by=group_by, aggregations=aggregations, sort_by=sort_by
+        )
         print(
             f"\nFit simulation Profiling {hex(id(self))}, "
             f"fit steps (n_runs): {self._n_runs},\n"

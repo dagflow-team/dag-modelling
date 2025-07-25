@@ -1,11 +1,12 @@
 from collections import Counter
 
+from pandas import Series
+from pytest import raises
+
 from dag_modelling.core.node import Node
 from dag_modelling.lib.arithmetic import Product, Sum
 from dag_modelling.lib.common import Array
 from dag_modelling.tools.profiling import NodeProfiler
-from pandas import Series
-from pytest import raises
 
 n_runs = 1000
 

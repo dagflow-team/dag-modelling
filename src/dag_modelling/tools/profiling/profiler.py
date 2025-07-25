@@ -62,8 +62,7 @@ class Profiler(metaclass=ABCMeta):
 
     def _gather_related_nodes(self) -> list[Node]:
         """Find all nodes that lie on all possible paths between
-        `self._sources` and `self._sinks`
-        """
+        `self._sources` and `self._sinks`"""
         related_nodes = gather_related_nodes(self._sources, self._sinks)
         return list(related_nodes)
 
@@ -76,9 +75,8 @@ class Profiler(metaclass=ABCMeta):
     ) -> None:
         """Add user-defined function for the Profiler.
 
-        The function applied for each group in grouped
-        data (i.e. data returned by `pandas.DataFrame.groupby()`)
-        separately.
+        The function applied for each group in grouped data (i.e. data
+        returned by `pandas.DataFrame.groupby()`) separately.
         """
         for al in aliases:
             self._aggregate_aliases[al] = func
@@ -95,7 +93,9 @@ class Profiler(metaclass=ABCMeta):
         object."""
         return self._column_aliases.get(alias, alias)
 
-    def _aggregations_from_aliases(self, aliases: Iterable[str]) -> list[str | Callable]:
+    def _aggregations_from_aliases(
+        self, aliases: Iterable[str]
+    ) -> list[str | Callable]:
         """Return aggregate function names if aliases exists, otherwise return
         the same object."""
         return [self._aggregate_aliases.get(al, al) for al in aliases]
@@ -113,8 +113,7 @@ class Profiler(metaclass=ABCMeta):
     ) -> DataFrame:
         """Apply pandas built-ins and user-defined aggregate functions (given
         as their aliases) on the `self._primary_col` column of the grouped data
-        `grouped_df`
-        """
+        `grouped_df`"""
         aggregate_funcs = self._aggregations_from_aliases(aggregate_names)
         df = grouped_df.agg({self._primary_col: aggregate_funcs})
         # grouped_by can be ["col1", "col2", ...] or "col"
@@ -128,8 +127,8 @@ class Profiler(metaclass=ABCMeta):
         return df
 
     def __possible_aggregations(self):
-        """Return set of all possible values for `aggregations`
-        argument of `make_report` and `print_report` methods.
+        """Return set of all possible values for `aggregations` argument of
+        `make_report` and `print_report` methods.
 
         Helper method for `_check_report_consistency`.
         Called on exception.
