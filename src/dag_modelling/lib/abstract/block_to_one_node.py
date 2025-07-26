@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 try:
+    # since python 3.12
     from itertools import batched
 except ImportError:
     from itertools import islice
