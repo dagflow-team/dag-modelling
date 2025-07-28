@@ -1,48 +1,61 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+
+requires = [ "packaging", "setuptools", "wheel" ]
+
 [project]
 name = "dag-modelling"
 version = "0.11"
-description = "The DAGModelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
-authors = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
-maintainers = [{ name = "DAGModelling Team", email = "dagflow@jinr.ru" }]
-license = "MIT"
+description = "The dag-modelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
 readme = "README.md"
+license = "MIT"
+maintainers = [ { name = "DAGModelling Team", email = "dagflow@jinr.ru" } ]
+authors = [ { name = "DAGModelling Team", email = "dagflow@jinr.ru" } ]
 requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 dependencies = [
   "contextlib2",
   "h5py",
   "latexdatax",
   "matplotlib",
+  "nested-mapping",
   "numba",
   "numpy",
   "ordered-set",
   "pandas",
+  "plotille",
   "pygraphviz",
   "pyyaml",
   "schema",
   "scipy",
   "tabulate",
   "uproot",
-  "plotille",
-  "nested-mapping",
 ]
 
-[project.urls]
-homepage = "https://github.com/dagflow-team/dag-modelling"
-repository = "https://github.com/dagflow-team/dag-modelling"
-documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
-"DAGModelling Team" = "https://github.com/dagflow-team"
-
-[project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "coverage"]
-
-[build-system]
-requires = ["setuptools", "wheel", "packaging"]
-build-backend = "setuptools.build_meta"
+optional-dependencies.dev = [ "coverage", "pytest", "pytest-cov" ]
+urls."Bug Tracker" = "https://github.com/dagflow-team/dag-modelling/issues"
+urls."DAGModelling Team" = "https://github.com/dagflow-team"
+urls.documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
+urls.homepage = "https://github.com/dagflow-team/dag-modelling"
+urls.repository = "https://github.com/dagflow-team/dag-modelling"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = [ "src" ]
 exclude = [
   "tests*",
   "docs*",
   "example*",
 ]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 5
