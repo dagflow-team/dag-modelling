@@ -1,10 +1,10 @@
 # Summary
 
 [![python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/)
-[![pipeline](https://git.jinr.ru/dag-computing/dag-flow/badges/master/pipeline.svg)](https://git.jinr.ru/dag-computing/dag-flow/commits/master)
-[![coverage report](https://git.jinr.ru/dag-computing/dag-flow/badges/master/coverage.svg)](https://git.jinr.ru/dag-computing/dag-flow/-/commits/master)
+[![pipeline](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/pipeline.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/commits/master)
+[![coverage report](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/coverage.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/-/commits/master)
 <!--- Uncomment here after adding docs!
-[![pages](https://img.shields.io/badge/pages-link-white.svg)](http://dag-computing.pages.jinr.ru/dag-flow)
+[![pages](https://img.shields.io/badge/pages-link-white.svg)](http://dagflow-team.pages.jinr.ru/dag-modelling)
 -->
 
 The **DAGModelling** software is a python implementation of the dataflow programming with the lazy graph evaluation approach.
@@ -30,7 +30,7 @@ pip install dag-modelling
 
 We recommend that developers install the package locally in editable mode:
 ```bash
-git clone https://github.com/dagmodelling-team/dag-modelling.git
+git clone https://github.com/dagflow-team/dag-modelling.git
 cd dag-modelling
 pip install -e .
 ```
@@ -67,18 +67,19 @@ with Graph(debug=debug) as graph:
     savegraph(graph, "dagmodelling_example_1a.png")
 ```
 The printed result must be `[0. 3. 12.]`, and the created image looks as
-![](https://raw.githubusercontent.com/dagmodelling-team/dag-modelling/refs/heads/0.9.0/example/dagmodelling_example_1a.png)
+![](https://raw.githubusercontent.com/dagflow-team/dag-modelling/refs/heads/0.9.0/example/dagmodelling_example_1a.png)
 
 
-For more examples see [example/example.py](https://github.com/dagmodelling-team/dag-modelling/blob/master/example/example.py) or [tests](https://github.com/dagmodelling-team/dag-modelling/tree/master/tests).
+For more examples see [example/example.py](https://github.com/dagflow-team/dag-modelling/blob/master/example/example.py) or [tests](https://github.com/dagflow-team/dag-modelling/tree/master/tests).
 
 ## Repositories and additional modules
 
 - Main repo:
-    * Development/CI: https://git.jinr.ru/dag-computing/dag-flow
+    * Development/CI: https://git.jinr.ru/dagflow-team/dag-modelling
     * Contact/pypi/mirror: https://github.com/dagflow-team/dag-modelling
     * PYPI: https://test.pypi.org/project/dag-modelling
 - Supplementary python modules:
-    * [dgm-reactor-neutrino](https://git.jinr.ru/dag-computing/dgm-reactorenueosc) — nodes related to reactor neutrino oscillations
-- [Daya Bay model](https://git.jinr.ru/dag-computing/dayabay-model) — test implementation of the Daya Bay oscillation analysis
+    * [dgm-reactor-neutrino](https://github.com/dagflow-team/dgm-reactor-neutrino) — nodes related to reactor neutrino oscillations
+    * [dgm-fit](https://github.com/dagflow-team/dgm-fit) — fitter interface
+    * [Daya Bay model](https://github.com/dagflow-team/dgm-dayabay-dev) — implementation of the Daya Bay oscillation analysis, development version
 
