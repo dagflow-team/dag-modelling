@@ -37,7 +37,7 @@ dependencies = [
   "uproot",
 ]
 
-optional-dependencies.dev = [ "coverage", "pytest", "pytest-cov" ]
+optional-dependencies.test = [ "coverage", "pytest", "pytest-cov" ]
 urls."Bug Tracker" = "https://github.com/dagflow-team/dag-modelling/issues"
 urls."DAGModelling Team" = "https://github.com/dagflow-team"
 urls.documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
@@ -51,11 +51,3 @@ exclude = [
   "docs*",
   "example*",
 ]
-
-[tool.black]
-line-length = 100
-
-[tool.isort]
-profile = "black"
-line_length = 100
-multi_line_output = 5
