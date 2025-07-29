@@ -77,7 +77,7 @@ For more examples see [example/example.py](https://github.com/dagflow-team/dag-m
 - Main repo:
     * Development/CI: https://git.jinr.ru/dagflow-team/dag-modelling
     * Contact/pypi/mirror: https://github.com/dagflow-team/dag-modelling
-    * PYPI: https://test.pypi.org/project/dag-modelling
+    * PYPI: https://pypi.org/project/dag-modelling
 - Supplementary python modules:
     * [dgm-reactor-neutrino](https://github.com/dagflow-team/dgm-reactor-neutrino) — nodes related to reactor neutrino oscillations
     * [dgm-fit](https://github.com/dagflow-team/dgm-fit) — fitter interface
