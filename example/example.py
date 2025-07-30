@@ -54,7 +54,7 @@ with Graph(debug=debug, close_on_exit=True) as graph:
     (s, s2) >> m
 
 print("Result:", m.outputs["result"].data)
-filename = "dag_modelling_example_1b.png"
+filename = "dag_modelling_example_2.png"
 savegraph(graph, filename)
 print(f"Write figure: {filename}")
 
@@ -74,7 +74,7 @@ with Graph(debug=debug, close_on_exit=True) as graph:
     (s, ws) >> m  # [0,2,4] * [0,5,10] = [0,10,40]
 
 print("Result:", m.outputs["result"].data)
-filename = "dag_modelling_example_1b.png"
+filename = "dag_modelling_example_3.png"
 savegraph(graph, filename)
 print(f"Write figure: {filename}")
 
@@ -121,5 +121,5 @@ with Graph(debug=debug, close_on_exit=True) as graph:
     (in7, in8, in9) >> s
 
 print("Result:", s.result)
-filename = "dag_modelling_example_1b.png"
+filename = "dag_modelling_example_4.png"
 savegraph(graph, filename)
