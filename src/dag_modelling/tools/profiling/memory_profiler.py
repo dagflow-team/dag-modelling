@@ -166,7 +166,10 @@ class MemoryProfiler(Profiler):
         size_bytes = self.total_size
         print("TOTAL SIZE:")
         print(f"\t{self._present_in_units(size_bytes)}")
-        s_node = size_bytes / len(self._target_nodes)
         print("TOTAL SIZE / node count:")
-        print(f"\t{self._present_in_units(s_node, float_bytes=True)}")
+        if size_bytes is not None:
+            s_node = size_bytes / len(self._target_nodes)
+            print(f"\t{self._present_in_units(s_node, float_bytes=True)}")
+        else:
+            print(f"\t[undefined]")
         return report

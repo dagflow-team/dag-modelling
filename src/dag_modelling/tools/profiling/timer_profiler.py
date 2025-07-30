@@ -113,7 +113,7 @@ class TimerProfiler(Profiler):
         """
         timer = perf_counter_ns
         total_nanoseconds = 0
-        for i in range(n_runs):
+        for _ in range(n_runs):
             if setup is not None:
                 setup()
             t_0 = timer()
