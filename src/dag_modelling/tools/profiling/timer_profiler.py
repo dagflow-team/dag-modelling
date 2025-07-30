@@ -9,7 +9,6 @@ from numpy import sum as npsum
 from pandas import DataFrame, Series
 
 from ...core.node import Node
-
 from .profiler import Profiler
 
 if TYPE_CHECKING:

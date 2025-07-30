@@ -7,7 +7,6 @@ from numpy import sum as npsum
 from pandas import DataFrame, Series
 
 from ...core.node import Node
-
 from .timer_profiler import TimerProfiler
 
 _ALLOWED_GROUPBY = (("parameters", "endpoints", "eval mode"),)

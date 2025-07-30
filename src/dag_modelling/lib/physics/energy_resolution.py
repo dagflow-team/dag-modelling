@@ -7,9 +7,7 @@ from ...core.meta_node import MetaNode
 from ...core.storage import NodeStorage
 from ..axis.bin_center import BinCenter
 from ..hist.hist_smear_normal_matrix_b_c import HistSmearNormalMatrixBC
-from ..physics.energy_resolution_sigma_rel_a_b_c import (
-    EnergyResolutionSigmaRelABC,
-)
+from ..physics.energy_resolution_sigma_rel_a_b_c import EnergyResolutionSigmaRelABC
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

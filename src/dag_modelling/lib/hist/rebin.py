@@ -11,10 +11,10 @@ from ..linalg import VectorMatrixProduct
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from .rebin_matrix import RebinModesType
     from nested_mapping.typing import KeyLike
 
     from ...core.node import Node
+    from .rebin_matrix import RebinModesType
 
 
 class Rebin(MetaNode):
