@@ -114,9 +114,7 @@ def test_estimate_all_edges(graph_0, graph_1):
                 expected += edge_size(edge)
         actual = mp._estimations_table["size"].sum()
 
-        assert (
-            expected == actual
-        ), "expected and actual sizes of all edges does not match"
+        assert expected == actual, "expected and actual sizes of all edges does not match"
 
 
 def test_total_size_property(graph_0):

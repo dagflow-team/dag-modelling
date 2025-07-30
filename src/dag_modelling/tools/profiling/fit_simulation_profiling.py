@@ -46,9 +46,7 @@ class FitSimulationProfiler(TimerProfiler):
         When the user sets `mode="simultaneous"` it is assumed that `n_derivative_points=0`
         """
         if not parameters or not endpoints:
-            raise ValueError(
-                "There must be at least one parameter and at least one endpoint"
-            )
+            raise ValueError("There must be at least one parameter and at least one endpoint")
         super().__init__(sources=parameters, sinks=endpoints, n_runs=n_runs)
         if mode == "parameter-wise":
             self._fit_step = self._separate_step
@@ -159,12 +157,8 @@ class FitSimulationProfiler(TimerProfiler):
         in derivative computation + 1].
         """
         if len(_s.index) == 0:
-            raise ZeroDivisionError(
-                "An empty group is received for t_call computation!"
-            )
-        return Series(
-            {"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))}
-        )
+            raise ZeroDivisionError("An empty group is received for t_call computation!")
+        return Series({"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))})
 
     def make_report(
         self,
@@ -173,9 +167,7 @@ class FitSimulationProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(
-            group_by=group_by, aggregations=aggregations, sort_by=sort_by
-        )
+        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
 
     def print_report(
         self,
@@ -185,9 +177,7 @@ class FitSimulationProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(
-            group_by=group_by, aggregations=aggregations, sort_by=sort_by
-        )
+        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nFit simulation Profiling {hex(id(self))}, "
             f"fit steps (n_runs): {self._n_runs},\n"

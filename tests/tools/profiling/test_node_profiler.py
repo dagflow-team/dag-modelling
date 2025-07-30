@@ -47,9 +47,7 @@ def test_estimate_node_g0(graph_0):
     _, nodes = graph_0
     print(f"(graph 0) NodeProfiler.estimate_node (n_runs={n_runs}):")
     for node in nodes:
-        print(
-            f"\t{node.name} estimated with:", NodeProfiler.estimate_node(node, n_runs)
-        )
+        print(f"\t{node.name} estimated with:", NodeProfiler.estimate_node(node, n_runs))
         assert check_inputs_taint(node) == False
 
 
@@ -57,9 +55,7 @@ def test_estimate_node_g1(graph_1):
     _, nodes = graph_1
     print(f"(graph 1) NodeProfiler.estimate_node (n_runs={n_runs}):")
     for node in nodes:
-        print(
-            f"\t{node.name} estimated with:", NodeProfiler.estimate_node(node, n_runs)
-        )
+        print(f"\t{node.name} estimated with:", NodeProfiler.estimate_node(node, n_runs))
         assert check_inputs_taint(node) == False
 
 
@@ -140,9 +136,7 @@ def test_print_report_g1_1(graph_1):
     profiling.print_report(aggregations=["min"], rows=1)
     profiling.print_report(group_by=None, rows=2)
     profiling.print_report(group_by=None, rows=20)
-    profiling.print_report(
-        aggregations=["single", "count", "sum", "percentage"], sort_by="single"
-    )
+    profiling.print_report(aggregations=["single", "count", "sum", "percentage"], sort_by="single")
 
 
 def test_print_report_g1_2(graph_1):
@@ -153,9 +147,7 @@ def test_print_report_g1_2(graph_1):
         n_runs = 10**i
         profiling = NodeProfiler(target_nodes, n_runs=n_runs)
         profiling.estimate_target_nodes()
-        profiling.print_report(
-            aggregations=["single", "count", "sum", "fraction_percent"]
-        )
+        profiling.print_report(aggregations=["single", "count", "sum", "fraction_percent"])
 
 
 def test_print_report_g1_3(graph_1):

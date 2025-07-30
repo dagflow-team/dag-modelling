@@ -93,9 +93,7 @@ class Profiler(metaclass=ABCMeta):
         object."""
         return self._column_aliases.get(alias, alias)
 
-    def _aggregations_from_aliases(
-        self, aliases: Iterable[str]
-    ) -> list[str | Callable]:
+    def _aggregations_from_aliases(self, aliases: Iterable[str]) -> list[str | Callable]:
         """Return aggregate function names if aliases exists, otherwise return
         the same object."""
         return [self._aggregate_aliases.get(al, al) for al in aliases]

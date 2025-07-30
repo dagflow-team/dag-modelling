@@ -52,9 +52,7 @@ class NodeProfiler(TimerProfiler):
         super().__init__(target_nodes, sources, sinks, n_runs)
         self._allowed_groupby = _ALLOWED_GROUPBY
 
-    def _filter_nodes(
-        self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]
-    ):
+    def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
         def condition(node: Node):
             for t in node_types:
                 if type(node).__name__ == t:
@@ -80,10 +78,7 @@ class NodeProfiler(TimerProfiler):
                 "node": (str(node) for node in self._target_nodes),
                 "type": (type(node).__name__ for node in self._target_nodes),
                 "name": (node.name for node in self._target_nodes),
-                "time": (
-                    self.estimate_node(node, self._n_runs)
-                    for node in self._target_nodes
-                ),
+                "time": (self.estimate_node(node, self._n_runs) for node in self._target_nodes),
             }
         )
         return self
@@ -96,9 +91,7 @@ class NodeProfiler(TimerProfiler):
         sort_by: str | None = None,
         average_by_runs: bool = True,
     ) -> DataFrame:
-        report = super().make_report(
-            group_by=group_by, aggregations=aggregations, sort_by=sort_by
-        )
+        report = super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         if average_by_runs:
             return self._compute_average(report)
         return report
@@ -116,9 +109,7 @@ class NodeProfiler(TimerProfiler):
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(
-            group_by=group_by, aggregations=aggregations, sort_by=sort_by
-        )
+        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
         print(
             f"\nNode Profiling {hex(id(self))}, "
             f"n_runs for each node: {self._n_runs}\n"

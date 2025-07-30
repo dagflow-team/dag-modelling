@@ -46,9 +46,7 @@ def test_full_guide(graph_0):
     # If you are going to use the same subgraph for all profiling types
     #  or plan to modify the found set of related nodes,
     #  you can call `gather_related_nodes` directrly
-    node_subgraph = gather_related_nodes(
-        sources=(nodes[0], nodes[1]), sinks=(nodes[-1],)
-    )
+    node_subgraph = gather_related_nodes(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
     #       * do something with `node_subgraph` here *
     _ = NodeProfiler(list(node_subgraph))
 

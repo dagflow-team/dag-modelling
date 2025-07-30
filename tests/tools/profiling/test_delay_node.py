@@ -8,9 +8,7 @@ from dag_modelling.tools.profiling import DelayNode, FrameworkProfiler, NodeProf
 EPS = 0.05
 
 
-@mark.skipif(
-    "--include-long-time-tests" not in argv, reason="long-time tests switched off"
-)
+@mark.skipif("--include-long-time-tests" not in argv, reason="long-time tests switched off")
 def test_one_delay_node():
     with Graph(close_on_exit=True) as graph:
         sl = DelayNode("SL0", sleep_time=0.25)
@@ -33,9 +31,7 @@ def _gen_graph(sleep_time: float):
     return graph, [sl0, sl1, sl2]
 
 
-@mark.skipif(
-    "--include-long-time-tests" not in argv, reason="long-time tests switched off"
-)
+@mark.skipif("--include-long-time-tests" not in argv, reason="long-time tests switched off")
 def test_three_delay_nodes():
     for sleep_t in (0.1, 0.25, 0.5):
         g, nodes = _gen_graph(sleep_time=sleep_t)

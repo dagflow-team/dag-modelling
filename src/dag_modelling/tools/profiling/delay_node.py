@@ -24,9 +24,7 @@ class DelayNode(Node):
 
     def __init__(self, *args, sleep_time: float | int = 0.01, **kwargs):
         if not isinstance(sleep_time, (int, float)):
-            raise InitializationError(
-                "Invalid sleep_time type " "(use `float` or `int`)"
-            )
+            raise InitializationError("Invalid sleep_time type " "(use `float` or `int`)")
         self._sleep_time = sleep_time
         super().__init__(*args, **kwargs, input_strategy=AddNewInput())
         self._out = self._add_output("result")
