@@ -26,7 +26,7 @@ from dag_modelling.plot.plot import add_colorbar, plot_array_1d, plot_auto
     ],
 )
 @mark.parametrize("datanum", [0, 1, 2, "all"])
-def test_mc(mcmode, scale, datanum, debug_graph, testname, tmp_path):
+def test_mc(mcmode, scale, datanum, debug_graph, test_name, tmp_path):
     (sequence,) = SeedSequence(6).spawn(1)
     algo = MT19937(sequence)
     generator = Generator(algo)
@@ -68,7 +68,7 @@ def test_mc(mcmode, scale, datanum, debug_graph, testname, tmp_path):
     toymc2.touch()
     assert toymc2.tainted is False
 
-    tmp_path = join(str(tmp_path), testname)
+    tmp_path = join(str(tmp_path), test_name)
     for data in mcdata_v:
         MCTestData.plot(data, tmp_path)
 
@@ -98,8 +98,8 @@ def test_mc(mcmode, scale, datanum, debug_graph, testname, tmp_path):
     assert toymc.tainted is False
     assert toymc2.tainted is True
 
-    plot_auto(toymc.outputs[0], save=f"output/{testname}_plot.png")
-    savegraph(graph, f"output/{testname}.png")
+    plot_auto(toymc.outputs[0], save=f"output/{test_name}_plot.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize(
@@ -372,7 +372,7 @@ class MCTestData:
 
 
 @mark.parametrize("mcmode", ["nonexistent"])
-def test_mc_nonexistent_mode(mcmode, debug_graph, testname, tmp_path):
+def test_mc_nonexistent_mode(mcmode, debug_graph, test_name, tmp_path):
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         with raises(RuntimeError) as exc:
             toymc = MonteCarlo(name="MonteCarlo", mode=mcmode)

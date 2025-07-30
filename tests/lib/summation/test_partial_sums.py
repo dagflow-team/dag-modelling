@@ -9,7 +9,7 @@ from dag_modelling.lib.summation import PartialSums
 
 
 @mark.parametrize("a", (arange(12, dtype="d") * i for i in (1, 2, 3)))
-def test_PartialSums_01(testname, debug_graph, a):
+def test_PartialSums_01(test_name, debug_graph, a):
     arrays_range = [0, 12], [0, 3], [4, 10], [11, 12]
     arrays_res = tuple(a[ranges[0] : ranges[1]].sum() for ranges in arrays_range)
 
@@ -28,7 +28,7 @@ def test_PartialSums_01(testname, debug_graph, a):
     )
     assert ps.tainted is False
 
-    savegraph(graph, f"output/{testname}.png", show="all")
+    savegraph(graph, f"output/{test_name}.png", show="all")
 
 
 @mark.parametrize("a", (arange(12, dtype="d") * i for i in (1, 2, 3)))

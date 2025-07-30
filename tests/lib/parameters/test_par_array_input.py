@@ -10,7 +10,7 @@ from dag_modelling.parameters import Parameters
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("parameters_mode", ("list", "Parameters"))
-def test_ParArrayInput(dtype, parameters_mode, testname):
+def test_ParArrayInput(dtype, parameters_mode, test_name):
     size = 10
     values_initial = ones(size, dtype=dtype)
     values_new = arange(size, dtype=dtype) + 2
@@ -34,4 +34,4 @@ def test_ParArrayInput(dtype, parameters_mode, testname):
     res = tuple(par.value for par in pars._pars)
     assert allclose(res, values_initial, atol=0, rtol=0)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")

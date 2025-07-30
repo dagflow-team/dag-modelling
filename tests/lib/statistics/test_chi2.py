@@ -10,7 +10,7 @@ from dag_modelling.lib.statistics import Chi2
 from dag_modelling.plot.graphviz import savegraph
 
 
-def test_Chi2_01(debug_graph, testname):
+def test_Chi2_01(debug_graph, test_name):
     n = 10
     start = 10
     offset = 1.0
@@ -31,10 +31,10 @@ def test_Chi2_01(debug_graph, testname):
     assert (res == truth1).all()
     assert (res == truth2).all()
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
-def test_Chi2_02(debug_graph, testname):
+def test_Chi2_02(debug_graph, test_name):
     n = 15
     start = 10
     offset = 1.0
@@ -56,11 +56,11 @@ def test_Chi2_02(debug_graph, testname):
     truth = (offset**2 / dataArr).sum()
     assert allclose(res, truth, rtol=0, atol=finfo("d").resolution)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("duplicate", (False, True))
-def test_Chi2_03(duplicate: bool, debug_graph, testname):
+def test_Chi2_03(duplicate: bool, debug_graph, test_name):
     n = 10
     start = 10
     offset = 1.0
@@ -88,4 +88,4 @@ def test_Chi2_03(duplicate: bool, debug_graph, testname):
     assert allclose(res, truth1, rtol=0, atol=finfo("d").resolution)
     assert allclose(res, truth2, rtol=0, atol=finfo("d").resolution)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")

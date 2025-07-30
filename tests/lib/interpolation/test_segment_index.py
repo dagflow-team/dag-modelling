@@ -15,7 +15,7 @@ from dag_modelling.plot.graphviz import savegraph
 @mark.parametrize("mode", ("left", "right"))
 @mark.parametrize("offset", (0, -1.0e-11, +1.0e-11, -0.5, 0.5, -7, 7))
 @mark.parametrize("dtype", ("d", "f"))
-def test_segmentIndex_01(debug_graph, testname, mode, offset: float | int, dtype: str):
+def test_segmentIndex_01(debug_graph, test_name, mode, offset: float | int, dtype: str):
     seed(10)
     nc, nf = 10, 100
     ne = nc + 1
@@ -45,12 +45,12 @@ def test_segmentIndex_01(debug_graph, testname, mode, offset: float | int, dtype
 
     res = segmentIndex.outputs[0].data
     assert all(res == expect)
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("mode", ("left", "right"))
 @mark.parametrize("offset", (0, -1.0e-11, +1.0e-11, -0.5, 0.5))
-def test_segmentIndex_02(debug_graph, testname, mode, offset):
+def test_segmentIndex_02(debug_graph, test_name, mode, offset):
     seed(10)
     nc, nf = 10, 100
     ne = nc + 1
@@ -76,11 +76,11 @@ def test_segmentIndex_02(debug_graph, testname, mode, offset):
 
     res = segmentIndex.outputs[0].data.ravel()
     assert all(res == expect)
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("mode", ("left", "right"))
-def test_segmentIndex_03(debug_graph, testname, mode):
+def test_segmentIndex_03(debug_graph, test_name, mode):
     seed(10)
     nc, nf = 10, 100
     ne = nc + 1
@@ -106,7 +106,7 @@ def test_segmentIndex_03(debug_graph, testname, mode):
 
     res = segmentIndex.outputs[0].data.ravel()
     assert all(res == expect)
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def test_segmentIndex_exception(debug_graph):

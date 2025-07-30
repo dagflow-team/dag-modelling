@@ -7,7 +7,7 @@ from dag_modelling.lib.common import Array, Cache, Copy
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_cache_copy(testname, debug_graph, dtype):
+def test_cache_copy(test_name, debug_graph, dtype):
     array_in_1 = linspace(-10, 10, 101, dtype=dtype)
     array_in_2 = geomspace(0.00001, 10, 101, dtype=dtype)
 
@@ -66,4 +66,4 @@ def test_cache_copy(testname, debug_graph, dtype):
     assert copy.tainted == False
     assert copy2.tainted == False
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")

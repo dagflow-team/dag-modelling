@@ -428,7 +428,7 @@ def test_08():
     final.data
 
 
-def test_09(testname):
+def test_09(test_name):
     """Test <<"""
     with Graph(close_on_exit=True) as g:
         n1 = Dummy("node1")
@@ -455,4 +455,4 @@ def test_09(testname):
 
     out2.data
 
-    savegraph(g, f"output/{testname}.pdf")
+    savegraph(g, f"output/{test_name}.pdf")

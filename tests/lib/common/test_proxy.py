@@ -7,7 +7,7 @@ from dag_modelling.lib.common import Array, Proxy
 from dag_modelling.plot.graphviz import savegraph
 
 
-def test_Proxy_several_inputs(testname, debug_graph):
+def test_Proxy_several_inputs(test_name, debug_graph):
     arrays = [arange(5) + i for i in range(8)]
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
@@ -16,7 +16,7 @@ def test_Proxy_several_inputs(testname, debug_graph):
         array0 >> proxy
 
     assert allclose(proxy.get_data(), arrays[0], atol=0, rtol=0)
-    savegraph(graph, f"output/{testname}-0.png", show="all")
+    savegraph(graph, f"output/{test_name}-0.png", show="all")
 
     with graph:
         graph.open(open_nodes=True)
@@ -29,17 +29,17 @@ def test_Proxy_several_inputs(testname, debug_graph):
         assert proxy.tainted
         assert allclose(proxy.get_data(), arrays[i], atol=0, rtol=0)
 
-        savegraph(graph, f"output/{testname}-i.png", show="all")
+        savegraph(graph, f"output/{test_name}-i.png", show="all")
 
     proxy.switch_input(0)
     assert proxy.tainted
     assert allclose(proxy.get_data(), arrays[0], atol=0, rtol=0)
-    savegraph(graph, f"output/{testname}-0-again.png", show="all")
+    savegraph(graph, f"output/{test_name}-0-again.png", show="all")
 
     proxy.switch_input(0)
     assert not proxy.tainted
     assert allclose(proxy.get_data(), arrays[0], atol=0, rtol=0)
-    savegraph(graph, f"output/{testname}-0-again.png", show="all")
+    savegraph(graph, f"output/{test_name}-0-again.png", show="all")
 
 
 def test_Proxy_closed_graph_positional_input():

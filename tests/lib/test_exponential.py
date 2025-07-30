@@ -18,7 +18,7 @@ nodedict = dict(zip(fcnnames, nodes))
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("fcnname", fcnnames)
-def test_Exponential_01(testname, debug_graph, fcnname, dtype):
+def test_Exponential_01(test_name, debug_graph, fcnname, dtype):
     fcn_np = fcndict[fcnname]
     fcn_node = nodedict[fcnname]
 
@@ -54,4 +54,4 @@ def test_Exponential_01(testname, debug_graph, fcnname, dtype):
     plot_auto(node.outputs[2], label="input 2")
     close()
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")

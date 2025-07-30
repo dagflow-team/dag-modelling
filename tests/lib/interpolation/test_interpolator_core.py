@@ -18,7 +18,7 @@ from dag_modelling.plot.graphviz import savegraph
 @mark.parametrize("function", ("python", "numba"))
 def test_InterpolatorCore_linear_01(
     debug_graph,
-    testname: str,
+    test_name: str,
     k: float | int,
     b: float | int,
     fine_x_mode: (
@@ -81,10 +81,10 @@ def test_InterpolatorCore_linear_01(
         rtol=finfo("d").resolution * 2,
         atol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
-def test_InterpolatorCore_linear_02(debug_graph, testname):
+def test_InterpolatorCore_linear_02(debug_graph, test_name):
     seed(10)
 
     nc, nf = 20, 45
@@ -111,11 +111,11 @@ def test_InterpolatorCore_linear_02(debug_graph, testname):
         sin(fineX),
         atol=1e-4,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("shape", ((3, 15), (15, 3)))
-def test_InterpolatorCore_ndim(debug_graph, testname, shape):
+def test_InterpolatorCore_ndim(debug_graph, test_name, shape):
     seed(10)
 
     nc, nf = 20, 45
@@ -142,13 +142,13 @@ def test_InterpolatorCore_ndim(debug_graph, testname, shape):
         sin(fineX),
         atol=1e-4,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("k", (10.234, 0.578))
 @mark.parametrize("b", (15.432, 0.742))
 @mark.parametrize("fine_x_mode", ("other", "same"))
-def test_InterpolatorCore_log_01(debug_graph, testname, k, b, fine_x_mode):
+def test_InterpolatorCore_log_01(debug_graph, test_name, k, b, fine_x_mode):
     seed(10)
 
     nc, nf = 100, 251
@@ -184,13 +184,13 @@ def test_InterpolatorCore_log_01(debug_graph, testname, k, b, fine_x_mode):
         atol=finfo("d").resolution * 100,
         rtol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("k", (0.234, 1.578))
 @mark.parametrize("b", (1.432, 0.742))
 @mark.parametrize("fine_x_mode", ("other", "same"))
-def test_InterpolatorCore_logx_01(debug_graph, testname, k, b, fine_x_mode):
+def test_InterpolatorCore_logx_01(debug_graph, test_name, k, b, fine_x_mode):
     seed(10)
 
     nc, nf = 100, 251
@@ -226,13 +226,13 @@ def test_InterpolatorCore_logx_01(debug_graph, testname, k, b, fine_x_mode):
         atol=finfo("d").resolution * 100,
         rtol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("k", (0.234, 1.578))
 @mark.parametrize("b", (1.432, 0.742))
 @mark.parametrize("fine_x_mode", ("other", "same"))
-def test_InterpolatorCore_exp_01(debug_graph, testname, k, b, fine_x_mode):
+def test_InterpolatorCore_exp_01(debug_graph, test_name, k, b, fine_x_mode):
     seed(10)
 
     nc, nf = 100, 251
@@ -267,7 +267,7 @@ def test_InterpolatorCore_exp_01(debug_graph, testname, k, b, fine_x_mode):
         atol=finfo("d").resolution * 1e3,
         rtol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("k", (0.234, 1.578))
@@ -276,7 +276,7 @@ def test_InterpolatorCore_exp_01(debug_graph, testname, k, b, fine_x_mode):
 @mark.parametrize("fine_x_mode", ("other", "same"))
 @mark.parametrize("truncate_y", (False, True))
 def test_InterpolatorCore_lrn_01(
-    debug_graph, testname, k, b, method: str, fine_x_mode: str, truncate_y: bool
+    debug_graph, test_name, k, b, method: str, fine_x_mode: str, truncate_y: bool
 ):
     seed(10)
 
@@ -350,13 +350,13 @@ def test_InterpolatorCore_lrn_01(
         atol=0,
         rtol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("strategy", ("constant", "nearestedge"))
 @mark.parametrize("fillvalue", (0, 1))
 @mark.parametrize("k", (1.234, -0.578))
-def test_InterpolatorCore_extrapolation_strategy(debug_graph, testname, k, strategy, fillvalue):
+def test_InterpolatorCore_extrapolation_strategy(debug_graph, test_name, k, strategy, fillvalue):
     seed(10)
 
     b = 5.137
@@ -403,7 +403,7 @@ def test_InterpolatorCore_extrapolation_strategy(debug_graph, testname, k, strat
         atol=finfo("d").resolution * 5,
         rtol=0,
     )
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def test_InterpolatorCore_exception_01(debug_graph):

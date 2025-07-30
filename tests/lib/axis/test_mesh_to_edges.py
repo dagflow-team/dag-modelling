@@ -8,7 +8,7 @@ from dag_modelling.lib.common import Array
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_MeshToEdges_Center_01(testname, debug_graph, dtype):
+def test_MeshToEdges_Center_01(test_name, debug_graph, dtype):
     dtype = "d"
     array1 = linspace(0, 100, 26, dtype=dtype)
 
@@ -27,4 +27,4 @@ def test_MeshToEdges_Center_01(testname, debug_graph, dtype):
     assert allclose(centers_back, array1, rtol=0, atol=0)
     assert allclose(widths[0], widths, rtol=0, atol=0)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")

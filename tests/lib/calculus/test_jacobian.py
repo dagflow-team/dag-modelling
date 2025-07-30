@@ -12,7 +12,7 @@ from dag_modelling.parameters import GaussianParameter
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Jacobian_01(dtype, testname):
+def test_Jacobian_01(dtype, test_name):
     """
     Test of the identity Jacobian.
     y_i = a_i, so the Jacobian is [dy/da_i]_i = 1 and [dy/da_i]_j = 0 when j != i
@@ -82,11 +82,11 @@ def test_Jacobian_01(dtype, testname):
     assert jac.tainted is False
     assert jac2.tainted is False
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Jacobian_02(dtype, testname):
+def test_Jacobian_02(dtype, test_name):
     """
     Test of the linear function input.
     y = a x + b, so the Jacobian must be [dy/da, dy/db]_i = [x_i, 1]
@@ -134,11 +134,11 @@ def test_Jacobian_02(dtype, testname):
     assert allclose(res[:, 1], 1, atol=factors[dtype][1] * finfo(dtype).resolution, rtol=0)
     assert allclose(res[:, 0], x, atol=factors[dtype][0] * finfo(dtype).resolution, rtol=0)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Jacobian_03(dtype, testname):
+def test_Jacobian_03(dtype, test_name):
     """
     Test of the linear function input.
     y = a*a*x + b*x + c, so the Jacobian must be [dy/da, dy/db, dy/dc]_i = [2*a*x_i, x_i, 1]
@@ -206,4 +206,4 @@ def test_Jacobian_03(dtype, testname):
     jac2 = compute_jacobian(Y.outputs[0], pars, scale=scale)
     assert allclose(res, jac2, atol=0, rtol=0)
 
-    savegraph(graph, f"output/{testname}.png", show="full")
+    savegraph(graph, f"output/{test_name}.png", show="full")

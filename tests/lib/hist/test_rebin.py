@@ -25,7 +25,7 @@ def partial_sum(y_old: NDArray, stride: int) -> list:
 @mark.parametrize("mode", ("python", "numba"))
 @mark.parametrize("nclones", (0, 2))
 def test_Rebin(
-    testname: str, start: int, stride: int, dtype: str, mode: str, nclones: int
+    test_name: str, start: int, stride: int, dtype: str, mode: str, nclones: int
 ):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
@@ -105,10 +105,10 @@ def test_Rebin(
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend(fontsize="x-large")
-    plt.savefig(f"output/{testname}-plot.png")
+    plt.savefig(f"output/{test_name}-plot.png")
     plt.close()
 
-    savegraph(graph, f"output/{testname}-graph.png")
+    savegraph(graph, f"output/{test_name}-graph.png")
 
 
 @mark.parametrize(

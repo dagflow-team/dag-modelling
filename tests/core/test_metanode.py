@@ -9,7 +9,7 @@ from dag_modelling.lib.trigonometry import Cos, Sin
 from dag_modelling.core.meta_node import MetaNode
 
 
-def test_meta_node_strategy_leading_node(testname):
+def test_meta_node_strategy_leading_node(test_name):
     data1 = linspace(0, 1, 11, dtype="d") * pi
     data2 = linspace(1, 2, 11, dtype="d") * pi
     data3 = linspace(2, 3, 11, dtype="d") * pi
@@ -37,10 +37,10 @@ def test_meta_node_strategy_leading_node(testname):
     assert (res[1].data == cos(data2)).all()
     assert (res[2].data == cos(data3)).all()
     assert (res[3].data == cos(data4)).all()
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
-def test_meta_node_strategy_new_node(testname):
+def test_meta_node_strategy_new_node(test_name):
     data1 = linspace(0, 1, 11, dtype="d") * pi
     data2 = linspace(1, 2, 11, dtype="d") * pi
     data3 = linspace(2, 3, 11, dtype="d") * pi
@@ -68,7 +68,7 @@ def test_meta_node_strategy_new_node(testname):
     assert (res[0].outputs[0].data == cos(data1)).all()
     assert (res[1].outputs[0].data == cos(data2)).all()
     assert (res[2].outputs[0].data == sin(data3)).all()
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def test_meta_node_exceptions():

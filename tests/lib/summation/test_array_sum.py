@@ -8,7 +8,7 @@ from dag_modelling.lib.summation import ArraySum
 
 
 @mark.parametrize("a", (arange(12, dtype="d") * i for i in (1, 2, 3)))
-def test_ArraySum_01(testname, debug_graph, a):
+def test_ArraySum_01(test_name, debug_graph, a):
     a2 = a * (-1.1)
     array_res = a.sum()
     array2_res = a2.sum()
@@ -29,4 +29,4 @@ def test_ArraySum_01(testname, debug_graph, a):
     assert allclose(arraysum.get_data(1)[0], array2_res, rtol=0, atol=atol)
     assert arraysum.tainted is False
 
-    savegraph(graph, f"output/{testname}.png", show="all")
+    savegraph(graph, f"output/{test_name}.png", show="all")

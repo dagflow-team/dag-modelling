@@ -20,7 +20,7 @@ def test_AxisDistortionMatrixPointwise(
     inverse: bool,
     xoffset: float | int,
     yoffset: float | int,
-    testname: str,
+    test_name: str,
 ):
     nbins = 10
     edges = linspace(0, nbins, nbins + 1, dtype=dtype)
@@ -85,7 +85,7 @@ def test_AxisDistortionMatrixPointwise(
 
     # print(f"{x_left=} {x_right=} {y_bottom=} {y_top=}")
 
-    plt.savefig(f"output/{testname}-plot.pdf")
+    plt.savefig(f"output/{test_name}-plot.pdf")
 
     ressum = res.sum(axis=0)
     # print("Obtained matrix sum:\n", ressum)
@@ -149,7 +149,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
     xoffset: float | int,
     yoffset: float | int,
     poly_points: ArrayLike,
-    testname: str,
+    test_name: str,
 ):
     nbins = 10
     edges = linspace(0, nbins, nbins + 1, dtype=dtype)
@@ -198,7 +198,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
     add_colorbar(cmbl)
 
     ax.plot(x_fine, y_fine, "+-", color="magenta")
-    plt.savefig(f"output/{testname}-plot.pdf")
+    plt.savefig(f"output/{test_name}-plot.pdf")
 
     ressum = res.sum(axis=0)
     # print("Obtained matrix sum:\n", ressum)

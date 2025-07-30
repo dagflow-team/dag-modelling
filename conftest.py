@@ -58,7 +58,7 @@ def debug_graph(request):
 
 
 @fixture()
-def testname():
+def test_name():
     """Returns corrected full name of a test."""
     name = environ.get("PYTEST_CURRENT_TEST").split(":")[-1].split(" ")[0]
     name = name.replace("[", "_").replace("]", "")

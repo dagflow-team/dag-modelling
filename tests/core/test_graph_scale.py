@@ -76,7 +76,7 @@ def _report(t1, t2, nsums, datasize):
 
 
 @mark.skipif("--include-long-time-tests" not in argv, reason="long-time tests switched off")
-def test_graph_scale_01(testname, width: int = 6, length: int = 7):
+def test_graph_scale_01(test_name, width: int = 6, length: int = 7):
     datasize = 1
     nsums, g, input_arrays, head = _make_test_graph(datasize, width, length)
 
@@ -116,7 +116,7 @@ def test_graph_scale_01(testname, width: int = 6, length: int = 7):
 
     # from dag_modelling.plot.graphviz import GraphDot
     # d = GraphDot(g)
-    # ofile = f"output/{testname}.dot"
+    # ofile = f"output/{test_name}.dot"
     # d.savegraph(ofile)
     # print(f"Save graph: {ofile}")
 

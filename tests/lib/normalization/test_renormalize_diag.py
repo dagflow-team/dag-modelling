@@ -11,7 +11,7 @@ from dag_modelling.lib.normalization import RenormalizeDiag
 @mark.parametrize("mode", ("diag", "offdiag"))
 @mark.parametrize("ndiag", (1, 2, 3, 4))
 @mark.parametrize("scale", (2.0, 0.33))
-def test_RenormalizeDiag(testname, debug_graph, ndiag, dtype, mode, scale, debug=True):
+def test_RenormalizeDiag(test_name, debug_graph, ndiag, dtype, mode, scale, debug=True):
     size = 4
     matrix = arange(size**2, dtype=dtype).reshape(size, size)
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
@@ -58,6 +58,6 @@ def test_RenormalizeDiag(testname, debug_graph, ndiag, dtype, mode, scale, debug
         print(f"desired:\n{desired}")
     assert allclose(desired, actual, atol=atol, rtol=0)
 
-    ograph = f"output/{testname}.png"
+    ograph = f"output/{test_name}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph, show="all")

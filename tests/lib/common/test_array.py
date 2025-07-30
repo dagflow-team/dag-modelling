@@ -8,7 +8,7 @@ from dag_modelling.lib.common import Array
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Array_00(testname, debug_graph, dtype):
+def test_Array_00(test_name, debug_graph, dtype):
     array = arange(12.0, dtype=dtype).reshape(3, 4)
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arr1 = Array("array: store", array, mode="store")
@@ -46,7 +46,7 @@ def test_Array_00(testname, debug_graph, dtype):
     assert arr2.tainted == False
     assert arr3.tainted == False
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def test_Array_01_set():

@@ -13,7 +13,7 @@ from dag_modelling.lib.calculus.jacobian import compute_covariance_matrix
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("correlated", (False, True))
-def test_CovarianceMatrixGroup(dtype, correlated: bool, testname):
+def test_CovarianceMatrixGroup(dtype, correlated: bool, test_name):
     """
     Test CovarianceMatrixGroup on
     y = a*a*a*x + b*b*x + c*x + d
@@ -182,4 +182,4 @@ def test_CovarianceMatrixGroup(dtype, correlated: bool, testname):
     assert allclose(jac_CD, jac_check_CD, rtol=factors[dtype] * rtol)
 
     graph.touch()
-    savegraph(graph, f"output/{testname}.dot", show="full")
+    savegraph(graph, f"output/{test_name}.dot", show="full")

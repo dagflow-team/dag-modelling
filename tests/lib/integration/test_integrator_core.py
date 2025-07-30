@@ -13,7 +13,7 @@ from dag_modelling.plot.plot import plot_auto
 
 
 @mark.parametrize("align", ("left", "center", "right"))
-def test_IntegratorCore_rect_center(align, debug_graph, testname):
+def test_IntegratorCore_rect_center(align, debug_graph, test_name):
     with Graph(debug=debug_graph, close_on_exit=True) as graph:
         npoints = 10
         edges = Array("edges", linspace(0, pi, npoints + 1), mode="fill")
@@ -38,10 +38,10 @@ def test_IntegratorCore_rect_center(align, debug_graph, testname):
     integrator.touch()
     assert allclose(integrator.outputs[0].data, res, atol=1e-4)
     assert integrator.outputs[0].dd.axes_edges == [edges["array"]]
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
-def test_IntegratorCore_trap(debug_graph, testname):
+def test_IntegratorCore_trap(debug_graph, test_name):
     with Graph(debug=debug_graph, close_on_exit=True) as graph:
         npoints = 10
         edges = Array("edges", linspace(0, pi, npoints + 1), mode="fill")
@@ -63,7 +63,7 @@ def test_IntegratorCore_trap(debug_graph, testname):
     res = sinf.outputs[1].data - sinf.outputs[0].data
     assert allclose(ires, res, atol=1e-2)
     assert integrator.outputs[0].dd.axes_edges == [edges["array"]]
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def f0(x: float) -> float:
@@ -90,7 +90,7 @@ class PolynomialRes(OneToOneNode):
             outdata[:] = vecFres(indata)
 
 
-def test_IntegratorCore_gl1d(debug_graph, testname):
+def test_IntegratorCore_gl1d(debug_graph, test_name):
     with Graph(debug=debug_graph, close_on_exit=True) as graph:
         npoints = 10
         edges = Array("edges", linspace(0, 10, npoints + 1), mode="fill")
@@ -112,10 +112,10 @@ def test_IntegratorCore_gl1d(debug_graph, testname):
     res = polyres.outputs[1].data - polyres.outputs[0].data
     assert allclose(ires, res, atol=1e-10)
     assert integrator.outputs[0].dd.axes_edges == [edges["array"]]
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
-def test_IntegratorCore_gl2d(debug_graph, testname):
+def test_IntegratorCore_gl2d(debug_graph, test_name):
     class Polynomial1(ManyToOneNode):
         scale = 1.0
 
@@ -146,7 +146,7 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
         integrator = IntegratorCore(
             "integrator",
             label={
-                "plot_title": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {test_name}",
                 "axis": "integral",
             },
         )
@@ -207,11 +207,11 @@ def test_IntegratorCore_gl2d(debug_graph, testname):
     assert allclose(integrator.outputs[0].data, res * poly0.scale, atol=1e-10)
 
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("dropdim", (True, False))
-def test_IntegratorCore_gl2to1d_x(debug_graph, testname, dropdim):
+def test_IntegratorCore_gl2to1d_x(debug_graph, test_name, dropdim):
     class Polynomial21(ManyToOneNode):
         def _function(self):
             self.outputs["result"]._data[:] = vecF0(self.inputs[1].data) * vecF0(
@@ -241,7 +241,7 @@ def test_IntegratorCore_gl2to1d_x(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plot_title": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {test_name}",
                 "axis": "integral",
             },
         )
@@ -273,11 +273,11 @@ def test_IntegratorCore_gl2to1d_x(debug_graph, testname, dropdim):
     assert allclose(ires, res, atol=1e-10)
     assert integrator.outputs[0].dd.axes_edges == edges
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 @mark.parametrize("dropdim", (True, False))
-def test_IntegratorCore_gl2to1d_y(debug_graph, testname, dropdim):
+def test_IntegratorCore_gl2to1d_y(debug_graph, test_name, dropdim):
     class Polynomial21(ManyToOneNode):
         def _function(self):
             self.outputs["result"]._data[:] = vecF0(self.inputs[1].data) * vecF0(
@@ -303,7 +303,7 @@ def test_IntegratorCore_gl2to1d_y(debug_graph, testname, dropdim):
             "integrator",
             dropdim=dropdim,
             label={
-                "plot_title": f"IntegratorCore test: {testname}",
+                "plot_title": f"IntegratorCore test: {test_name}",
                 "axis": "integral",
             },
         )
@@ -335,7 +335,7 @@ def test_IntegratorCore_gl2to1d_y(debug_graph, testname, dropdim):
     assert allclose(ires, res, atol=1e-10)
     assert integrator.outputs[0].dd.axes_edges == edges
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"output/{test_name}.png")
 
 
 def test_IntegratorCore_orders_0(debug_graph):

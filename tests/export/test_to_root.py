@@ -8,7 +8,7 @@ from dag_modelling.core.storage import NodeStorage
 
 @mark.skip(reason="no way of currently testing this")
 @mark.parametrize('dtype', ('d', 'f',))
-def test_to_root(testname, debug_graph, dtype):
+def test_to_root(test_name, debug_graph, dtype):
     sizex = 12
     sizey = 10
     data = (arange(sizex, dtype=dtype)-6)**2
@@ -116,6 +116,6 @@ def test_to_root(testname, debug_graph, dtype):
     except ImportError:
         pass
     else:
-        storage('outputs').to_root(f'output/{testname}.root')
+        storage('outputs').to_root(f'output/{test_name}.root')
 
-    savegraph(graph, f"output/{testname}.pdf")
+    savegraph(graph, f"output/{test_name}.pdf")
