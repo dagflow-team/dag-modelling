@@ -146,7 +146,7 @@ class MonteCarlo(BlockToOneNode):
             return super().__new__(cls)
 
         subclass = cls._determine_subclass(mode)
-        return subclass(name, mode, *args, generator=generator, _baseclass=False, **kwargs)
+        return subclass(name, mode, *args, generator=generator, _baseclass=False, **kwargs)  # pyright: ignore [reportArgumentType]
 
     def __init__(
         self,

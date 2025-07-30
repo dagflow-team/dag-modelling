@@ -4,5 +4,5 @@ if TYPE_CHECKING:
     from .output import Output
 
 ShapeLike = tuple[int, ...]
-EdgesLike = tuple["Output", ...]
-MeshesLike = tuple["Output", ...]
+EdgesLike = tuple[Output, ...]
+MeshesLike = tuple[Output, ...]

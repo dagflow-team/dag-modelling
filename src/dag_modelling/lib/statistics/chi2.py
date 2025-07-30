@@ -160,7 +160,7 @@ class Chi2(ManyToOneNode):
         self._triplets_tuple = tuple(
             tuple(x)
             for x in zip(self._data_tuple, self._theory_tuple, self._errors_tuple)
-        )
+        )  # pyright: ignore [reportAttributeAccessIssue]
 
         # NOTE: buffer is needed only for 2d case
         if self._errors_tuple[0].ndim == 2:

@@ -110,10 +110,17 @@ class AxisDistortionMatrixPointwise(Node):
 
 
 @njit
-def _project_y_to_x_linear(y: float, x0: float, x1: float, y0: float, y1: float):
+def _project_y_to_x_linear(
+    y: float, x0: float, x1: float, y0: float, y1: float
+) -> float:
+    """Project Y to X linearly.
+
+    For the case of constant height the middle x is returned. Note:
+    review this decision in case of concerns.
+    """
     k = (y1 - y0) / (x1 - x0)
     if k == 0:
-        return (x0 + x1) * 0.5  # TODO: check
+        return (x0 + x1) * 0.5
 
     return (y - y0) / k + x0
 

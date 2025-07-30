@@ -85,12 +85,12 @@ class plot_auto:
 
         ndim = len(self._array.shape)
         if ndim == 1:
-            self._edges = self._edges[0] if self._edges else None
-            self._meshes = self._meshes[0] if self._meshes else None
+            _edges = self._edges[0].data if self._edges else None
+            _meshes = self._meshes[0].data if self._meshes else None
             self._ret = plot_array_1d(
                 self._array,
-                self._edges,
-                self._meshes,
+                _edges,
+                _meshes,
                 *args,
                 plotter=self,
                 **kwargs,
