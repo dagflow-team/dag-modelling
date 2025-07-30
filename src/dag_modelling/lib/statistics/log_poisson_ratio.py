@@ -10,8 +10,6 @@ from ..abstract import ManyToOneNode
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from ...core.node import Input, Output
-
 
 @njit(cache=True)
 def _log_poisson_ratio(
@@ -93,5 +91,8 @@ class LogPoissonRatio(ManyToOneNode):
         self._theory_tuple = tuple(self._input_data[1::2])  # input: 1
 
         self._pairs_tuple = tuple(
-            tuple(x) for x in zip(self._data_tuple, self._theory_tuple)
+            tuple(x)
+            for x in zip(
+                self._data_tuple, self._theory_tuple
+            )  # pyright: ignore [reportAttributeAccessIssue]
         )

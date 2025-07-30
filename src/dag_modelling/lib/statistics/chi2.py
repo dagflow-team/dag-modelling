@@ -21,8 +21,6 @@ from ..abstract import ManyToOneNode
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from ...core.node import Input, Output
-
 
 @njit(cache=True)
 def _chi2_1d_add(

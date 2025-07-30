@@ -15,6 +15,8 @@ from ...core.type_functions import (
 from ..abstract import BlockToOneNode
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from numpy import double
     from numpy.typing import NDArray
 
