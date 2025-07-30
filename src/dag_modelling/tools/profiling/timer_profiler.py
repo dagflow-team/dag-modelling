@@ -8,14 +8,14 @@ from numpy import empty, ndarray
 from numpy import sum as npsum
 from pandas import DataFrame, Series
 
-from dag_modelling.core.node import Node
+from ...core.node import Node
 
 from .profiler import Profiler
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from dag_modelling.core.node import Node
+    from ...core.node import Node
 
 
 # prefix `t_` - time notation

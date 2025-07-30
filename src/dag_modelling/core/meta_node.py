@@ -3,9 +3,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
-from dag_modelling.core.input_strategy import InheritInputStrategy, InputStrategyBase
-
 from .exception import CriticalError, InitializationError
+from .input_strategy import InheritInputStrategy, InputStrategyBase
 from .node_base import NodeBase
 
 if TYPE_CHECKING:
@@ -21,7 +20,8 @@ MetaNodeStrategiesType = Literal[MetaNodeStrategies]
 
 
 class MetaNode(NodeBase):
-    """A node containing multiple nodes and exposing part of their inputs and outputs"""
+    """A node containing multiple nodes and exposing part of their inputs and
+    outputs."""
 
     __slots__ = (
         "_nodes",
@@ -100,9 +100,7 @@ class MetaNode(NodeBase):
         meta_node_args: dict | None = None,
         new_node_cls: type[NodeBase] | None = None,
     ) -> Input | None:
-        """
-        Creates new node with positional input
-        """
+        """Creates new node with positional input."""
         if node_args is None:
             node_args = {}
         if input_args is None:
@@ -120,9 +118,7 @@ class MetaNode(NodeBase):
         return self._add_input_to_node(node, idx_input=ln, idx_output=ln, **input_args)
 
     def _call_leading_node(self, *args, **kwargs) -> Input | None:
-        """
-        Creates new node with positional input
-        """
+        """Creates new node with positional input."""
         if self.leading_node is None:
             raise CriticalError(
                 "Cannot create a new input: the leading node is unknown!", node=self
@@ -130,10 +126,10 @@ class MetaNode(NodeBase):
         return self._add_input_to_node(self.leading_node, *args, **kwargs)
 
     def _call_disabled(self, *args, **kwargs) -> Input | None:
-        """
-        Prevents creation of new nodes
-        """
-        raise CriticalError("Cannot create a new input: the node is not scalable!", node=self)
+        """Prevents creation of new nodes."""
+        raise CriticalError(
+            "Cannot create a new input: the node is not scalable!", node=self
+        )
 
     def __call__(
         self,
@@ -160,7 +156,8 @@ class MetaNode(NodeBase):
             if isinstance(name, str):
                 return self._add_input_to_node(node, name=name, *args, **kwargs)
             return tuple(
-                self._add_input_to_node(node, name=_name, *args, **kwargs) for _name in name
+                self._add_input_to_node(node, name=_name, *args, **kwargs)
+                for _name in name
             )
         names = [name] * len(self._nodes) if isinstance(name, str) else name
         return tuple(
@@ -197,7 +194,9 @@ class MetaNode(NodeBase):
             self._import_pos_outputs(node, namefmt=outputs_pos_fmt)
         self._import_kw_inputs(node, kw_inputs, merge=merge_inputs)
         if kw_inputs_optional:
-            self._import_kw_inputs(node, kw_inputs_optional, merge=merge_inputs, optional=True)
+            self._import_kw_inputs(
+                node, kw_inputs_optional, merge=merge_inputs, optional=True
+            )
         self._import_kw_outputs(node, kw_outputs)
         if kw_outputs_optional:
             self._import_kw_outputs(node, kw_outputs_optional, optional=True)

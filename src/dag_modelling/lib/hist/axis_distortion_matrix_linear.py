@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import allclose
 
-from dag_modelling.core.node import Node
-from dag_modelling.core.type_functions import (
+from ...core.node import Node
+from ...core.type_functions import (
     check_dimension_of_inputs,
     check_inputs_have_same_dtype,
     check_inputs_have_same_shape,
@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from dag_modelling.core.input import Input
-    from dag_modelling.core.output import Output
+    from ...core.input import Input
+    from ...core.output import Output
 
 
 class AxisDistortionMatrixLinear(Node):

@@ -6,7 +6,7 @@ from typing import Literal
 from numpy import sum as npsum
 from pandas import DataFrame, Series
 
-from dag_modelling.core.node import Node
+from ...core.node import Node
 
 from .timer_profiler import TimerProfiler
 

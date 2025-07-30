@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from pandas.api.typing import DataFrameGroupBy
 
-    from dag_modelling.core.node import Node
+    from ...core.node import Node
 
 
 class Profiler(metaclass=ABCMeta):

@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from dag_modelling.core.node import Node
-from dag_modelling.core.type_functions import (
+from ...core.node import Node
+from ...core.type_functions import (
     AllPositionals,
     assign_axes_from_inputs_to_outputs,
     check_dimension_of_inputs,
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from numpy import double
     from numpy.typing import NDArray
 
-    from dag_modelling.core.input import Input
-    from dag_modelling.core.output import Output
+    from ...core.input import Input
+    from ...core.output import Output
 
 
 @njit(cache=True)

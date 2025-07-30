@@ -21,7 +21,7 @@ from ..abstract import ManyToOneNode
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from dag_modelling.core.node import Input, Output
+    from ...core.node import Input, Output
 
 
 @njit(cache=True)

@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dag_modelling.core.exception import ConnectionError
-from dag_modelling.core.meta_node import MetaNode
-from dag_modelling.core.storage import NodeStorage
-from dag_modelling.lib.axis.bin_center import BinCenter
-from dag_modelling.lib.hist.hist_smear_normal_matrix_b_c import HistSmearNormalMatrixBC
-from dag_modelling.lib.physics.energy_resolution_sigma_rel_a_b_c import (
+from ...core.exception import ConnectionError
+from ...core.meta_node import MetaNode
+from ...core.storage import NodeStorage
+from ..axis.bin_center import BinCenter
+from ..hist.hist_smear_normal_matrix_b_c import HistSmearNormalMatrixBC
+from ..physics.energy_resolution_sigma_rel_a_b_c import (
     EnergyResolutionSigmaRelABC,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from multikeydict.typing import KeyLike
+    from nested_mapping.typing import KeyLike
 
-    from dag_modelling.core.node import Node
+    from ...core.node import Node
 
 
 class EnergyResolution(MetaNode):

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 from weakref import ref as weakref
 
-from dag_modelling.core.input_strategy import InputStrategyBase
 from nested_mapping.typing import KeyLike, properkey
 
 from ..core.labels import Labels
@@ -21,6 +20,7 @@ from .exception import (
 from .flags_descriptor import FlagsDescriptor
 from .graph import Graph
 from .input import Input
+from .input_strategy import InputStrategyBase
 from .iter import IsIterable
 from .node_base import NodeBase
 from .output import Output
@@ -104,7 +104,9 @@ class Node(NodeBase):
         if isinstance(logger, Logger):
             self._logger = logger
         elif logger is not None:
-            raise InitializationError(f"Cannot initialize a node with logger={logger}", node=self)
+            raise InitializationError(
+                f"Cannot initialize a node with logger={logger}", node=self
+            )
         elif self.graph is not None:
             self._logger = self.graph.logger
         else:
@@ -155,7 +157,9 @@ class Node(NodeBase):
         outputs = storage("outputs")
 
         if not replicate_outputs:
-            raise RuntimeError("`replicate_outputs` tuple should have at least one item")
+            raise RuntimeError(
+                "`replicate_outputs` tuple should have at least one item"
+            )
 
         tuplename = (name,)
         for key in replicate_outputs:
@@ -301,16 +305,17 @@ class Node(NodeBase):
     # Methods
     #
     def __call__(self, name: str | None = None, *args, **kwargs) -> Input | None:
-        """
-        Returns an existing input by `name`, else try to create new one.
-        If `name` is given, creates an input by the default way,
-        otherwise tries to use `input_strategy`.
-        If `name` is not given simply uses the input handler.
+        """Returns an existing input by `name`, else try to create new one. If
+        `name` is given, creates an input by the default way, otherwise tries
+        to use `input_strategy`. If `name` is not given simply uses the input
+        handler.
 
         .. note:: creation of a new input is restricted for a *closed* graph
         """
         if name is None:
-            self.logger.debug(f"Node '{self.name}': Try to create an input with `input_strategy`")
+            self.logger.debug(
+                f"Node '{self.name}': Try to create an input with `input_strategy`"
+            )
             if not self.closed:
                 return self._make_input(*args, **kwargs)
             raise ClosedGraphError(node=self)
@@ -325,9 +330,7 @@ class Node(NodeBase):
         return inp
 
     def _make_input(self, *args, exception=True, **kwargs) -> Input | None:
-        """
-        Creates a single input via an input handler
-        """
+        """Creates a single input via an input handler."""
         try:
             return self.input_strategy(*args, **kwargs)
         except Exception as exc:
@@ -338,8 +341,7 @@ class Node(NodeBase):
             return None
 
     def add_input(self, name: str, **kwargs) -> Input:
-        """
-        Creates a single input with name, if the graph is not closed.
+        """Creates a single input with name, if the graph is not closed.
 
         If the node has `allowed_kw_inputs` checks whether the name in the `allowed_kw_inputs`
         and then directly creates a new input.
@@ -363,8 +365,7 @@ class Node(NodeBase):
         return inp
 
     def _add_inputs(self, name: Sequence[str], **kwargs) -> tuple[Input, ...]:
-        """
-        Creates a sequence of inputs
+        """Creates a sequence of inputs.
 
         .. note:: there is no check whether the graph is closed or not.
         """
@@ -383,8 +384,7 @@ class Node(NodeBase):
         keyword: bool = True,
         **kwargs,
     ) -> Input:
-        """
-        Creates a new single input if there is no input with `name`.
+        """Creates a new single input if there is no input with `name`.
 
         .. note:: there is no check whether the graph is closed or not.
         """
@@ -404,7 +404,8 @@ class Node(NodeBase):
         positional: bool = True,
         **kwargs,
     ) -> Output:
-        """Creates a new single output if there is no output with `name` and the graph is not closed"""
+        """Creates a new single output if there is no output with `name` and
+        the graph is not closed."""
         if self.closed:
             raise ClosedGraphError(node=self)
         return self._add_output(name, keyword=keyword, positional=positional, **kwargs)
@@ -417,8 +418,7 @@ class Node(NodeBase):
         positional: bool = True,
         **kwargs,
     ) -> Output:
-        """
-        Creates a new single output if there is no output with `name`.
+        """Creates a new single output if there is no output with `name`.
 
         .. note:: there is no check whether the graph is closed or not.
         """
@@ -431,8 +431,7 @@ class Node(NodeBase):
         return out
 
     def _add_outputs(self, name: Sequence[str], **kwargs) -> tuple[Output, ...]:
-        """
-        Creates a sequence of outputs
+        """Creates a sequence of outputs.
 
         .. note:: there is no check whether the graph is closed or not.
         """
@@ -446,9 +445,7 @@ class Node(NodeBase):
     def add_pair(
         self, iname: str, oname: str, **kwargs
     ) -> tuple[Input | tuple[Input, ...], Output | tuple[Output, ...]]:
-        """
-        Creates a pair of input and output
-        """
+        """Creates a pair of input and output."""
         if self.closed:
             raise ClosedGraphError(node=self)
         return self._add_pair(iname, oname, **kwargs)
@@ -460,8 +457,7 @@ class Node(NodeBase):
         input_kws: dict | None = None,
         output_kws: dict | None = None,
     ) -> tuple[list[Input], list[Output]]:
-        """
-        Creates sequence of pairs of input and output
+        """Creates sequence of pairs of input and output.
 
         .. note:: the inputs and outputs count must be the same
         """
@@ -487,8 +483,7 @@ class Node(NodeBase):
         input_kws: dict | None = None,
         output_kws: dict | None = None,
     ) -> tuple[Input | tuple[Input, ...], Output | tuple[Output, ...]]:
-        """
-        Creates a pair of input and output
+        """Creates a pair of input and output.
 
         .. note:: there is no check whether the graph is closed or not.
         """
@@ -579,7 +574,9 @@ class Node(NodeBase):
         self.fd.taint_type(force_taint=force_taint)
 
     def print(self):
-        print(f"Node {self._name}: →[{self.inputs.len_all()}],[{self.outputs.len_all()}]→")
+        print(
+            f"Node {self._name}: →[{self.inputs.len_all()}],[{self.outputs.len_all()}]→"
+        )
         for i, _input in enumerate(self.inputs):
             print("  ", i, _input)
         for _input in self.inputs.iter_nonpos():
@@ -595,7 +592,7 @@ class Node(NodeBase):
         }
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         raise DagModellingError("Unimplemented method: the method must be overridden!")
 
     def _post_allocate(self):
@@ -613,7 +610,9 @@ class Node(NodeBase):
         # TODO: causes problems with nodes, that are allocated and closed prior the graph being closed
         # Need a mechanism to request reallocation
         if update_parents:
-            self.logger.debug(f"Node '{self.name}': Trigger update_parents update types...")
+            self.logger.debug(
+                f"Node '{self.name}': Trigger update_parents update types..."
+            )
             for input in self.inputs.iter_all():
                 if not input.connected():
                     raise ClosingError("Input is not connected", node=self, input=input)
@@ -627,12 +626,16 @@ class Node(NodeBase):
         if self._fd.allocated and not self._fd.needs_reallocation:
             return True
         if allocate_parents:
-            self.logger.debug(f"Node '{self.name}': Trigger allocate_parents memory allocation...")
+            self.logger.debug(
+                f"Node '{self.name}': Trigger allocate_parents memory allocation..."
+            )
             for _input in self.inputs.iter_all():
                 try:
                     parent_node = _input.parent_node
                 except AttributeError as exc:
-                    raise ClosingError("Parent node is not initialized", input=_input) from exc
+                    raise ClosingError(
+                        "Parent node is not initialized", input=_input
+                    ) from exc
                 if not parent_node.allocate(allocate_parents):
                     return False
         self.logger.debug(f"Node '{self.name}': Allocate memory on inputs")
@@ -689,22 +692,21 @@ class Node(NodeBase):
                 for input in output.child_inputs:
                     input.node.close(close_children=True, strict=strict)
 
-        self.logger.debug(f"Node '{self.name}': {self.closed and 'closed' or 'failed to close'}")
+        self.logger.debug(
+            f"Node '{self.name}': {self.closed and 'closed' or 'failed to close'}"
+        )
         return self.closed
 
-    def open(
-        self,
-        *,
-        open_children: bool = False,
-        force_taint: bool = False
-    ) -> bool:
+    def open(self, *, open_children: bool = False, force_taint: bool = False) -> bool:
         if not self.closed and not force_taint:
             return True
         self.logger.debug(f"Node '{self.name}': Open")
         if open_children:
             for output in self.outputs:
                 for _input in output.child_inputs:
-                    if not _input.node.open(force_taint=force_taint, open_children=open_children):
+                    if not _input.node.open(
+                        force_taint=force_taint, open_children=open_children
+                    ):
                         raise OpeningError(node=self, output=output)
         self.unfreeze()
         self.taint()

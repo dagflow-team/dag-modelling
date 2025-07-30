@@ -3,12 +3,12 @@ from __future__ import annotations
 from time import sleep
 from typing import TYPE_CHECKING
 
-from dag_modelling.core.exception import InitializationError
-from dag_modelling.core.input_strategy import AddNewInput
-from dag_modelling.core.node import Node
+from ...core.exception import InitializationError
+from ...core.input_strategy import AddNewInput
+from ...core.node import Node
 
 if TYPE_CHECKING:
-    from dag_modelling.core.output import Output
+    from ...core.output import Output
 
 
 class DelayNode(Node):

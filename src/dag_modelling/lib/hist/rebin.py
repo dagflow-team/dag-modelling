@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dag_modelling.core.exception import ConnectionError
-from dag_modelling.core.meta_node import MetaNode
-from dag_modelling.core.storage import NodeStorage
-from dag_modelling.lib.hist.rebin_matrix import RebinMatrix
-from dag_modelling.lib.linalg import VectorMatrixProduct
+from ...core.exception import ConnectionError
+from ...core.meta_node import MetaNode
+from ...core.storage import NodeStorage
+from ..hist.rebin_matrix import RebinMatrix
+from ..linalg import VectorMatrixProduct
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from dgf_detector.RebinMatrix import RebinModesType
-    from multikeydict.typing import KeyLike
+    from .rebin_matrix import RebinModesType
+    from nested_mapping.typing import KeyLike
 
-    from dag_modelling.core.node import Node
+    from ...core.node import Node
 
 
 class Rebin(MetaNode):

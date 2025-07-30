@@ -6,9 +6,9 @@ from pandas import DataFrame
 
 if TYPE_CHECKING:
     from collections.abc import Sequence, Callable
-    from dag_modelling.core.node import Node
-    from dag_modelling.core.input import Input
-    from dag_modelling.core.output import Output
+    from ...core.node import Node
+    from ...core.input import Input
+    from ...core.output import Output
 
 from .profiler import Profiler
 

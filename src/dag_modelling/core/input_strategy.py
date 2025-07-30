@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dag_modelling.core.exception import InitializationError
-
 from ..tools.formatter import Formattable, LimbNameFormatter, SimpleLimbNameFormatter
+from .exception import InitializationError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -15,7 +14,8 @@ if TYPE_CHECKING:
 
 
 class InputStrategyBase:
-    """The base class for a behaviour when output is connecting to the node with missing input via >>/<<"""
+    """The base class for a behaviour when output is connecting to the node
+    with missing input via >>/<<"""
 
     __slots__ = ("_node", "_idx_scope")
 
@@ -54,7 +54,7 @@ class InputStrategyBase:
 
 
 class AddNewInput(InputStrategyBase):
-    """Adds an input for each output in >> operator"""
+    """Adds an input for each output in >> operator."""
 
     __slots__ = ("input_fmt", "input_kws", "output_fmt", "output_kws")
 
@@ -105,8 +105,8 @@ class AddNewInput(InputStrategyBase):
 
 
 class AddNewInputAddNewOutput(AddNewInput):
-    """
-    Adds an input for each output in >> operator.
+    """Adds an input for each output in >> operator.
+
     Adds an output for each new input.
     """
 
@@ -120,13 +120,17 @@ class AddNewInputAddNewOutput(AddNewInput):
             idx_output = len(self.node.outputs)
         if idx_scope is None:
             idx_scope = self.idx_scope
-        out = self.node._add_output(self.output_fmt.format(idx_output), **self.output_kws)
-        return super().__call__(idx_input, child_output=out, idx_scope=idx_scope, **kwargs)
+        out = self.node._add_output(
+            self.output_fmt.format(idx_output), **self.output_kws
+        )
+        return super().__call__(
+            idx_input, child_output=out, idx_scope=idx_scope, **kwargs
+        )
 
 
 class AddNewInputAddAndKeepSingleOutput(AddNewInput):
-    """
-    Adds an input for each output in >> operator.
+    """Adds an input for each output in >> operator.
+
     Adds only one output if needed.
     """
 
@@ -134,15 +138,21 @@ class AddNewInputAddAndKeepSingleOutput(AddNewInput):
 
     add_child_output: bool
 
-    def __init__(self, node: NodeBase | None = None, *, add_child_output: bool = False, **kwargs):
+    def __init__(
+        self, node: NodeBase | None = None, *, add_child_output: bool = False, **kwargs
+    ):
         super().__init__(node, **kwargs)
         self.add_child_output = add_child_output
 
     def __call__(self, idx_input=None, idx_scope=None, idx_output=None, **kwargs):
         if idx_output is not None:
-            out = self.node._add_output(self.output_fmt.format(idx_output), **self.output_kws)
+            out = self.node._add_output(
+                self.output_fmt.format(idx_output), **self.output_kws
+            )
         elif (idx_output := len(self.node.outputs)) == 0:
-            out = self.node._add_output(self.output_fmt.format(idx_output), **self.output_kws)
+            out = self.node._add_output(
+                self.output_fmt.format(idx_output), **self.output_kws
+            )
         else:
             out = self.node.outputs[-1]
         if idx_scope is None:
@@ -153,8 +163,8 @@ class AddNewInputAddAndKeepSingleOutput(AddNewInput):
 
 
 class AddNewInputAddNewOutputForBlock(AddNewInput):
-    """
-    Adds an input for each block of outputs (for each >> operator).
+    """Adds an input for each block of outputs (for each >> operator).
+
     Adds an output for each block of outputs (for each >> operator).
     """
 
@@ -162,7 +172,9 @@ class AddNewInputAddNewOutputForBlock(AddNewInput):
 
     add_child_output: bool
 
-    def __init__(self, node: NodeBase | None = None, *, add_child_output=False, **kwargs):
+    def __init__(
+        self, node: NodeBase | None = None, *, add_child_output=False, **kwargs
+    ):
         super().__init__(node, **kwargs)
         self.add_child_output = add_child_output
 
@@ -187,8 +199,8 @@ class AddNewInputAddNewOutputForBlock(AddNewInput):
 
 
 class AddNewInputAddNewOutputForNInputs(AddNewInput):
-    """
-    Adds an input for each output in >> operator.
+    """Adds an input for each output in >> operator.
+
     Adds an output for each N inputs.
     """
 
@@ -209,7 +221,9 @@ class AddNewInputAddNewOutputForNInputs(AddNewInput):
         super().__init__(node, **kwargs)
         self.n = n
         if not isinstance(n, int) or n < 1:
-            raise InitializationError(f"'n' must be int > 0, but given {n=}, {type(n)=}!")
+            raise InitializationError(
+                f"'n' must be int > 0, but given {n=}, {type(n)=}!"
+            )
         self.starts_from_0 = starts_from_0
         self._idx_scope = 0
         self.add_child_output = add_child_output
@@ -233,9 +247,11 @@ class AddNewInputAddNewOutputForNInputs(AddNewInput):
 
 
 class InputStrategyViewConcat(InputStrategyBase):
-    """Special strategy for `ViewConcat` node"""
+    """Special strategy for `ViewConcat` node."""
 
-    def __call__(self, idx_input: int | None = None, idx_scope: int | None = None) -> Input:
+    def __call__(
+        self, idx_input: int | None = None, idx_scope: int | None = None
+    ) -> Input:
         if idx_input is None:
             idx_input = len(self.node.inputs)
         return self.node._add_input(
@@ -244,8 +260,9 @@ class InputStrategyViewConcat(InputStrategyBase):
 
 
 class InheritInputStrategy(InputStrategyBase):
-    """
-    Inherit an input strategy from the source node. It is a special strategy for `MetaNode`.
+    """Inherit an input strategy from the source node.
+
+    It is a special strategy for `MetaNode`.
     """
 
     __slots__ = ("_source_node", "_target_node", "_source_handler", "_inherit_outputs")
@@ -269,7 +286,9 @@ class InheritInputStrategy(InputStrategyBase):
         try:
             self._source_handler = source_node._input_strategy
         except AttributeError as exc:
-            raise RuntimeError(f"Node {source_node!s} has no missing input handler") from exc
+            raise RuntimeError(
+                f"Node {source_node!s} has no missing input handler"
+            ) from exc
 
     def __call__(self, *args, **kwargs):
         newinput = self._source_handler(*args, **kwargs)

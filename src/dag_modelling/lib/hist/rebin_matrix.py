@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Literal
 from numba import njit
 from numpy import allclose, finfo, isclose
 
-from dag_modelling.core.exception import InitializationError
-from dag_modelling.core.input_strategy import AddNewInput
-from dag_modelling.core.node import Node
-from dag_modelling.core.type_functions import (
+from ...core.exception import InitializationError
+from ...core.input_strategy import AddNewInput
+from ...core.node import Node
+from ...core.type_functions import (
     AllPositionals,
     assign_edges_from_inputs_to_outputs,
     check_dimension_of_inputs,
@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from dag_modelling.core.input import Input
-    from dag_modelling.core.output import Output
+    from ...core.input import Input
+    from ...core.output import Output
 
 
 RebinModes = {"python", "numba"}
