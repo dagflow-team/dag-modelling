@@ -12,9 +12,7 @@ tests:
     - source venv/bin/activate
     - pip install --upgrade wheel setuptools pip
     - pip install cython
-    # nested-dict is yet in testing
-    - pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple -e ".[dev]"
-    # - pip install -e ".[dev]"
+    - pip install -e ".[test]"
     - coverage run --source=. -m pytest --include-long-time-tests
     - coverage report
     - coverage xml
