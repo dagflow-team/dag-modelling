@@ -9,7 +9,7 @@ from dag_modelling.parameters import GaussianParameters, Parameter
 
 
 @mark.parametrize("mode", ("single", "uncorr", "cov", "cov1d"))
-def test_parameters_00(mode) -> None:
+def test_parameters_00(mode, output_path: str) -> None:
     names = list("abc")
     value_in = [1.1, 1.8, 5.0]
     central_in = [1.0, 2.0, 3.0]
@@ -76,7 +76,7 @@ def test_parameters_00(mode) -> None:
     try:
         graph.close()
     except CriticalError as error:
-        savegraph(graph, f"output/test_parameters_00_{mode}.png")
+        savegraph(graph, f"{output_path}/test_parameters_00_{mode}.png")
         raise error
 
     value_out0 = gp.value.data.copy()
@@ -96,8 +96,8 @@ def test_parameters_00(mode) -> None:
     assert allclose(value_in, value_out2, atol=0, rtol=0)
     assert allclose(normvalue_out2, normvalue_out0, atol=0, rtol=0)
 
-    savegraph(graph, f"output/test_parameters_00_{mode}.png", show=["all"])
-    savegraph(graph, f"output/test_parameters_00_{mode}.pdf", show=["all"])
+    savegraph(graph, f"{output_path}/test_parameters_00_{mode}.png", show=["all"])
+    savegraph(graph, f"{output_path}/test_parameters_00_{mode}.pdf", show=["all"])
 
 
 def test_parameters_01():

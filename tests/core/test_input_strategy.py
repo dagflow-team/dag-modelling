@@ -16,7 +16,7 @@ from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("strategy", (None, InputStrategyBase))
-def test_InputStrategyBase(strategy, test_name):
+def test_InputStrategyBase(strategy, test_name, output_path: str):
     """Test default strategy: fail on connect"""
     with Graph() as graph:
         nodes = [Dummy(f"n{i}") for i in range(4)]
@@ -34,10 +34,10 @@ def test_InputStrategyBase(strategy, test_name):
         nodes[0].outputs[0] >> s
     with raises(RuntimeError):
         (node.outputs[0] for node in nodes[:-1]) >> s
-    savegraph(graph, f"output/{test_name}.pdf", label="Fail on connect")
+    savegraph(graph, f"{output_path}/{test_name}.pdf", label="Fail on connect")
 
 
-def test_AddNewInput(test_name):
+def test_AddNewInput(test_name, output_path: str):
     """Test AddNewInput strategy: add new input on each new connect"""
     with Graph() as graph:
         nodes = [Dummy(f"n{i}") for i in range(4)]
@@ -57,10 +57,10 @@ def test_AddNewInput(test_name):
     s.print()
     graph.close()
 
-    savegraph(graph, f"output/{test_name}.pdf", label="Add only inputs")
+    savegraph(graph, f"{output_path}/{test_name}.pdf", label="Add only inputs")
 
 
-def test_AddNewInputAddNewOutput(test_name):
+def test_AddNewInputAddNewOutput(test_name, output_path: str):
     """
     Test AddNewInputAddNewOutput strategy: add new input on each new connect
     and connect them as inputs to another input
@@ -88,13 +88,13 @@ def test_AddNewInputAddNewOutput(test_name):
 
     savegraph(
         graph,
-        f"output/{test_name}.pdf",
+        f"{output_path}/{test_name}.pdf",
         label="Add inputs and an output for each input",
     )
 
 
 @mark.parametrize("child_output", (False, True))
-def test_AddNewInputAddAndKeepSingleOutput(test_name, child_output):
+def test_AddNewInputAddAndKeepSingleOutput(test_name, child_output, output_path: str):
     """
     Test AddNewInputAddAndKeepSingleOutput strategy: add new input on each new connect and
     add an output if needed
@@ -127,14 +127,14 @@ def test_AddNewInputAddAndKeepSingleOutput(test_name, child_output):
 
     savegraph(
         graph,
-        f"output/{test_name}.pdf",
+        f"{output_path}/{test_name}.pdf",
         label="Add only inputs and only one output",
     )
 
 
 @mark.parametrize("n_blocks", (1, 2, 3, 4))
 @mark.parametrize("child_output", (False, True))
-def test_AddNewInputAddNewOutputForBlock(test_name, child_output, n_blocks):
+def test_AddNewInputAddNewOutputForBlock(test_name, child_output, n_blocks, output_path: str):
     """
     Test AddNewInputAddNewOutputForBlock strategy: add new input on each new connect and
     add an output for each >> group
@@ -196,7 +196,7 @@ def test_AddNewInputAddNewOutputForBlock(test_name, child_output, n_blocks):
 
     savegraph(
         graph,
-        f"output/{test_name}.pdf",
+        f"{output_path}/{test_name}.pdf",
         label="Add inputs and an output for each block",
     )
 
@@ -204,7 +204,7 @@ def test_AddNewInputAddNewOutputForBlock(test_name, child_output, n_blocks):
 @mark.parametrize("n_inp", (1, 2, 4))
 @mark.parametrize("child_output", (False, True))
 @mark.parametrize("starts_from_0", (False, True))
-def test_AddNewInputAddNewOutputForNInputs(test_name, child_output, n_inp, starts_from_0):
+def test_AddNewInputAddNewOutputForNInputs(test_name, child_output, n_inp, starts_from_0, output_path: str):
     """
     Test AddNewInputAddNewOutputForNInputs strategy: add new input on each new connect and
     add an output for each n inputs in >> operator
@@ -256,6 +256,6 @@ def test_AddNewInputAddNewOutputForNInputs(test_name, child_output, n_inp, start
 
     savegraph(
         graph,
-        f"output/{test_name}.pdf",
+        f"{output_path}/{test_name}.pdf",
         label="Add inputs and an output for each block",
     )

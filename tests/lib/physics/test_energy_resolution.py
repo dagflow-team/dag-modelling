@@ -21,7 +21,7 @@ parnames = ("a_nonuniform", "b_stat", "c_noise")
         [[6.025, 7.025, 8.025, 8.825]],
     ],
 )
-def test_HistSmearNormalMatrixBC_v01(input_binning, debug_graph, Energy_set, test_name):
+def test_HistSmearNormalMatrixBC_v01(input_binning, debug_graph, Energy_set, test_name, output_path: str):
     def singularities(values, Edges):
         indices = digitize(values, Edges) - 1
         phist = zeros(Edges.size - 1)
@@ -57,7 +57,7 @@ def test_HistSmearNormalMatrixBC_v01(input_binning, debug_graph, Energy_set, tes
             edges >> eres.inputs["Edges"]
             edges >> eres.inputs["EdgesOut"]
             ereses.append(eres)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
     for i, eres in enumerate(ereses):
         centers_in = eres.outputs["Energy"].data
@@ -74,7 +74,7 @@ def test_HistSmearNormalMatrixBC_v01(input_binning, debug_graph, Energy_set, tes
         plt.grid()
         plt.plot(centers_in, mat.data @ centers_in, "+")
         plt.xlabel("Energy")
-        plt.savefig(f"output/{test_name}_{i}.png")
+        plt.savefig(f"{output_path}/{test_name}_{i}.png")
         plt.close()
 
 

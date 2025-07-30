@@ -8,7 +8,7 @@ from dag_modelling.lib.statistics import LogPoissonRatio
 from dag_modelling.plot.graphviz import savegraph
 
 
-def test_LogPoissonRatio_01(debug_graph, test_name):
+def test_LogPoissonRatio_01(debug_graph, test_name, output_path: str):
     n = 10
     start = 10
     offset = 1.0
@@ -25,4 +25,4 @@ def test_LogPoissonRatio_01(debug_graph, test_name):
     truth = 2.0 * ((theoryArr - dataArr) + dataArr * log(dataArr / theoryArr)).sum()
     assert allclose(res, truth, atol=0, rtol=0)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

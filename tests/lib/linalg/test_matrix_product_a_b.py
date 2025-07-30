@@ -10,7 +10,7 @@ from dag_modelling.lib.linalg import MatrixProductAB
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("diag_left", (False, True))
 @mark.parametrize("diag_right", (False, True))
-def test_MatrixProductAB(dtype: str, diag_left: bool, diag_right: bool):
+def test_MatrixProductAB(dtype: str, diag_left: bool, diag_right: bool, output_path: str):
     size = 3
     left = (in_left := arange(1, size * (size + 1) + 1, dtype=dtype).reshape(size + 1, size))
     right = (in_right := arange(1, size * (size + 1) + 1, dtype=dtype).reshape(size, size + 1))
@@ -40,6 +40,6 @@ def test_MatrixProductAB(dtype: str, diag_left: bool, diag_right: bool):
 
     sleft = diag_left and "diag" or "block"
     sright = diag_right and "diag" or "block"
-    ograph = f"output/test_MatrixProductAB_{dtype}_{sleft}_{sright}.png"
+    ograph = f"{output_path}/test_MatrixProductAB_{dtype}_{sleft}_{sright}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph)

@@ -18,7 +18,7 @@ nodedict = dict(zip(fcnnames, nodes))
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("fcnname", fcnnames)
-def test_Trigonometry_01(test_name, debug_graph, fcnname, dtype):
+def test_Trigonometry_01(test_name, debug_graph, fcnname, dtype, output_path: str):
     fcn_np = fcndict[fcnname]
     fcn_node = nodedict[fcnname]
 
@@ -50,4 +50,4 @@ def test_Trigonometry_01(test_name, debug_graph, fcnname, dtype):
     plot_auto(node.outputs[2], label="input 2")
     close()
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

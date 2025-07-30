@@ -31,7 +31,7 @@ from dag_modelling.core.type_functions import (
         ([[[1], [2]], [[3], [4]], [[5], [6]]], 3, (3, 2, 1), "float64"),
     ),
 )
-def test_check_input_common(test_name, debug_graph, data, dim, shape, dtype):
+def test_check_input_common(test_name, debug_graph, data, dim, shape, dtype, output_path: str):
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         arr1 = Array("arr1", array(data, dtype=dtype), mode="fill")
         node = Dummy(
@@ -49,11 +49,11 @@ def test_check_input_common(test_name, debug_graph, data, dim, shape, dtype):
         check_shape_of_inputs(node, 0, (1,))
     with raises(TypeFunctionError):
         check_dtype_of_inputs(node, 0, dtype=object)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("data", ([0, 1, 2], [1], [[1, 2], [1, 2, 3]], [[[], [], []]]))
-def test_check_inputs_are_square_matrices_00(test_name, debug_graph, data):
+def test_check_inputs_are_square_matrices_00(test_name, debug_graph, data, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array(data, dtype=object), mode="fill")
         arr2 = Array("arr2", array(data, dtype=object), mode="fill")
@@ -68,7 +68,7 @@ def test_check_inputs_are_square_matrices_00(test_name, debug_graph, data):
     if arr1.outputs["array"].dd.dim != 1:
         with raises(TypeFunctionError):
             check_inputs_are_matrices_or_diagonals(node, 0, check_square=True)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
@@ -79,7 +79,7 @@ def test_check_inputs_are_square_matrices_00(test_name, debug_graph, data):
         linspace(0, 16, 16).reshape(4, 4),
     ),
 )
-def test_check_inputs_are_square_matrices_01(test_name, debug_graph, data):
+def test_check_inputs_are_square_matrices_01(test_name, debug_graph, data, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array(data), mode="fill")
         node = Dummy(
@@ -89,7 +89,7 @@ def test_check_inputs_are_square_matrices_01(test_name, debug_graph, data):
         arr1 >> node
         check_inputs_are_square_matrices(node, 0)
         check_inputs_are_matrices_or_diagonals(node, 0, check_square=True)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
@@ -100,7 +100,7 @@ def test_check_inputs_are_square_matrices_01(test_name, debug_graph, data):
         ("float64", array([5, 6, 7], dtype="i")),
     ),
 )
-def test_check_inputs_equivalence(test_name, debug_graph, dtype, wrongarr):
+def test_check_inputs_equivalence(test_name, debug_graph, dtype, wrongarr, output_path: str):
     # TODO: check edges and nodes
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array([1, 2], dtype=dtype), mode="fill")
@@ -123,14 +123,14 @@ def test_check_inputs_equivalence(test_name, debug_graph, dtype, wrongarr):
             # NOTE: at least one raises Exception, see `wrongarr`
             check_inputs_have_same_dtype(node)
             check_inputs_have_same_shape(node)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
     "dtype",
     ("float64", "float32", "float16", "float", "double"),
 )
-def test_check_subtype(test_name, debug_graph, dtype):
+def test_check_subtype(test_name, debug_graph, dtype, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array([1, 2], dtype=dtype), mode="fill")
         node = Dummy(
@@ -144,7 +144,7 @@ def test_check_subtype(test_name, debug_graph, dtype):
             check_subtype_of_inputs(node, 0, dtype=integer)
         with raises(TypeFunctionError):
             check_subtype_of_outputs(node, "result", dtype=integer)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
@@ -155,7 +155,7 @@ def test_check_subtype(test_name, debug_graph, dtype):
         (linspace(0, 3, 3)[newaxis].T, linspace(0, 3, 3)[newaxis].T),
     ),
 )
-def test_check_inputs_are_matrix_multipliable_00(test_name, debug_graph, data1, data2):
+def test_check_inputs_are_matrix_multipliable_00(test_name, debug_graph, data1, data2, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array(data1), mode="fill")
         arr2 = Array("arr2", array(data2), mode="fill")
@@ -166,7 +166,7 @@ def test_check_inputs_are_matrix_multipliable_00(test_name, debug_graph, data1, 
         (arr1, arr2) >> node
         with raises(TypeFunctionError):
             check_inputs_are_matrix_multipliable(node, 0, 1)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
@@ -177,7 +177,7 @@ def test_check_inputs_are_matrix_multipliable_00(test_name, debug_graph, data1, 
         (linspace(0, 3, 3)[newaxis], linspace(0, 3, 3)[newaxis].T),
     ),
 )
-def test_check_inputs_are_matrix_multipliable_01(test_name, debug_graph, data1, data2):
+def test_check_inputs_are_matrix_multipliable_01(test_name, debug_graph, data1, data2, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array(data1), mode="fill")
         arr2 = Array("arr2", array(data2), mode="fill")
@@ -187,4 +187,4 @@ def test_check_inputs_are_matrix_multipliable_01(test_name, debug_graph, data1, 
         )
         (arr1, arr2) >> node
         check_inputs_are_matrix_multipliable(node, 0, 1)
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

@@ -10,7 +10,7 @@ debug = False
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_SumSq_01(dtype):
+def test_SumSq_01(dtype, output_path: str):
     arrays_in = tuple(arange(12, dtype=dtype) * i for i in (1, 2, 3))
     arrays2_in = tuple(a**2 for a in arrays_in)
 
@@ -34,4 +34,4 @@ def test_SumSq_01(dtype):
     assert all(output.data == res)
     assert sm.tainted == False
 
-    savegraph(graph, f"output/test_SumSq_00_{dtype}.png")
+    savegraph(graph, f"{output_path}/test_SumSq_00_{dtype}.png")

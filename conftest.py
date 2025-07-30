@@ -1,26 +1,6 @@
-from os import chdir, environ, getcwd, listdir, mkdir
-from os.path import isdir
+from os import environ, makedirs
 
 from pytest import fixture
-
-
-def pytest_sessionstart(session):
-    """Called after the Session object has been created and before performing
-    collection and entering the run test loop.
-
-    Automatic change path to the `dag-modelling/tests` and create
-    `tests/output` dir
-    """
-    while path := getcwd():
-        if (lastdir := path.split("/")[-1]) == "tests":
-            break
-        elif ".git" in listdir(path):
-            chdir("./tests")
-            break
-        else:
-            chdir("..")
-    if not isdir("output"):
-        mkdir("output")
 
 
 def pytest_addoption(parser):
@@ -36,22 +16,28 @@ def pytest_addoption(parser):
         default=False,
         help="include long-time tests",
     )
+    parser.addoption(
+        "--output-path",
+        default="output/tests",
+        help="choose the location of output materials",
+    )
 
 
 def pytest_generate_tests(metafunc):
     # This is called for every test. Only get/set command line arguments
     # if the argument is specified in the list of test "fixturenames".
     option_value = metafunc.config.option.include_long_time_tests
-    if (
-        "--include-long-time-tests" in metafunc.fixturenames
-        and option_value is not None
-    ):
+    if "--include-long-time-tests" in metafunc.fixturenames and option_value is not None:
         metafunc.parametrize("--include-long-time-tests", [option_value])
 
 
-########################################
-# Create global variables (fixtures) for a pytest run
-########################################
+@fixture(scope="session")
+def output_path(request):
+    loc = request.config.option.output_path
+    makedirs(loc, exist_ok=True)
+    return loc
+
+
 @fixture(scope="session")
 def debug_graph(request):
     return request.config.option.debug_graph

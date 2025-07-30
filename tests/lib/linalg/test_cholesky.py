@@ -10,7 +10,7 @@ from dag_modelling.lib.linalg import Cholesky
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Cholesky_00(test_name, debug_graph, dtype):
+def test_Cholesky_00(test_name, debug_graph, dtype, output_path: str):
     inV = array([[10, 2, 1], [2, 12, 3], [1, 3, 13]], dtype=dtype)
     inV2 = inV @ inV
     inD = diag(inV)
@@ -46,7 +46,7 @@ def test_Cholesky_00(test_name, debug_graph, dtype):
     assert allclose(inL2d2, result2d2, atol=atol, rtol=0)
     assert allclose(inL1d, result1d, atol=atol, rtol=0)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 def test_Cholesky_01_type_functions():

@@ -9,7 +9,7 @@ from dag_modelling.lib.summation import SumMatOrDiag
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_SumMatOrDiag_01(dtype, debug_graph):
+def test_SumMatOrDiag_01(dtype, debug_graph, output_path: str):
     for size in (5, 4, 100):
         array1 = arange(size, dtype=dtype) + 1.0
         array2 = arange(size, dtype=dtype) * 3
@@ -62,7 +62,7 @@ def test_SumMatOrDiag_01(dtype, debug_graph):
 
         savegraph(
             graph,
-            f"output/test_SumMatOrDiag_00_{dtype}_{size}.png",
+            f"{output_path}/test_SumMatOrDiag_00_{dtype}_{size}.png",
             show="all",
         )
 

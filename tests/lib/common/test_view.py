@@ -7,7 +7,7 @@ from dag_modelling.lib.common import Array, View
 debug = False
 
 
-def test_View_00():
+def test_View_00(output_path: str):
     """Create four nodes: sum up three of them, multiply the result by the fourth
     Use graph context to create the graph.
     Use one-line code for connecting the nodes
@@ -48,4 +48,4 @@ def test_View_00():
     assert view2.tainted == True
 
     view2.touch()
-    savegraph(graph, "output/test_View_00.png")
+    savegraph(graph, f"{output_path}/test_View_00.png")

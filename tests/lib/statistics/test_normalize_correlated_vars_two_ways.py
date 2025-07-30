@@ -13,7 +13,7 @@ debug = False
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_NormalizeCorrelatedVarsTwoWays_00(dtype):
+def test_NormalizeCorrelatedVarsTwoWays_00(dtype, output_path: str):
     fp_tolerance = finfo(dtype).resolution * 2
 
     inCentral = arange(3.0, dtype=dtype) * 100.0
@@ -250,7 +250,7 @@ def test_NormalizeCorrelatedVarsTwoWays_00(dtype):
     assert allclose(checkMatrixOnes, back_matrix, atol=0, rtol=0)
     assert allclose(checkDiagOnes, back_diag, atol=0, rtol=0)
 
-    savegraph(graph, f"output/test_NormalizeCorrelatedVarsTwoWays_00_{dtype}.png", show=["all"])
+    savegraph(graph, f"{output_path}/test_NormalizeCorrelatedVarsTwoWays_00_{dtype}.png", show=["all"])
 
 
 def test_NormalizeCorrelatedVarsTwoWays_01(dtype="d"):

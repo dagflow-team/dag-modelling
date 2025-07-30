@@ -7,7 +7,7 @@ from dag_modelling.lib.statistics import CNPStat
 from dag_modelling.plot.graphviz import savegraph
 
 
-def test_Chi2CNPStat_v01(debug_graph, test_name):
+def test_Chi2CNPStat_v01(debug_graph, test_name, output_path: str):
     n = 10
     start = 10
     offset = 1.0
@@ -29,11 +29,11 @@ def test_Chi2CNPStat_v01(debug_graph, test_name):
     res_expected = ((1.0 / dataa + 2.0 / theorya) * (theorya - dataa) ** 2).sum() / 3.0
     assert allclose(res, res_expected, atol=finfo("d").resolution)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("mode", (None, "uncertainty", "variance"))
-def test_Chi2CNPStat_v01(mode: str | None, debug_graph, test_name):
+def test_Chi2CNPStat_v02(mode: str | None, debug_graph, test_name, output_path: str):
     n = 10
     start = 10
     offset = 1.0
@@ -58,4 +58,4 @@ def test_Chi2CNPStat_v01(mode: str | None, debug_graph, test_name):
 
     assert allclose(res, res_expected, atol=finfo("d").resolution)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

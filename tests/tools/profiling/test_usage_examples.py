@@ -9,16 +9,16 @@ from dag_modelling.tools.profiling import (
 )
 
 
-def test_minimal_example(graph_0):
+def test_minimal_example(graph_0, output_path: str):
     _, nodes = graph_0
 
     node_profiler = NodeProfiler(nodes)
     report = node_profiler.estimate_target_nodes().print_report()
-    report.to_csv("output/test_node_report.csv")
+    report.to_csv(f"{output_path}/test_node_report.csv")
 
     framework_profiler = FrameworkProfiler(nodes)
     report = framework_profiler.estimate_framework_time().print_report()
-    report.to_json("output/test_framework_report.json")
+    report.to_json(f"{output_path}/test_framework_report.json")
 
     calls_profiler = CountCallsProfiler(nodes)
     calls_profiler.estimate_calls()
@@ -28,7 +28,7 @@ def test_minimal_example(graph_0):
     report = memory_profiler.estimate_target_nodes().print_report()
 
 
-def test_full_guide(graph_0):
+def test_full_guide(graph_0, output_path: str):
     graph, _ = graph_0
 
     # Obtain nodes from graph instance
@@ -76,8 +76,8 @@ def test_full_guide(graph_0):
     #  or by first column of aggregation function
 
     # Saving results is pretty easy, because it's just a pandas.DataFrame
-    report.to_csv("output/test_report.tsv", sep="\t", index=False)
-    report.to_json("output/test_report.json")
+    report.to_csv(f"{output_path}/test_report.tsv", sep="\t", index=False)
+    report.to_json(f"{output_path}/test_report.json")
 
     # Sometimes it could be helpful to directly estimate one node
     node = nodes[5]
@@ -105,7 +105,7 @@ def test_full_guide(graph_0):
     # 2. Make report
     # 3. Print report
     # 4. Save to some format
-    calls_profiler.estimate_calls().print_report().to_csv("output/test_report.csv")
+    calls_profiler.estimate_calls().print_report().to_csv(f"{output_path}/test_report.csv")
 
     calls_profiler.print_report(group_by=None, sort_by="calls", rows=10)
 

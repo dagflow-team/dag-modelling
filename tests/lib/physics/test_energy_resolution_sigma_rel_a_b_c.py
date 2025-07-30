@@ -9,7 +9,7 @@ from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.plot.plot import plot_auto
 
 
-def test_EnergyResolutionSigmaRelABC_v01(debug_graph, test_name):
+def test_EnergyResolutionSigmaRelABC_v01(debug_graph, test_name, output_path: str):
     weights = [0.016, 0.081, 0.026]
     Energy = linspace(1.0, 8.0, 200)
     parnames = ("a_nonuniform", "b_stat", "c_noise")
@@ -28,11 +28,11 @@ def test_EnergyResolutionSigmaRelABC_v01(debug_graph, test_name):
 
     show = False
     close = not show
-    plot_auto(sigma, show=show, close=close, save=f"output/{test_name}_plot.png")
+    plot_auto(sigma, show=show, close=close, save=f"{output_path}/{test_name}_plot.png")
 
     cmpto = (
         weights[0] ** 2 + weights[1] ** 2 / Energy + (weights[2] / Energy) ** 2
     ) ** 0.5
     assert allclose(res, cmpto, rtol=0, atol=finfo("d").resolution)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

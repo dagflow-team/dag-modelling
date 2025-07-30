@@ -9,7 +9,7 @@ from dag_modelling.lib.statistics import LogProdDiag
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_LogProdDiag_00(test_name, debug_graph, dtype):
+def test_LogProdDiag_00(test_name, debug_graph, dtype, output_path: str):
     inV1 = array([[10, 0, 0], [2, 12, 0], [1, 3, 13]], dtype=dtype)
     inV2 = inV1**2
     inD = diag(inV1)
@@ -77,7 +77,7 @@ def test_LogProdDiag_00(test_name, debug_graph, dtype):
     assert allclose(inL2d2, result2d2, atol=atol, rtol=0)
     assert allclose(inL1d, result1d, atol=atol, rtol=0)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 def test_LogProdDiag_01_type_functions():

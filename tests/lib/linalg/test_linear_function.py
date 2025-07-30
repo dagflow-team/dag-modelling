@@ -8,7 +8,7 @@ from dag_modelling.lib.linalg import LinearFunction
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_LinearFunction_01(dtype, test_name):
+def test_LinearFunction_01(dtype, test_name, output_path: str):
     size = 10
 
     a = 2.3
@@ -37,4 +37,4 @@ def test_LinearFunction_01(dtype, test_name):
     assert allclose(res1, x1 * aa + bb, atol=atol, rtol=0)
     assert allclose(res2, x2 * aa + bb, atol=atol, rtol=0)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

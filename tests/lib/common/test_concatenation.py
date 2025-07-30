@@ -5,7 +5,7 @@ from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.lib.common import Array, Concatenation
 
 
-def test_Concatenation_00(debug_graph):
+def test_Concatenation_00(debug_graph, output_path: str):
     array1 = [1.0, 2.0]
     array2 = [3.0, 4.0, 5.0]
     array3 = [6.0]
@@ -38,10 +38,10 @@ def test_Concatenation_00(debug_graph):
     inputs[1].taint()
     assert concat.tainted == True
 
-    savegraph(graph, "output/test_Concatatenation_00.png")
+    savegraph(graph, f"{output_path}/test_Concatatenation_00.png")
 
 
-def test_Concatenation_01(debug_graph):
+def test_Concatenation_01(debug_graph, output_path: str):
     array1 = linspace(0, 5, 5)
     array2 = linspace(5, 10, 10)
     array3 = linspace(10, 20, 100)
@@ -72,4 +72,4 @@ def test_Concatenation_01(debug_graph):
     inputs[1].taint()
     assert concat.tainted == True
 
-    savegraph(graph, "output/test_Concatatenation_01.png")
+    savegraph(graph, f"{output_path}/test_Concatatenation_01.png")

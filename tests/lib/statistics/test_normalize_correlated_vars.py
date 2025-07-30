@@ -13,7 +13,7 @@ debug = False
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_NormalizeCorrelatedVars_00(dtype):
+def test_NormalizeCorrelatedVars_00(dtype, output_path: str):
     inCentral = arange(3.0, dtype=dtype) * 100.0
     inV = array([[10, 2, 1], [2, 12, 3], [1, 3, 13]], dtype=dtype)
     inD = inV.diagonal()
@@ -99,7 +99,7 @@ def test_NormalizeCorrelatedVars_00(dtype):
     assert allclose(inVec, back_matrix, atol=atol, rtol=0)
     assert allclose(inVec, back_diag, atol=0, rtol=0)
 
-    savegraph(graph, f"output/test_NormalizeCorrelatedVars_00_{dtype}.png")
+    savegraph(graph, f"{output_path}/test_NormalizeCorrelatedVars_00_{dtype}.png")
 
 
 def test_NormalizeCorrelatedVars_01(dtype="d"):

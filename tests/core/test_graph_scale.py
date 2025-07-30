@@ -116,7 +116,7 @@ def test_graph_scale_01(test_name, width: int = 6, length: int = 7):
 
     # from dag_modelling.plot.graphviz import GraphDot
     # d = GraphDot(g)
-    # ofile = f"output/{test_name}.dot"
+    # ofile = f"{output_path}/{test_name}.dot"
     # d.savegraph(ofile)
     # print(f"Save graph: {ofile}")
 

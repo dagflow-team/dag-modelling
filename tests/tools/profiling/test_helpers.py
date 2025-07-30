@@ -20,8 +20,8 @@ def test_exec_graph_1(graph_1):
     assert np.any(p2_data), "graph_1, `p2` was not evaluated"
 
 
-def test_invoke_and_save(graph_0, graph_1):
+def test_invoke_and_save(graph_0, graph_1, output_path: str):
     graphs = [graph_0, graph_1]
     for i, g in enumerate(graphs):
         graph_dot = GraphDot(g[0])
-        graph_dot.savegraph(f"output/test_profiling_graph_{i}.png")
+        graph_dot.savegraph(f"{output_path}/test_profiling_graph_{i}.png")

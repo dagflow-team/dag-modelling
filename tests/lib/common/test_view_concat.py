@@ -11,7 +11,7 @@ debug = False
 
 
 @mark.parametrize("closemode", ["graph", "recursive"])
-def test_ViewConcat_00(closemode):
+def test_ViewConcat_00(closemode, output_path: str):
     """Create four nodes: sum up three of them, multiply the result by the fourth
     Use graph context to create the graph.
     Use one-line code for connecting the nodes
@@ -71,10 +71,10 @@ def test_ViewConcat_00(closemode):
     assert view.tainted == True
 
     view.touch()
-    savegraph(graph, "output/test_ViewConcat_00.png")
+    savegraph(graph, f"{output_path}/test_ViewConcat_00.png")
 
 
-def test_ViewConcat_01():
+def test_ViewConcat_01(output_path: str):
     with Graph() as graph:
         concat = ViewConcat("concat")
         concat2 = ViewConcat("concat 2")
@@ -93,4 +93,4 @@ def test_ViewConcat_01():
         with raises(ConnectionError):
             concat >> concat2
 
-    savegraph(graph, "output/test_ViewConcat_01.png")
+    savegraph(graph, f"{output_path}/test_ViewConcat_01.png")

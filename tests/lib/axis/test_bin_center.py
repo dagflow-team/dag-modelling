@@ -9,7 +9,7 @@ from dag_modelling.lib.common import Array
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_BinCenter_01(test_name, debug_graph, dtype):
+def test_BinCenter_01(test_name, debug_graph, dtype, output_path: str):
     array1 = linspace(0, 100, 26, dtype=dtype)
     array2 = geomspace(1e-2, 1e2, 10, dtype=dtype)
 
@@ -50,7 +50,7 @@ def test_BinCenter_01(test_name, debug_graph, dtype):
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend()
-    plt.savefig(f"output/{test_name}-plot.png")
+    plt.savefig(f"{output_path}/{test_name}-plot.png")
     plt.close()
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

@@ -25,7 +25,7 @@ from dag_modelling.core.type_functions import (
         ([1, 2, 3], [1, 2, 3, 4]),
     ),
 )
-def test_edges_00(test_name, debug_graph, data, edgesdata):
+def test_edges_00(test_name, debug_graph, data, edgesdata, output_path: str):
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         edges = Array("edges", edgesdata, mode="fill").outputs["array"]
         arr1 = Array("arr1", array(data), edges=edges, mode="fill")
@@ -42,7 +42,7 @@ def test_edges_00(test_name, debug_graph, data, edgesdata):
         check_dtype_of_edges(node)
         check_edges_consistency_with_array(node, "result")
         copy_edges_from_inputs_to_outputs(node, 0, "result")
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(
@@ -55,7 +55,7 @@ def test_edges_00(test_name, debug_graph, data, edgesdata):
         ([[1, 2, 3], [1, 2, 3], [1, 2, 3]], [1, 2, 3, 4], [1, 2, 3, 4]),
     ),
 )
-def test_edges_01(test_name, debug_graph, data, edgesdataX, edgesdataY):
+def test_edges_01(test_name, debug_graph, data, edgesdataX, edgesdataY, output_path: str):
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         edgesX = Array("edgesX", edgesdataX, mode="fill").outputs["array"]
         edgesY = Array("edgesY", edgesdataY, mode="fill").outputs["array"]
@@ -74,4 +74,4 @@ def test_edges_01(test_name, debug_graph, data, edgesdataX, edgesdataY):
         check_dtype_of_edges(node)
         check_edges_consistency_with_array(node, "result")
         copy_edges_from_inputs_to_outputs(node, 0, "result")
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

@@ -8,7 +8,7 @@ from dag_modelling.lib.summation import ElSumSq
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_ElSumSq_01(test_name, debug_graph, dtype):
+def test_ElSumSq_01(test_name, debug_graph, dtype, output_path: str):
     arrays_in = tuple(arange(12, dtype=dtype) * i for i in (1, 2, 3))
     arrays2_in = tuple(a**2 for a in arrays_in)
 
@@ -34,4 +34,4 @@ def test_ElSumSq_01(test_name, debug_graph, dtype):
     sm.touch()
     assert all(output.data == res)
 
-    savegraph(graph, f"output/{test_name}.png", show="all")
+    savegraph(graph, f"{output_path}/{test_name}.png", show="all")

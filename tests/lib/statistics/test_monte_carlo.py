@@ -26,7 +26,7 @@ from dag_modelling.plot.plot import add_colorbar, plot_array_1d, plot_auto
     ],
 )
 @mark.parametrize("datanum", [0, 1, 2, "all"])
-def test_mc(mcmode, scale, datanum, debug_graph, test_name, tmp_path):
+def test_mc(mcmode, scale, datanum, debug_graph, test_name, tmp_path, output_path: str):
     (sequence,) = SeedSequence(6).spawn(1)
     algo = MT19937(sequence)
     generator = Generator(algo)
@@ -98,8 +98,8 @@ def test_mc(mcmode, scale, datanum, debug_graph, test_name, tmp_path):
     assert toymc.tainted is False
     assert toymc2.tainted is True
 
-    plot_auto(toymc.outputs[0], save=f"output/{test_name}_plot.png")
-    savegraph(graph, f"output/{test_name}.png")
+    plot_auto(toymc.outputs[0], save=f"{output_path}/{test_name}_plot.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize(

@@ -23,7 +23,7 @@ from dag_modelling.core.type_functions import (
         ([[[1, 2], [3, 4], [5, 6]]], "float64"),
     ),
 )
-def test_copy_input_dtype_and_shape(test_name, debug_graph, data, dtype):
+def test_copy_input_dtype_and_shape(test_name, debug_graph, data, dtype, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arrdata = array(data, dtype=dtype)
         arr1 = Array("arr1", arrdata, mode="fill")
@@ -37,11 +37,11 @@ def test_copy_input_dtype_and_shape(test_name, debug_graph, data, dtype):
     assert node.close()
     assert node.outputs["result"].dd.dtype == arrdata.dtype
     assert node.outputs["result"].dd.shape == arrdata.shape
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("dtype", ("i", "d", "float64"))
-def test_output_eval_dtype(test_name, debug_graph, dtype):
+def test_output_eval_dtype(test_name, debug_graph, dtype, output_path: str):
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         arr1 = Array("arr1", array([1, 2, 3, 4], dtype="i"), mode="fill")
         arr2 = Array("arr2", array([3, 2, 1], dtype=dtype), mode="fill")
@@ -54,10 +54,10 @@ def test_output_eval_dtype(test_name, debug_graph, dtype):
     evaluate_dtype_of_outputs(node, AllPositionals, "result")
     assert node.close()
     assert node.outputs["result"].dd.dtype == dtype
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
-def test_copy_from_input_00(test_name, debug_graph):
+def test_copy_from_input_00(test_name, debug_graph, output_path: str):
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         node = Dummy("node")
     assert (
@@ -72,11 +72,11 @@ def test_copy_from_input_00(test_name, debug_graph):
         )
         is None
     )
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("dtype", ("i", "d", "f"))
-def test_copy_from_input_01(test_name, debug_graph, dtype):
+def test_copy_from_input_01(test_name, debug_graph, dtype, output_path: str):
     # TODO: adding axes_meshes check
     with Graph(close_on_exit=False, debug=debug_graph) as graph:
         edges1 = Array("edges1", [0, 1, 2, 3, 4], mode="fill").outputs["array"]
@@ -103,4 +103,4 @@ def test_copy_from_input_01(test_name, debug_graph, dtype):
     assert node.outputs[1].dd.shape == out2.shape
     assert node.outputs[1].dd.axes_edges == out2.axes_edges
     assert node.outputs[1].dd.axes_meshes == out2.axes_meshes
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

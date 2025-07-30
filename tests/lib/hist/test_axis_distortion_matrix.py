@@ -4,12 +4,12 @@ from numpy import allclose, array, finfo
 from pytest import mark
 
 from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Array
 from dag_modelling.lib.hist import (
     AxisDistortionMatrix,
     AxisDistortionMatrixLinear,
     AxisDistortionMatrixPointwise,
 )
-from dag_modelling.lib.common import Array
 from dag_modelling.plot.graphviz import savegraph
 
 
@@ -41,9 +41,7 @@ from dag_modelling.plot.graphviz import savegraph
     ("pointwise",),
 )
 def test_AxisDistortionMatrix(
-    setname: str,
-    dtype: str,
-    mode: Literal["exact", "linear", "pointwise"],
+    setname: str, dtype: str, mode: Literal["exact", "linear", "pointwise"], output_path: str
 ):
     test_sets_current = test_sets[mode]
     edgesset = test_sets_current[setname]
@@ -64,9 +62,7 @@ def test_AxisDistortionMatrix(
         Edges = Array("Edges", edges, mode="fill")
         EdgesModified = Array("Edges modified", edges_modified, mode="fill")
         if mode == "exact":
-            EdgesBackward = Array(
-                "Edges, projected backward", edges_backward, mode="fill"
-            )
+            EdgesBackward = Array("Edges, projected backward", edges_backward, mode="fill")
 
         match mode:
             case "linear":
@@ -118,7 +114,7 @@ def test_AxisDistortionMatrix(
 
     savegraph(
         graph,
-        f"output/test_AxisDistortionMatrix{mode.capitalize()}_{dtype}.png",
+        f"{output_path}/test_AxisDistortionMatrix{mode.capitalize()}_{dtype}.png",
     )
 
 

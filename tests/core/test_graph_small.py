@@ -6,7 +6,7 @@ from dag_modelling.lib.common import Array
 from dag_modelling.lib.arithmetic import Product, Sum
 
 
-def test_graph_small(test_name, debug_graph):
+def test_graph_small(test_name, debug_graph, output_path: str):
     """Create four arrays: sum up three of them, multiply the result by the fourth
     Use graph context to create the graph.
     """
@@ -29,4 +29,4 @@ def test_graph_small(test_name, debug_graph):
     result = m.outputs["result"].data
     print("Evaluation result:", result)
 
-    savegraph(graph, f"output/{test_name}.pdf")
+    savegraph(graph, f"{output_path}/{test_name}.pdf")

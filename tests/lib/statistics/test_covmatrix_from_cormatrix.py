@@ -8,7 +8,7 @@ from dag_modelling.lib.statistics import CovmatrixFromCormatrix
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_CovmatrixFromCormatrix_00(test_name, debug_graph, dtype):
+def test_CovmatrixFromCormatrix_00(test_name, debug_graph, dtype, output_path: str):
     inSigma = arange(1.0, 4.0, dtype=dtype)
     inC = array(
         [
@@ -32,4 +32,4 @@ def test_CovmatrixFromCormatrix_00(test_name, debug_graph, dtype):
     assert allclose(inV, V, atol=0, rtol=0)
     assert allclose(tril(V), tril(V.T), atol=0, rtol=0)
 
-    savegraph(graph, f"output/{test_name}.png", show=["all"])
+    savegraph(graph, f"{output_path}/{test_name}.png", show=["all"])

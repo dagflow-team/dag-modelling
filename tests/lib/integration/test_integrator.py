@@ -10,7 +10,7 @@ from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.plot.plot import plot_auto
 
 
-def test_Integrator_trap(debug_graph):
+def test_Integrator_trap(debug_graph, output_path: str):
     metaint = MetaNode()
 
     xlabel = "Edges for the integrator"
@@ -54,5 +54,5 @@ def test_Integrator_trap(debug_graph):
     assert ax.get_title() == "Integrator"
     close()
 
-    savegraph(graph, "output/test_Integrator_trap_meta.pdf", show="all")
+    savegraph(graph, f"{output_path}/test_Integrator_trap_meta.pdf", show="all")
 

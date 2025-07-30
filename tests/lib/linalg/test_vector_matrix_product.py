@@ -10,7 +10,7 @@ from dag_modelling.lib.linalg import VectorMatrixProduct
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("diag_matrix", (False, True))
 @mark.parametrize("mode", ("row", "column"))
-def test_VectorMatrixProduct(dtype: str, diag_matrix: bool, mode: str):
+def test_VectorMatrixProduct(dtype: str, diag_matrix: bool, mode: str, output_path: str):
     size = 4
     is_column = mode == "column"
 
@@ -54,6 +54,6 @@ def test_VectorMatrixProduct(dtype: str, diag_matrix: bool, mode: str):
     assert prod.outputs[0].dd.axes_edges[0] == right_edges
 
     smatrix = diag_matrix and "diag" or "block"
-    ograph = f"output/test_VectorMatrixProduct_{dtype}_{smatrix}_{mode}.png"
+    ograph = f"{output_path}/test_VectorMatrixProduct_{dtype}_{smatrix}_{mode}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph)

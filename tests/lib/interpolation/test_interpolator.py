@@ -13,7 +13,7 @@ from dag_modelling.plot.plot import plot_auto
 
 
 @mark.parametrize("dtype", ("d", "f"))
-def test_Interpolator(debug_graph, test_name, dtype):
+def test_Interpolator(debug_graph, test_name, dtype, output_path: str):
     a, b = 2.5, -3.5
     xlabel = "Nodes for the interpolator"
     seed(10)
@@ -64,4 +64,4 @@ def test_Interpolator(debug_graph, test_name, dtype):
     assert ax.get_title() == "Interpolator"
     close()
 
-    savegraph(graph, f"output/{test_name}.pdf", show="all")
+    savegraph(graph, f"{output_path}/{test_name}.pdf", show="all")

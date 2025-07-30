@@ -4,8 +4,8 @@ from numpy.typing import NDArray
 from pytest import mark, raises
 
 from dag_modelling.core.graph import Graph
-from dag_modelling.lib.hist import Rebin, RebinMatrix
 from dag_modelling.lib.common import Array
+from dag_modelling.lib.hist import Rebin, RebinMatrix
 from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.plot.plot import plot_array_1d_hist
 
@@ -23,10 +23,7 @@ def partial_sum(y_old: NDArray, stride: int) -> list:
 @mark.parametrize("start", (0, 1))
 @mark.parametrize("stride", (2, 4))
 @mark.parametrize("mode", ("python", "numba"))
-@mark.parametrize("nclones", (0, 2))
-def test_Rebin(
-    test_name: str, start: int, stride: int, dtype: str, mode: str, nclones: int
-):
+def test_Rebin(test_name: str, start: int, stride: int, dtype: str, mode: str, output_path: str):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
     edges_new = edges_old[start::stride]
@@ -105,10 +102,10 @@ def test_Rebin(
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend(fontsize="x-large")
-    plt.savefig(f"output/{test_name}-plot.png")
+    plt.savefig(f"{output_path}/{test_name}-plot.png")
     plt.close()
 
-    savegraph(graph, f"output/{test_name}-graph.png")
+    savegraph(graph, f"{output_path}/{test_name}-graph.png")
 
 
 @mark.parametrize(
@@ -134,7 +131,7 @@ def test_RebinMatrix_wrong_edges_new(edges_new, mode):
 
 
 @mark.parametrize("mode", ("python", "numba"))
-def test_RebinMatrix_wrong_edges_new(mode):
+def test_RebinMatrix_wrong_edges_new_v2(mode):
     edges_old = linspace(0.0, 2.0, 21)
     edges_new = edges_old[0::2]
     edges_clone = edges_old.copy()

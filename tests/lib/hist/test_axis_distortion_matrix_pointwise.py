@@ -4,8 +4,8 @@ from numpy.typing import ArrayLike
 from pytest import mark
 
 from dag_modelling.core.graph import Graph
-from dag_modelling.lib.hist import AxisDistortionMatrixPointwise
 from dag_modelling.lib.common import Array
+from dag_modelling.lib.hist import AxisDistortionMatrixPointwise
 from dag_modelling.plot.plot import add_colorbar
 
 
@@ -21,6 +21,7 @@ def test_AxisDistortionMatrixPointwise(
     xoffset: float | int,
     yoffset: float | int,
     test_name: str,
+    output_path: str,
 ):
     nbins = 10
     edges = linspace(0, nbins, nbins + 1, dtype=dtype)
@@ -59,9 +60,7 @@ def test_AxisDistortionMatrixPointwise(
     ax.hlines(edges, edges[0], edges[-1], linestyle="dashed", color="gray", alpha=0.5)
 
     res_m = ma.array(res, mask=(res == 0))
-    cmbl = ax.matshow(
-        res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]]
-    )
+    cmbl = ax.matshow(res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]])
     add_colorbar(cmbl)
 
     ax.plot(x_fine, y_fine, "+-", color="magenta")
@@ -85,7 +84,7 @@ def test_AxisDistortionMatrixPointwise(
 
     # print(f"{x_left=} {x_right=} {y_bottom=} {y_top=}")
 
-    plt.savefig(f"output/{test_name}-plot.pdf")
+    plt.savefig(f"{output_path}/{test_name}-plot.pdf")
 
     ressum = res.sum(axis=0)
     # print("Obtained matrix sum:\n", ressum)
@@ -150,6 +149,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
     yoffset: float | int,
     poly_points: ArrayLike,
     test_name: str,
+    output_path: str,
 ):
     nbins = 10
     edges = linspace(0, nbins, nbins + 1, dtype=dtype)
@@ -192,13 +192,11 @@ def test_AxisDistortionMatrixPointwise_pol3(
     ax.hlines(edges, edges[0], edges[-1], linestyle="dashed", color="gray", alpha=0.5)
 
     res_m = ma.array(res, mask=(res == 0))
-    cmbl = ax.matshow(
-        res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]]
-    )
+    cmbl = ax.matshow(res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]])
     add_colorbar(cmbl)
 
     ax.plot(x_fine, y_fine, "+-", color="magenta")
-    plt.savefig(f"output/{test_name}-plot.pdf")
+    plt.savefig(f"{output_path}/{test_name}-plot.pdf")
 
     ressum = res.sum(axis=0)
     # print("Obtained matrix sum:\n", ressum)

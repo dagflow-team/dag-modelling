@@ -9,7 +9,7 @@ from dag_modelling.lib.normalization import NormalizeMatrix
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("mode", ("rows", "columns"))
-def test_NormalizeMatrix(dtype: str, mode: str):
+def test_NormalizeMatrix(dtype: str, mode: str, output_path: str):
     size = 4
     norm_columns = mode == "columns"
 
@@ -28,6 +28,6 @@ def test_NormalizeMatrix(dtype: str, mode: str):
     actual = prod.get_data()
     assert allclose(desired, actual, atol=0, rtol=0)
 
-    ograph = f"output/test_NormalizeMatrix_{dtype}_{mode}.png"
+    ograph = f"{output_path}/test_NormalizeMatrix_{dtype}_{mode}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph, show="all")

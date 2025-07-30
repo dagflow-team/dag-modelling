@@ -12,7 +12,7 @@ from dag_modelling.core.storage import NodeStorage
 
 @mark.parametrize("pass_params", (False, True))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_safe(test_name, pass_params, pass_output):
+def test_make_fcn_safe(test_name, pass_params, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
@@ -51,12 +51,12 @@ def test_make_fcn_safe(test_name, pass_params, pass_output):
     assert all(res0 == (vals_in[0] * x + vals_in[1]))
     assert all(res2 == res0)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("pass_params", (False, True))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_nonsafe(test_name, pass_params, pass_output):
+def test_make_fcn_nonsafe(test_name, pass_params, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
@@ -97,4 +97,4 @@ def test_make_fcn_nonsafe(test_name, pass_params, pass_output):
     assert all(res1 == res0)
     assert all(res1 == res2)
 
-    savegraph(graph, f"output/{test_name}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
