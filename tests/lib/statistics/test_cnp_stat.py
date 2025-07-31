@@ -3,7 +3,7 @@ from pytest import mark
 
 from dag_modelling.core.graph import Graph
 from dag_modelling.lib.common import Array
-from dag_modelling.lib.statistics import CNPStat
+from dag_modelling.lib.statistics import Chi2, CNPStat
 from dag_modelling.plot.graphviz import savegraph
 
 
