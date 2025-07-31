@@ -18,8 +18,6 @@ from ..tools.logger import INFO1, logger
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, NDArray
 
-    from ..core.types import EdgesLike, MeshesLike
-
 
 class plot_auto:
     __slots__ = (
@@ -39,8 +37,8 @@ class plot_auto:
     _object: NodeBase | Output | ArrayLike
     _output: Output | None
     _array: NDArray
-    _edges: EdgesLike
-    _meshes: MeshesLike
+    _edges: tuple[NDArray, ...]
+    _meshes: tuple[NDArray, ...]
     _plotoptions: Mapping[str, Any]
     _ret: tuple
 
@@ -85,8 +83,8 @@ class plot_auto:
 
         ndim = len(self._array.shape)
         if ndim == 1:
-            _edges = self._edges[0].data if self._edges else None
-            _meshes = self._meshes[0].data if self._meshes else None
+            _edges = self._edges[0] if self._edges else None
+            _meshes = self._meshes[0] if self._meshes else None
             self._ret = plot_array_1d(
                 self._array,
                 _edges,
@@ -176,19 +174,13 @@ class plot_auto:
 
             self._zlabel = self._ylabel
             if method == "slicesx":
-                self._xlabel = (
-                    self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
-                )
-                self._zlabel = (
-                    self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
-                )
+                self._xlabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
+                self._zlabel = self._output.dd.axis_label(0) or labels.xaxis_unit or "Index [#]"
             elif method == "slicesy":
                 self._zlabel = self._output.dd.axis_label(1) or "Index [#]"
             else:
                 self._zlabel = self._ylabel
-                self._ylabel = (
-                    self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
-                )
+                self._ylabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
 
     def annotate_axes(
         self,
@@ -248,9 +240,7 @@ class plot_auto:
 
             fig = plt.gcf()
             try:
-                ax.text2D(
-                    0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="small"
-                )
+                ax.text2D(0.02, 0.02, path[0], transform=fig.dpi_scale_trans, fontsize="small")
             except AttributeError:
                 ax.text(
                     0.02,
@@ -292,9 +282,7 @@ def plot_array_1d(
         return plot_array_1d_hist(array, edges, *args, **kwargs)
     elif meshes is not None:
         if yerr is not None or xerr is not None:
-            return plot_array_1d_errors(
-                meshes, array, yerr=yerr, xerr=xerr, *args, **kwargs
-            )
+            return plot_array_1d_errors(meshes, array, yerr=yerr, xerr=xerr, *args, **kwargs)
         return plot_array_1d_vs(array, meshes, *args, **kwargs)
     else:
         return plot_array_1d_array(array, *args, **kwargs)
@@ -332,41 +320,34 @@ def plot_array_1d_vs(
     return plt.plot(meshes, array, *args, **kwargs)
 
 
-def plot_array_1d_array(
-    array: NDArray, *args, plotter: plot_auto | None = None, **kwargs
-) -> tuple:
+def plot_array_1d_array(array: NDArray, *args, plotter: plot_auto | None = None, **kwargs) -> tuple:
     return plt.plot(array, *args, **kwargs)
 
 
 def plot_array_2d(
     array: NDArray,
-    edges: EdgesLike,
-    meshes: MeshesLike,
+    edges: tuple[NDArray, ...],
+    meshes: tuple[NDArray, ...],
     *args,
     plotoptions: Mapping[str, Any] = {},
     **kwargs,
 ) -> tuple[tuple, ...]:
     if edges:
-
-        return plot_array_2d_hist(
-            array, edges, *args, plotoptions=plotoptions, **kwargs
-        )
+        return plot_array_2d_hist(array, edges, *args, plotoptions=plotoptions, **kwargs)
     elif meshes:
         return plot_array_2d_vs(array, meshes, *args, plotoptions=plotoptions, **kwargs)
     else:
         return plot_array_2d_array(array, *args, **kwargs)
 
 
-def plot_array_2d_array(
-    array: NDArray, *args, plotter: plot_auto | None = None, **kwargs
-) -> tuple:
+def plot_array_2d_array(array: NDArray, *args, plotter: plot_auto | None = None, **kwargs) -> tuple:
     kwargs.setdefault("aspect", "auto")
     return plot_array_2d_hist_matshow(array, None, *args, **kwargs)
 
 
 def plot_array_2d_hist_bar3d(
     dZ: NDArray,
-    edges: list[NDArray],
+    edges: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     cmap: str | None = None,
@@ -394,7 +375,7 @@ def plot_array_2d_hist_bar3d(
 
 def plot_array_2d_hist_pcolorfast(
     Z: NDArray,
-    edges: list[NDArray],
+    edges: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -405,7 +386,7 @@ def plot_array_2d_hist_pcolorfast(
 
 def plot_array_2d_hist_pcolormesh(
     Z: NDArray,
-    edges: list[NDArray],
+    edges: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -416,7 +397,7 @@ def plot_array_2d_hist_pcolormesh(
 
 def plot_array_2d_hist_pcolor(
     Z: NDArray,
-    edges: list[NDArray],
+    edges: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -427,7 +408,7 @@ def plot_array_2d_hist_pcolor(
 
 def plot_array_2d_hist_imshow(
     Z: NDArray,
-    edges: EdgesLike | None = None,
+    edges: tuple[NDArray, ...] | None = None,
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -442,7 +423,7 @@ def plot_array_2d_hist_imshow(
 
 def plot_array_2d_hist_matshow(
     Z: NDArray,
-    edges: EdgesLike | None = None,
+    edges: tuple[NDArray, ...] | None = None,
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -467,15 +448,13 @@ plot_array_2d_hist_methods = {
 
 def plot_array_2d_hist(
     dZ: NDArray,
-    edges: list[NDArray],
+    edges: tuple[NDArray, ...],
     *args,
     plotoptions: Mapping[str, Any] = {},
     **kwargs,
 ) -> tuple:
     smethod: str = (
-        "pcolormesh"
-        if (method := plotoptions.get("method", "auto")) == "auto"
-        else method
+        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
     )
     try:
         function = plot_array_2d_hist_methods[smethod]
@@ -487,7 +466,7 @@ def plot_array_2d_hist(
 
 def plot_array_2d_vs_pcolormesh(
     Z: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -499,7 +478,7 @@ def plot_array_2d_vs_pcolormesh(
 
 def plot_array_2d_vs_pcolor(
     Z: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -511,7 +490,7 @@ def plot_array_2d_vs_pcolor(
 
 def plot_array_2d_vs_slicesx(
     Z: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -534,15 +513,13 @@ def plot_array_2d_vs_slicesx(
         ax.legend(title=legtitle)
 
 
-def plot_array_2d_vs_slicesy(Z: NDArray, meshes: list[NDArray], *args, **kwargs):
-    return plot_array_2d_vs_slicesx(
-        Z.T, [mesh.T for mesh in reversed(meshes)], *args, **kwargs
-    )
+def plot_array_2d_vs_slicesy(Z: NDArray, meshes: tuple[NDArray, ...], *args, **kwargs):
+    return plot_array_2d_vs_slicesx(Z.T, tuple(mesh.T for mesh in reversed(meshes)), *args, **kwargs)
 
 
 def plot_array_2d_vs_surface(
     Z: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     plotter: plot_auto | None = None,
     **kwargs,
@@ -552,7 +529,7 @@ def plot_array_2d_vs_surface(
 
 def plot_array_2d_vs_wireframe(
     Z: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     # facecolors: str | None = None,
     plotter: plot_auto | None = None,
@@ -589,15 +566,13 @@ plot_array_2d_vs_methods = {
 
 def plot_array_2d_vs(
     array: NDArray,
-    meshes: list[NDArray],
+    meshes: tuple[NDArray, ...],
     *args,
     plotoptions: Mapping[str, Any] = {},
     **kwargs,
 ) -> tuple:
     smethod: str = (
-        "pcolormesh"
-        if (method := plotoptions.get("method", "auto")) == "auto"
-        else method
+        "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
     )  # pyright: ignore [reportGeneralTypeIssues]
     try:
         function = plot_array_2d_vs_methods[smethod]
@@ -607,9 +582,7 @@ def plot_array_2d_vs(
     return function(array, meshes, *args, **kwargs)
 
 
-def _mask_if_needed(
-    datain: ArrayLike, /, *, masked_value: float | None = None
-) -> NDArray:
+def _mask_if_needed(datain: ArrayLike, /, *, masked_value: float | None = None) -> NDArray:
     data = asanyarray(datain)
     if masked_value is None:
         return data
@@ -651,9 +624,7 @@ def _patch_with_colorbar(function, mode3d=False):
     return newfcn
 
 
-def apply_colors(
-    buf: NDArray, cmap: str | bool | None, kwargs: dict, colorsname: str
-) -> tuple:
+def apply_colors(buf: NDArray, cmap: str | bool | None, kwargs: dict, colorsname: str) -> tuple:
     if cmap is True:
         cmap = "viridis"
     elif not cmap:

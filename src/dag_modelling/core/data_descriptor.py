@@ -86,11 +86,11 @@ class DataDescriptor:
         return prod(self.shape)
 
     @property
-    def edges_arrays(self) -> tuple[NDArray, ...] | None:
+    def edges_arrays(self) -> tuple[NDArray, ...]:
         return tuple(o.data for o in self.axes_edges)
 
     @property
-    def meshes_arrays(self) -> tuple[NDArray, ...] | None:
+    def meshes_arrays(self) -> tuple[NDArray, ...]:
         return tuple(o.data for o in self.axes_meshes)
 
     def axis_label(
