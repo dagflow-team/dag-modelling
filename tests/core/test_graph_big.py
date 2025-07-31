@@ -2,15 +2,15 @@ from sys import argv
 
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.lib.common import Dummy
-from dagflow.plot.graphviz import GraphDot
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Dummy
+from dag_modelling.plot.graphviz import GraphDot
 
 counter = 0
 
 
 @mark.skipif("--include-long-time-tests" not in argv, reason="long-time tests switched off")
-def test_graph_big_01():
+def test_graph_big_01(output_path: str):
     """Create a graph of nodes and test evaluation features"""
     g = Graph()
     label = None
@@ -21,7 +21,7 @@ def test_graph_big_01():
         newlabel = label and label + suffix or suffix
         if newlabel is not None:
             d.set_label(newlabel)
-        d.savegraph(f"output/test_graph_big_{counter:03d}.png")
+        d.savegraph(f"{output_path}/test_graph_big_{counter:03d}.png")
         counter += 1
 
     def plotter(function, node):

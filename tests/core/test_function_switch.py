@@ -1,9 +1,9 @@
 from numpy import arange, array, copyto, result_type
 
-from dagflow.core.graph import Graph
-from dagflow.core.input_strategy import AddNewInputAddAndKeepSingleOutput
-from dagflow.lib.common import Array
-from dagflow.core.node import Node
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.input_strategy import AddNewInputAddAndKeepSingleOutput
+from dag_modelling.lib.common import Array
+from dag_modelling.core.node import Node
 
 
 class SumIntOrProductFloatOrDoNothing(Node):

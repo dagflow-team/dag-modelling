@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 import pytest
 
-from dagflow.bundles.load_graph import load_graph
+from dag_modelling.bundles.load_graph import load_graph
 
 
 def _save_data(filename, object_name, data):

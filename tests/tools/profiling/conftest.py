@@ -1,11 +1,11 @@
 import numpy as np
 from pytest import fixture
 
-from dagflow.core.graph import Graph
-from dagflow.core.node import Node
-from dagflow.lib.arithmetic import Product, Sum
-from dagflow.lib.common import Array
-from dagflow.lib.linalg import MatrixProductDVDt
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.node import Node
+from dag_modelling.lib.arithmetic import Product, Sum
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.linalg import MatrixProductDVDt
 
 
 # dummy graph structures on which the profiler is being tested

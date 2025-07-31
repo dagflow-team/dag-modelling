@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from pandas import DataFrame
 
-from dagflow.tools.profiling import CountCallsProfiler
+from dag_modelling.tools.profiling import CountCallsProfiler
 
 
 def eval_n_times(node, n):
-    """Evaluate node n times. Helper function"""
+    """Evaluate node n times.
+
+    Helper function
+    """
     for _ in range(n):
         node.eval()
 
 
 def get_estimated_calls(profiler, node):
     """Return the estimated number of calls for the given node.
+
     This is a helper function.
     Note: This method of retrieving the number of calls should never be used in
     real code, as some nodes could have the same name.

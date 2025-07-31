@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from functools import reduce
-from operator import mul
 from itertools import chain
+from operator import mul
+from typing import TYPE_CHECKING
 
 from pandas import DataFrame
 
-from dagflow.tools.profiling import MemoryProfiler
-from dagflow.core.input import Input
+from dag_modelling.core.input import Input
+from dag_modelling.tools.profiling import MemoryProfiler
 
 if TYPE_CHECKING:
-    from dagflow.core.output import Output
-    from dagflow.core.input import Input
     from numpy.typing import NDArray
+
+    from dag_modelling.core.input import Input
+    from dag_modelling.core.output import Output
 
 
 def _calc_numpy_size(data: NDArray) -> int:
-    """Size of Numpy's `NDArray` in bytes"""
+    """Size of Numpy's `NDArray` in bytes."""
     length = reduce(mul, data.shape)
     return length * data.dtype.itemsize
 
@@ -35,7 +36,7 @@ def get_output_size(out: Output) -> int:
 
 
 def edge_size(edge: Output | Input) -> int:
-    """Return size of `edge` data in bytes"""
+    """Return size of `edge` data in bytes."""
     if isinstance(edge, Input):
         return get_input_size(edge)
     return get_output_size(edge)
@@ -66,7 +67,7 @@ def test_basic_edges_g0(graph_0):
 
 
 def test_array_store_mods_g0(graph_0):
-    """Test profiling behavior with different array store modes"""
+    """Test profiling behavior with different array store modes."""
     _, nodes = graph_0
     _, a1, _, a3, _, p1, s0, _, _, _, _, _ = nodes
 

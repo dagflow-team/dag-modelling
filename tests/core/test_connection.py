@@ -9,17 +9,17 @@ from copy import deepcopy
 
 from pytest import mark, raises
 
-from dagflow.core.exception import ClosedGraphError, ConnectionError, UnclosedGraphError
-from dagflow.core.graph import Graph
-from dagflow.core.input import Input, Inputs
-from dagflow.core.node import Node
-from dagflow.core.output import Output
-from dagflow.core.storage import NodeStorage
-from dagflow.lib.abstract import BlockToOneNode, OneToOneNode
-from dagflow.lib.common import Dummy
-from dagflow.parameters import Parameter
-from dagflow.plot.graphviz import savegraph
-from multikeydict.nestedmkdict import NestedMKDict
+from dag_modelling.core.exception import ClosedGraphError, ConnectionError, UnclosedGraphError
+from dag_modelling.core.graph import Graph
+from dag_modelling.core.input import Input, Inputs
+from dag_modelling.core.node import Node
+from dag_modelling.core.output import Output
+from dag_modelling.core.storage import NodeStorage
+from dag_modelling.lib.abstract import BlockToOneNode, OneToOneNode
+from dag_modelling.lib.common import Dummy
+from dag_modelling.parameters import Parameter
+from dag_modelling.plot.graphviz import savegraph
+from nested_mapping import NestedMapping
 
 
 def check_connection(obj):
@@ -88,14 +88,14 @@ def test_Output_or_Parameter_to_Input_or_Node_or_Sequence(LHS, RHS):
         {f"n{i}": [OneToOneNode(f"node_{j}{i}") for j in range(3)] for i in range(3)},
     ),
 )
-@mark.parametrize("rhscls", (dict, NestedMKDict, NodeStorage))
+@mark.parametrize("rhscls", (dict, NestedMapping, NodeStorage))
 def test_Output_or_Parameter_to_Mapping(LHS, RHS, rhscls):
     """
     Test of a connection in the following cases:
       * `Output | Parameter >> Mapping[Input | Sequence[Input] | Inputs]`;
       * `Output | Parameter >> Mapping[Node | Sequence[Node]]`.
 
-    Here `Mapping` is `dict | NestedMKDict | NodeStorage`.
+    Here `Mapping` is `dict | NestedMapping | NodeStorage`.
     """
     # NOTE: LHS and RHS are initialized only once for all the test cases,
     #       so we need to create their copies to avoid reconnections!
@@ -105,7 +105,7 @@ def test_Output_or_Parameter_to_Mapping(LHS, RHS, rhscls):
     lhs >> rhs
 
     assert lhs.connected()
-    for obj in NestedMKDict(dic=rhs).walkvalues():
+    for obj in NestedMapping(dic=rhs).walkvalues():
         assert check_connection(obj)
 
 
@@ -428,7 +428,7 @@ def test_08():
     final.data
 
 
-def test_09(testname):
+def test_09(test_name, output_path: str):
     """Test <<"""
     with Graph(close_on_exit=True) as g:
         n1 = Dummy("node1")
@@ -455,4 +455,4 @@ def test_09(testname):
 
     out2.data
 
-    savegraph(g, f"output/{testname}.pdf")
+    savegraph(g, f"{output_path}/{test_name}.pdf")

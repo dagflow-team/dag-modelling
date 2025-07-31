@@ -2,11 +2,11 @@ from matplotlib.pyplot import close
 from numpy import allclose, arccos, arcsin, arctan, cos, linspace, pi, sin, tan
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.trigonometry import ArcCos, ArcSin, ArcTan, Cos, Sin, Tan
-from dagflow.plot.plot import plot_auto
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.trigonometry import ArcCos, ArcSin, ArcTan, Cos, Sin, Tan
+from dag_modelling.plot.plot import plot_auto
 
 fcnnames = ("cos", "sin", "tan", "arccos", "arcsin", "arctan")
 fcns = (cos, sin, tan, arccos, arcsin, arctan)
@@ -18,7 +18,7 @@ nodedict = dict(zip(fcnnames, nodes))
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("fcnname", fcnnames)
-def test_Trigonometry_01(testname, debug_graph, fcnname, dtype):
+def test_Trigonometry_01(test_name, debug_graph, fcnname, dtype, output_path: str):
     fcn_np = fcndict[fcnname]
     fcn_node = nodedict[fcnname]
 
@@ -50,4 +50,4 @@ def test_Trigonometry_01(testname, debug_graph, fcnname, dtype):
     plot_auto(node.outputs[2], label="input 2")
     close()
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")

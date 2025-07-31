@@ -1,18 +1,18 @@
 from numpy import arange
 from pytest import mark
 
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.common import Array
-from dagflow.lib.linalg import LinearFunction
-from dagflow.core.make_fcn import make_fcn
-from dagflow.parameters import Parameters
-from dagflow.core.storage import NodeStorage
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.linalg import LinearFunction
+from dag_modelling.core.make_fcn import make_fcn
+from dag_modelling.parameters import Parameters
+from dag_modelling.core.storage import NodeStorage
 
 
 @mark.parametrize("pass_params", (False, True))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_safe(testname, pass_params, pass_output):
+def test_make_fcn_safe(test_name, pass_params, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
@@ -51,12 +51,12 @@ def test_make_fcn_safe(testname, pass_params, pass_output):
     assert all(res0 == (vals_in[0] * x + vals_in[1]))
     assert all(res2 == res0)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
 
 
 @mark.parametrize("pass_params", (False, True))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_nonsafe(testname, pass_params, pass_output):
+def test_make_fcn_nonsafe(test_name, pass_params, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
@@ -97,4 +97,4 @@ def test_make_fcn_nonsafe(testname, pass_params, pass_output):
     assert all(res1 == res0)
     assert all(res1 == res2)
 
-    savegraph(graph, f"output/{testname}.png")
+    savegraph(graph, f"{output_path}/{test_name}.png")
