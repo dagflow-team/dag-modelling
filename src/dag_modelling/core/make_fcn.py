@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nested_mapping import NestedMapping
+
 from ..parameters import Parameter
 from .node import Node
 from .output import Output
-from .storage import NestedMapping, NodeStorage
 
 if TYPE_CHECKING:
     from collections.abc import Callable, KeysView
@@ -13,14 +14,14 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def _find_par_permissive(storage: NodeStorage | NestedMapping, name: str) -> Parameter | None:
+def _find_par_permissive(storage: NestedMapping, name: str) -> Parameter | None:
     for key, par in storage.walkitems():
         if key[-1] == name and isinstance(par, Parameter):
             return par
 
 
 def _collect_pars_permissive(
-    storage: NodeStorage | NestedMapping, par_names: list[str] | tuple[str, ...] | KeysView
+    storage: NestedMapping, par_names: list[str] | tuple[str, ...] | KeysView
 ) -> dict[str, Parameter]:
     res = {}
     for name in par_names:
@@ -31,18 +32,17 @@ def _collect_pars_permissive(
 
 def make_fcn(
     node: Node | Output,
-    storage: NodeStorage | NestedMapping,
+    storage: NestedMapping,
     safe: bool = True,
     par_names: list[str] | tuple[str, ...] | None = None,
 ) -> Callable:
-    """
-    Retruns a function, which takes the parameter values as arguments
-    and retruns the result of the node evaluation.
+    """Retruns a function, which takes the parameter values as arguments and
+    retruns the result of the node evaluation.
 
     :param node: A node (or output), depending (explicitly or implicitly) on the parameters
     :type node: class:`dag_modelling.core.node.Node` | class:`dag_modelling.core.output.Output`
     :param storage: A storage with parameters
-    :type storage: class:`dag_modelling.core.storage.NodeStorage`
+    :type storage: class:`nested_mapping.NestedMapping` (including `dag_modelling.core.storage.NodeStorage`)
     :param safe: If `safe=True`, the parameters will be resetted to old values after evaluation.
     If `safe=False`, the parameters will be setted to the new values
     :type safe: bool
@@ -50,10 +50,8 @@ def make_fcn(
     :type par_names: list[str] | tuple[str,...] | None
     :rtype: function
     """
-    if not isinstance(storage, (NodeStorage, NestedMapping)):
-        raise ValueError(
-            f"`storage` must be NodeStorage | NestedMapping, but given {storage}, {type(storage)=}!"
-        )
+    if not isinstance(storage, NestedMapping):
+        raise ValueError(f"`storage` must be NestedMapping, but given {storage}, {type(storage)=}!")
 
     # to avoid extra checks in the function, we prepare the corresponding getter here
     if isinstance(node, Output):
@@ -75,12 +73,10 @@ def make_fcn(
     _parsdict = _collect_pars_permissive(storage, par_names) if par_names else {}
 
     def _get_parameter(name: str) -> Parameter:
-        """
-        Gets a parameter from the parameters dict,
-        which stores the parameters found from the "fuzzy" search,
-        or try to get the parameter from the storage,
-        supposing that the name is the precise key in the storage
-        """
+        """Gets a parameter from the parameters dict, which stores the
+        parameters found from the "fuzzy" search, or try to get the parameter
+        from the storage, supposing that the name is the precise key in the
+        storage."""
         try:
             par = _parsdict[name]
         except KeyError as exc:
