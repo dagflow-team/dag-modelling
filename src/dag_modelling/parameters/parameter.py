@@ -87,7 +87,7 @@ class Parameter:
                 label,
                 fmtlong=f"{{}} (par {idx}: {idxname})",
                 fmtextra={"graph": f"{{source.text}}\\nparameter {idx}: {idxname}"},
-                fields_exclude={"paths"},
+                # fields_exclude={"paths"},
             )
             # if idxtuple:
             #     self._view.labels.index_values.extend(idxtuple)
