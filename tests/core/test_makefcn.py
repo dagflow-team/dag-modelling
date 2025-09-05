@@ -1,13 +1,13 @@
 from numpy import arange
-from pytest import mark
+from pytest import mark, raises
 
 from dag_modelling.core.graph import Graph
-from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.core.make_fcn import make_fcn
+from dag_modelling.core.storage import NodeStorage
 from dag_modelling.lib.common import Array
 from dag_modelling.lib.linalg import LinearFunction
-from dag_modelling.core.make_fcn import make_fcn
 from dag_modelling.parameters import Parameters
-from dag_modelling.core.storage import NodeStorage
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("pass_params", (False, True))
@@ -50,6 +50,15 @@ def test_make_fcn_safe(test_name, pass_params, pass_output, output_path: str):
     assert all(res1 == (vals_new[0] * x + vals_new[1]))
     assert all(res0 == (vals_in[0] * x + vals_in[1]))
     assert all(res2 == res0)
+
+    if pass_params:
+        res3 = LF(vals_new[0] * 2, **{"parameters.all.b.IDX1": vals_new[1] * 3})
+        assert A.value == vals_in[0]
+        assert B.value == vals_in[1]
+        assert all(res3 == (vals_new[0] * 2 * x + vals_new[1] * 3))
+
+    with raises(RuntimeError):
+        LF(1, 2)
 
     savegraph(graph, f"{output_path}/{test_name}.png")
 
@@ -96,5 +105,14 @@ def test_make_fcn_nonsafe(test_name, pass_params, pass_output, output_path: str)
     assert all(res1 == (vals_new[0] * x + vals_new[1]))
     assert all(res1 == res0)
     assert all(res1 == res2)
+
+    if pass_params:
+        res3 = LF(vals_new[0] * 2, **{"parameters.all.b.IDX1": vals_new[1] * 3})
+        assert A.value == vals_new[0]*2
+        assert B.value == vals_new[1]*3
+        assert all(res3 == (vals_new[0] * 2 * x + vals_new[1] * 3))
+
+    with raises(RuntimeError):
+        LF(1, 2)
 
     savegraph(graph, f"{output_path}/{test_name}.png")
