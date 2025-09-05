@@ -54,7 +54,7 @@ def make_fcn(
         raise ValueError(f"`storage` must be NestedMapping, but given {storage}, {type(storage)=}!")
 
     # to avoid extra checks in the function, we prepare the corresponding getter here
-    output, outputs, touchable = None, None, None
+    output, outputs = None, None
     if isinstance(node_or_output, Output):
         output = node_or_output
     elif isinstance(node_or_output, Node):
@@ -89,37 +89,55 @@ def make_fcn(
                 return output.data
 
     # the dict with parameters found from the presearch
-    _parsdict = _collect_pars_permissive(storage, par_names) if par_names else {}
+    _pars_dict = _collect_pars_permissive(storage, par_names) if par_names else {}
+    _pars_list = list(_pars_dict.values())
 
-    def _get_parameter(name: str) -> Parameter:
+    def _get_parameter_by_name(name: str) -> Parameter:
         """Gets a parameter from the parameters dict, which stores the
         parameters found from the "fuzzy" search, or try to get the parameter
         from the storage, supposing that the name is the precise key in the
         storage."""
         try:
-            par = _parsdict[name]
+            return _pars_dict[name]
         except KeyError as exc:
             try:
-                par = storage[name]
+                return storage[name]
             except KeyError:
                 raise RuntimeError(f"There is no parameter '{name}' in the {storage=}!") from exc
-        return par
 
     if not safe:
 
-        def fcn_unsafe(**kwargs) -> NDArray | tuple[NDArray, ...] | None:
+        def fcn_not_safe(
+            *args: float | int, **kwargs: float | int
+        ) -> NDArray | tuple[NDArray, ...] | None:
+            if len(args) > len(_pars_list):
+                raise RuntimeError(
+                    f"Too much parameter values provided: {len(args)} [>{len(_pars_list)}]"
+                )
+            for par, val in zip(_pars_dict.values(), args):
+                par.value = val
+
             for name, val in kwargs.items():
-                par = _get_parameter(name)
+                par = _get_parameter_by_name(name)
                 par.value = val
             node_or_output.touch()
             return _get_data()
 
-        return fcn_unsafe
+        return fcn_not_safe
 
-    def fcn_safe(**kwargs) -> NDArray | tuple[NDArray, ...] | None:
+    def fcn_safe(*args: float | int, **kwargs: float | int) -> NDArray | tuple[NDArray, ...] | None:
+        if len(args) > len(_pars_list):
+            raise RuntimeError(
+                f"Too much parameter values provided: {len(args)} [>{len(_pars_list)}]"
+            )
+
         pars = []
+        for par, val in zip(_pars_dict.values(), args):
+            par.push(val)
+            pars.append(par)
+
         for name, val in kwargs.items():
-            par = _get_parameter(name)
+            par = _get_parameter_by_name(name)
             par.push(val)
             pars.append(par)
         node_or_output.touch()
