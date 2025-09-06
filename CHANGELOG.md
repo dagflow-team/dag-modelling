@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - `make_fcn`: add positional parameters, clean.
 - Add `disable_implicit_numpy_multithreading` module.
+- Introduce `set_verbosity(int)` function, the simpler version to use instead of the logger's `set_level()`
 - ...
 
 ## [0.12.0] - 2025-07-29
