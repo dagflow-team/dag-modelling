@@ -1,19 +1,27 @@
 
 # Change Log
+
 All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.12] - 2025-07-29
+## [Draft] [0.13.0] - 2025-09-
 
-- First PYPI version
+- `make_fcn`: add positional parameters, clean.
+- Add `disable_implicit_numpy_multithreading` module.
+- Introduce `set_verbosity(int)` function, the simpler version to use instead of the logger's `set_level()`
+- ...
 
-## [0.11] - 2025-07-25
+## [0.12.0] - 2025-07-29
 
-- Merge upstream changes for profiling
+- First PYPI version.
 
-## [0.10] - 2025-07-24
+## [0.11.0] - 2025-07-25
+
+- Merge upstream changes for profiling.
+
+## [0.10.0] - 2025-07-24
   
 Major updates:
 - Merge upstream changes
@@ -27,7 +35,7 @@ Major updates:
  
 ## [0.9.0] - 2025-04-07
   
-The prerelease version
+The pre-release version
 
 ### Added
  

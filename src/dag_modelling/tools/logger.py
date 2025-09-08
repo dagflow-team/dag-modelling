@@ -58,5 +58,23 @@ addLevelName(INFO1, "INFO1")
 addLevelName(INFO2, "INFO2")
 addLevelName(INFO3, "INFO3")
 
+info_levels = [INFO, INFO1, INFO2, INFO3, DEBUG]
+
+
+def set_verbosity(verbosity: int, name="dag_modelling"):
+    if verbosity<0:
+        verbosity = 0
+
+    try:
+        level = info_levels[verbosity]
+    except IndexError:
+        level = info_levels[-1]
+
+    logger = _loggers[name]
+    for handler in logger.handlers:
+        handler.setLevel(level)
+    logger.setLevel(level)
+
+
 logger = get_logger()
 logger.propagate = False
