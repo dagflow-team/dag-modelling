@@ -6,12 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Draft] [0.13.0] - 2025-09-
+## [0.13.0] - 2025-09-08
 
 - `make_fcn`: add positional parameters, clean.
 - Add `disable_implicit_numpy_multithreading` module.
 - Introduce `set_verbosity(int)` function, the simpler version to use instead of the logger's `set_level()`
-- ...
 
 ## [0.12.0] - 2025-07-29
 
@@ -36,9 +35,3 @@ Major updates:
 ## [0.9.0] - 2025-04-07
   
 The pre-release version
-
-### Added
- 
-### Changed
- 
-### Fixed
