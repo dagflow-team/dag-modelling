@@ -101,7 +101,7 @@ def save_matrices(
     filenames: Path | str | Sequence[Path | str],
     **kwargs,
 ) -> None:
-    if not isinstance(filenames, Sequence):
+    if isinstance(filenames, (Path, str)):
         _save_matrices(Path(filenames), matrices=matrices, **kwargs)
         return
 

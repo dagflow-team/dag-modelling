@@ -116,7 +116,7 @@ def save_records(
                 records[key] = value.to_records(**to_records_kwargs)
                 dataframes[key] = value
 
-    if not isinstance(filenames, Sequence):
+    if isinstance(filenames, (Path, str)):
         _save_records(Path(filenames), dataframes=dataframes, records=records, **kwargs)
         return
 
