@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from h5py import File
-from numpy import ndarray, savez
+from numpy import ndarray, savez_compressed
 from pandas import DataFrame
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ def _save_records(
                 print(df)
             print_filename_global = False
         case (*_, "npz"):
-            savez(filename, **records)
+            savez_compressed(filename, **records)
         case (*_, "pd", "hdf5"):
             mode = "w"
             pdhdf_kwargs = dict(pdhdf_kwargs, index=False)
