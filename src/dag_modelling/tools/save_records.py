@@ -86,6 +86,7 @@ def _save_records(
             tsv_kwargs = dict(tsv_kwargs)
             tsv_kwargs.setdefault("index", False)
             tsv_kwargs.setdefault("sep", "\t")
+            tsv_kwargs.setdefault("float_format", "%.17g")
 
             for key, df in dataframes.items():
                 koutput = namefcn(key)
