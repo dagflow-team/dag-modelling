@@ -22,7 +22,7 @@ def _save_matrices(
     tsv_include_parent_name: bool = False,
     tsv_allow_no_key: bool = False,
     tsv_mode: Literal["flat", "folder"] = "folder",
-    root_,
+    root_reproducible: bool = False,
 ) -> None:
     Path(filename.parent).mkdir(parents=True, exist_ok=True)
 
@@ -45,12 +45,16 @@ def _save_matrices(
             except ImportError as ex:
                 raise RuntimeError("ROOT not found") from ex
             else:
-                file = TFile(filename, "recreate")
+                if root_reproducible:
+                    filename_str = f"{filename!s}?reproducible={filename.name}"
+                else:
+                    filename_str = str(filename)
+                file = TFile(filename_str, "recreate")
                 for name, matrix in matrices.items():
-                    Matrix = TMatrixD(matrix)
+                    Matrix = TMatrixD(matrix.shape[0], matrix.shape[1], matrix.ravel())
                     file.WriteTObject(Matrix, name, "overwrite")
                 file.Close()
-        case (*_, "tsv" | "txt"):
+        case (*_, "tsv" | "txt") | (*_, "tsv" | "txt", "gz" | "bz2"):
             name_no_key = len(matrices) == 1 and tsv_allow_no_key
             print_filename_global = False
             match (tsv_mode, name_no_key):
@@ -86,7 +90,7 @@ def _save_matrices(
 
             for key, matrix in matrices.items():
                 koutput = namefcn(key)
-                savetxt(koutput, **tsv_kwargs)
+                savetxt(koutput, matrix, **tsv_kwargs)
                 if not print_filename_global:
                     print(f"Write {koutput}")
         case _:
