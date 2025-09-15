@@ -53,7 +53,7 @@ def _save_records(
             file = recreate(filename)
             for key, record in records.items():
                 file[key] = record
-        case (*_, "tsv" | "txt"):
+        case (*_, "tsv" | "txt") | (*_, "tsv" | "txt", "gz" | "bz2"):
             name_no_key = len(dataframes) == 1 and tsv_allow_no_key
             print_filename_global = False
             match (tsv_mode, name_no_key):
