@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.14.0] - 2025-09-XX
+
+- [feat] add `save_matrices` function similar to `save_records`, but for matrices. Saves dicitonary
+    with matrices as hdf5, npz, root, tsv or archived tsv.
+
 ## [0.13.0] - 2025-09-08
 
 - `make_fcn`: add positional parameters, clean.
