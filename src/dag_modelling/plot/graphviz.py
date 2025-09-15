@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 try:
     import pygraphviz as G
 except ImportError:
+    logger.warning("Unable to import pygraphviz. Corresponding functions will not work.")
+
     GraphDot = None
 
     def savegraph(*args, **kwargs):
