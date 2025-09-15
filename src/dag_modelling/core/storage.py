@@ -77,8 +77,8 @@ class NodeStorage(NestedMapping):
     def savegraphs(
         self,
         folder: str,
-        mindepth: int = -2,
-        maxdepth: int = 2,
+        min_depth: int = -2,
+        max_depth: int = 2,
         accept_index: Mapping[str, str | int | Container[str | int]] | None = None,
         **kwargs,
     ):
@@ -122,7 +122,7 @@ class NodeStorage(NestedMapping):
             makedirs(folder, exist_ok=True)
             fullname = f"{folder}/{filename}.dot"
 
-            gd = GraphDot.from_nodes([node], mindepth=mindepth, maxdepth=maxdepth, **kwargs)
+            gd = GraphDot.from_nodes([node], min_depth=min_depth, max_depth=max_depth, **kwargs)
             gd.savegraph(fullname, quiet=True)
 
             logger.log(INFO1, f"Write: {fullname} [{i + 1}/{nitems}]")
