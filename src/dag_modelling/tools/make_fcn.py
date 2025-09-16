@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from nested_mapping import NestedMapping
 
 from ..parameters import Parameter
-from .node import Node
-from .output import Output
+from ..core.node import Node
+from ..core.output import Output
 
 if TYPE_CHECKING:
     from collections.abc import Callable, KeysView
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def _find_par_permissive(storage: NestedMapping, name: str) -> Parameter | None:
+def _find_par(storage: NestedMapping, name: str) -> Parameter | None:
     """Find parameter in storage (permissive).
 
     Warning
@@ -40,12 +40,12 @@ def _find_par_permissive(storage: NestedMapping, name: str) -> Parameter | None:
             return par
 
 
-def _collect_pars_permissive(
+def _collect_pars(
     storage: NestedMapping, par_names: list[str] | tuple[str, ...] | KeysView
 ) -> dict[str, Parameter]:
     res = {}
     for name in par_names:
-        if (par := _find_par_permissive(storage, name)) is not None:
+        if (par := _find_par(storage, name)) is not None:
             res[name] = par
     return res
 
@@ -53,8 +53,9 @@ def _collect_pars_permissive(
 def make_fcn(
     node_or_output: Node | Output,
     storage: NestedMapping,
+    par_names: list[str] | tuple[str],
     safe: bool = True,
-    par_names: list[str] | tuple[str, ...] | None = None,
+    mapper: dict[str, str] | None = None,
 ) -> Callable:
     """Retruns a function, which takes the parameter values as arguments and
     retruns the result of the node evaluation.
@@ -69,6 +70,8 @@ def make_fcn(
         If `safe=True`, the parameters will be resetted to old values after evaluation.
         If `safe=False`, the parameters will be setted to the new values.
     par_names : list[str] | tuple[str, ...] | None
+        The names of the set of parameters for building function.
+    mapper : dict[str, str] | None
         The names of the set of parameters for presearch.
 
     Returns
@@ -115,9 +118,10 @@ def make_fcn(
             def _get_data():
                 return output.data
 
-    # the dict with parameters found from the presearch
-    o
-    _pars_dict = _collect_pars_permissive(storage, par_names) if par_names else {}
+    # the dict with parameters
+    _pars_dict = _collect_pars(storage, par_names) if par_names else {}
+    if mapper:
+        _pars_dict = {mapper.get(parname, parname): parvalue for parname, parvalue in _pars_dict.items()}
     _pars_list = list(_pars_dict.values())
 
     def _get_parameter_by_name(name: str) -> Parameter:
@@ -127,11 +131,8 @@ def make_fcn(
         storage."""
         try:
             return _pars_dict[name]
-        except KeyError as exc:
-            try:
-                return storage[name]
-            except KeyError:
-                raise RuntimeError(f"There is no parameter '{name}' in the {storage=}!") from exc
+        except KeyError:
+            raise RuntimeError(f"Parameter '{name}' was not passed to `par_names` or `mapper`, only {_pars_dict.keys()} are allowed!")
 
     if not safe:
 
@@ -141,6 +142,10 @@ def make_fcn(
             if len(args) > len(_pars_list):
                 raise RuntimeError(
                     f"Too much parameter values provided: {len(args)} [>{len(_pars_list)}]"
+                )
+            if len(args) + len(kwargs)  > len(_pars_list):
+                raise RuntimeError(
+                    f"Possible overwritting of parameters: {len(args) + len(kwargs)} were passed, but only {len(_pars_list)} are allowed"
                 )
             for par, val in zip(_pars_dict.values(), args):
                 par.value = val
@@ -157,6 +162,10 @@ def make_fcn(
         if len(args) > len(_pars_list):
             raise RuntimeError(
                 f"Too much parameter values provided: {len(args)} [>{len(_pars_list)}]"
+            )
+        if len(args) + len(kwargs)  > len(_pars_list):
+            raise RuntimeError(
+                f"Possible overwritting of parameters: {len(args) + len(kwargs)} were passed, but only {len(_pars_list)} are allowed"
             )
 
         pars = []
