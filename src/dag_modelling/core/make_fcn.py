@@ -15,8 +15,28 @@ if TYPE_CHECKING:
 
 
 def _find_par_permissive(storage: NestedMapping, name: str) -> Parameter | None:
-    for key, par in storage.walkitems():
-        if key[-1] == name and isinstance(par, Parameter):
+    """Find parameter in storage (permissive).
+
+    Warning
+    -------
+    More than one parameter might contain `name` in their paths.
+    It will return only first item.
+
+    Parameters
+    ----------
+    storage : NestedMapping
+        A storage with parameters.
+    name : str
+        Name of parameter (might be with periods).
+
+    Returns
+    -------
+    Parameter | None
+        Parameter that contains `name` in path of parameter in storage.
+
+    """
+    for key, par in storage.walkjoineditems():
+        if key in name and isinstance(par, Parameter):
             return par
 
 
@@ -39,17 +59,24 @@ def make_fcn(
     """Retruns a function, which takes the parameter values as arguments and
     retruns the result of the node evaluation.
 
-    :param node_or_output: A node (or output), depending (explicitly or implicitly) on the parameters
-    :type node: class:`dag_modelling.core.node.Node` | class:`dag_modelling.core.output.Output`
-    :param storage: A storage with parameters
-    :type storage: class:`nested_mapping.NestedMapping` (including `dag_modelling.core.storage.NodeStorage`)
-    :param safe: If `safe=True`, the parameters will be resetted to old values after evaluation.
-    If `safe=False`, the parameters will be setted to the new values
-    :type safe: bool
-    :param par_names: The short names of the set of parameters for presearch
-    :type par_names: list[str] | tuple[str,...] | None
-    :rtype: function
+    Parameters
+    ----------
+    node_or_output : Node | Output
+        A node (or output), depending (explicitly or implicitly) on the parameters.
+    storage : NestedMapping
+        A storage with parameters.
+    safe : bool
+        If `safe=True`, the parameters will be resetted to old values after evaluation.
+        If `safe=False`, the parameters will be setted to the new values.
+    par_names : list[str] | tuple[str, ...] | None
+        The names of the set of parameters for presearch.
+
+    Returns
+    -------
+    Callable
+        Function that depends on set of parameters with `par_names` names.
     """
+    pass
     if not isinstance(storage, NestedMapping):
         raise ValueError(f"`storage` must be NestedMapping, but given {storage}, {type(storage)=}!")
 
@@ -89,6 +116,7 @@ def make_fcn(
                 return output.data
 
     # the dict with parameters found from the presearch
+    o
     _pars_dict = _collect_pars_permissive(storage, par_names) if par_names else {}
     _pars_list = list(_pars_dict.values())
 
