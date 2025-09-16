@@ -132,7 +132,7 @@ def make_fcn(
         try:
             return _pars_dict[name]
         except KeyError:
-            raise RuntimeError(f"Parameter '{name}' was not passed to `par_names` or `mapper`, only {_pars_dict.keys()} are allowed!")
+            raise KeyError(f"Parameter '{name}' was not passed to `par_names` or `mapper`, only {_pars_dict.keys()} are allowed!")
 
     if not safe:
 
@@ -163,7 +163,7 @@ def make_fcn(
             raise RuntimeError(
                 f"Too much parameter values provided: {len(args)} [>{len(_pars_list)}]"
             )
-        if len(args) + len(kwargs)  > len(_pars_list):
+        if len(args) + len(kwargs) > len(_pars_list):
             raise RuntimeError(
                 f"Possible overwritting of parameters: {len(args) + len(kwargs)} were passed, but only {len(_pars_list)} are allowed"
             )
