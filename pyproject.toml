@@ -1,0 +1,61 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+
+requires = [ "packaging", "setuptools", "wheel" ]
+
+[project]
+name = "dag-modelling"
+version = "0.13.0"
+description = "The dag-modelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
+readme = "README.md"
+license = "MIT"
+maintainers = [ { name = "DAGModelling Team", email = "dagflow@jinr.ru" } ]
+authors = [ { name = "DAGModelling Team", email = "dagflow@jinr.ru" } ]
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "contextlib2",
+  "h5py",
+  "latexdatax",
+  "matplotlib",
+  "nested-mapping>=0.11",
+  "numba",
+  "numpy",
+  "ordered-set",
+  "pandas",
+  "plotille",
+  "pygraphviz",
+  "pyyaml",
+  "schema",
+  "scipy",
+  "tabulate",
+  "uproot",
+]
+
+optional-dependencies.test = [ "coverage", "pytest", "pytest-cov" ]
+urls."Bug Tracker" = "https://github.com/dagflow-team/dag-modelling/issues"
+urls."DAGModelling Team" = "https://github.com/dagflow-team"
+urls.documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
+urls.homepage = "https://github.com/dagflow-team/dag-modelling"
+urls.repository = "https://github.com/dagflow-team/dag-modelling"
+
+[tool.setuptools.packages.find]
+where = [ "src" ]
+exclude = [
+  "tests*",
+  "docs*",
+  "example*",
+]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 5

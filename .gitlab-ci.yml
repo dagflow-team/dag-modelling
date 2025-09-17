@@ -1,0 +1,30 @@
+stages:
+  - tests
+
+tests:
+  image: 'python:3.11.7-bullseye'
+  stage: tests
+
+  script:
+    - apt-get update
+    - apt-get -y install libgraphviz-dev graphviz
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade wheel setuptools pip
+    - pip install cython
+    - pip install -e ".[test]"
+    - coverage run --source=. -m pytest --include-long-time-tests
+    - coverage report
+    - coverage xml
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - tests/output
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  only:
+    - master
+    - main
+    - merge_requests
