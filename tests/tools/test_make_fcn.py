@@ -9,14 +9,14 @@ from dag_modelling.parameters import Parameters
 from dag_modelling.plot.graphviz import savegraph
 
 
-@mark.parametrize("par_dict,mapper", (
-    ({}, None),
-    ({"a": 2.0, "b.IDX1": 3.0}, {"b.IDX1": "par1"}),
-    ({"a": 2.0}, {"a": "par0"}),
-    ({"b.IDX1": 3.0}, {"a": "par0"}),
+@mark.parametrize("par_dict,pass_dict", (
+    ({}, False),
+    ({"a": 2.0, "b.IDX1": 3.0}, True),
+    ({"a": 2.0}, False),
+    ({"b.IDX1": 3.0}, True),
 ))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_safe(test_name, par_dict, mapper, pass_output, output_path: str):
+def test_make_fcn_safe(test_name, par_dict, pass_dict, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
@@ -34,51 +34,51 @@ def test_make_fcn_safe(test_name, par_dict, mapper, pass_output, output_path: st
         Array("x", x, mode="fill") >> f
 
     res0 = f.outputs[0].data
+    if pass_dict:
+        par_names = {parname: storage[f"parameters.all.{parname}"] for parname in par_dict.keys()}
+    else:
+        par_names = [storage[f"parameters.all.{parname}"] for parname in par_dict.keys()]
     LF = make_fcn(
         f.outputs[0] if pass_output else f,
-        storage["parameters.all"],
-        par_names=par_dict.keys(),
-        mapper=mapper,
+        par_names=par_names,
         safe=True,
     )
+    res1 = LF()
 
     if par_dict:
         with raises(KeyError):
             LF(non_existent=12)
 
         with raises(RuntimeError):
-            LF(*[value for value in par_dict.values()], non_existent=12)
+            LF(*[value for value in par_dict.values()], -1)
 
-    res1 = LF(*[value for value in par_dict.values()])
-    res2 = LF()
+    if pass_dict:
+        res2 = LF(**{parname: parvalue for parname, parvalue in zip(par_names.keys(), par_dict.values())})
+    else:
+        res2 = LF(*[value for value in par_dict.values()])
 
-    if mapper:
-        res3 = LF(**{mapper.get(parname, parname): parvalue for parname, parvalue in par_dict.items()})
-        assert all(res1 == res3)
-
-    # pars equal inital values
+    # pars equal old values
     assert A.value == vals_in[0]
     assert B.value == vals_in[1]
-    # new result differs from the result of LF
-    assert all(res1 == (par_dict.get("a", vals_in[0]) * x + par_dict.get("b.IDX1", vals_in[1])))
+    # new result is the same as the result of LF
     assert all(res0 == (vals_in[0] * x + vals_in[1]))
-    assert all(res2 == res0)
+    assert all(res1 == res0)
+    assert all(res2 == par_dict.get("a", vals_in[0]) * x + par_dict.get("b.IDX1", vals_in[1]))
 
     savegraph(graph, f"{output_path}/{test_name}.png")
 
 
-@mark.parametrize("par_dict,mapper", (
-    ({}, None),
-    ({"parameters.all.a": 2.0, "parameters.all.b.IDX1": 3.0}, {"parameters.all.b.IDX1": "par1"}),
-    ({"parameters.all.a": 2.0}, {"parameters.all.a": "par0"}),
-    ({"parameters.all.b.IDX1": 3.0}, {"parameters.all.a": "par0"}),
+@mark.parametrize("par_dict,pass_dict", (
+    ({}, False),
+    ({"parameters.all.a": 2.0, "parameters.all.b.IDX1": 3.0}, True),
+    ({"parameters.all.a": 2.0}, False),
+    ({"parameters.all.b.IDX1": 3.0}, True),
 ))
 @mark.parametrize("pass_output", (False, True))
-def test_make_fcn_nonsafe(test_name, par_dict, mapper, pass_output, output_path: str):
+def test_make_fcn_nonsafe(test_name, par_dict, pass_dict, pass_output, output_path: str):
     n = 10
     x = arange(n, dtype="d")
     vals_in = [1.0, 2.0]
-    val_new = 3.0
     names = ("a", "b.IDX1")
 
     with Graph(close_on_exit=True) as graph:
@@ -92,13 +92,15 @@ def test_make_fcn_nonsafe(test_name, par_dict, mapper, pass_output, output_path:
         B >> f("b")
         Array("x", x, mode="fill") >> f
 
+    if pass_dict:
+        par_names = {parname: storage[parname] for parname in par_dict.keys()}
+    else:
+        par_names = [storage[parname] for parname in par_dict.keys()]
     res0 = f.outputs[0].data
     res0c = res0.copy()
     LF = make_fcn(
         f.outputs[0] if pass_output else f,
-        storage,
-        mapper=mapper,
-        par_names=par_dict.keys(),
+        par_names=par_names,
         safe=False,
     )
 
@@ -107,14 +109,10 @@ def test_make_fcn_nonsafe(test_name, par_dict, mapper, pass_output, output_path:
             LF(non_existent=12)
 
         with raises(RuntimeError):
-            LF(*[value for value in par_dict.values()], non_existent=12)
+            LF(*[value for value in par_dict.values()], -1)
 
     res1 = LF(*[value for value in par_dict.values()])
     res2 = LF()
-
-    if mapper:
-        res3 = LF(**{mapper.get(parname, parname): parvalue for parname, parvalue in par_dict.items()})
-        assert all(res1 == res3)
 
     # pars equal new values
     assert A.value == par_dict.get("parameters.all.a", vals_in[0])
