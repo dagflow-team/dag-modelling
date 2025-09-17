@@ -37,7 +37,7 @@ def test_make_fcn_safe(test_name, par_dict, mapper, pass_output, output_path: st
     LF = make_fcn(
         f.outputs[0] if pass_output else f,
         storage["parameters.all"],
-        par_names=par_dict,
+        par_names=par_dict.keys(),
         mapper=mapper,
         safe=True,
     )
@@ -98,7 +98,7 @@ def test_make_fcn_nonsafe(test_name, par_dict, mapper, pass_output, output_path:
         f.outputs[0] if pass_output else f,
         storage,
         mapper=mapper,
-        par_dict=par_dict,
+        par_names=par_dict.keys(),
         safe=False,
     )
 
