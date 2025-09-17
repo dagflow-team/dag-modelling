@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 def _find_par(storage: NestedMapping, name: str) -> Parameter | None:
     """Find parameter in storage (permissive).
 
-    Warning
-    -------
     More than one parameter might contain `name` in their paths.
     It will return only first item.
 
@@ -36,13 +34,27 @@ def _find_par(storage: NestedMapping, name: str) -> Parameter | None:
 
     """
     for key, par in storage.walkjoineditems():
-        if key in name and isinstance(par, Parameter):
+        if key == name and isinstance(par, Parameter):
             return par
 
 
 def _collect_pars(
     storage: NestedMapping, par_names: list[str] | tuple[str, ...] | KeysView
 ) -> dict[str, Parameter]:
+    """Collect parameters with `par_names` in dictionary (parameter name, parameter).
+
+    Parameters
+    ----------
+    storage : NestedMapping
+        A storage with parameters.
+    par_names : list[str] | tuple[str, ...] | KeysView
+        The names of the set of parameters that the function will depend on.
+
+    Returns
+    -------
+    dict[str, Parameter]
+        Dictionary that contains pairs (parameter name, parameters).
+    """
     res = {}
     for name in par_names:
         if (par := _find_par(storage, name)) is not None:
@@ -57,8 +69,10 @@ def make_fcn(
     safe: bool = True,
     mapper: dict[str, str] | None = None,
 ) -> Callable:
-    """Retruns a function, which takes the parameter values as arguments and
-    retruns the result of the node evaluation.
+    """Retrun a function, which takes the parameter values as arguments and retruns the result of the node evaluation.
+    
+    Supports positional and key-word arguments. Posiotion of parameter is
+    determined by index in the `par_names` list.
 
     Parameters
     ----------
@@ -66,20 +80,19 @@ def make_fcn(
         A node (or output), depending (explicitly or implicitly) on the parameters.
     storage : NestedMapping
         A storage with parameters.
+    par_names : list[str] | tuple[str, ...] | None
+        The names of the set of parameters that the function will depend on.
     safe : bool
         If `safe=True`, the parameters will be resetted to old values after evaluation.
         If `safe=False`, the parameters will be setted to the new values.
-    par_names : list[str] | tuple[str, ...] | None
-        The names of the set of parameters for building function.
     mapper : dict[str, str] | None
-        The names of the set of parameters for presearch.
+        The mapping of original parameter names to short names.
 
     Returns
     -------
     Callable
         Function that depends on set of parameters with `par_names` names.
     """
-    pass
     if not isinstance(storage, NestedMapping):
         raise ValueError(f"`storage` must be NestedMapping, but given {storage}, {type(storage)=}!")
 
@@ -125,10 +138,18 @@ def make_fcn(
     _pars_list = list(_pars_dict.values())
 
     def _get_parameter_by_name(name: str) -> Parameter:
-        """Gets a parameter from the parameters dict, which stores the
-        parameters found from the "fuzzy" search, or try to get the parameter
-        from the storage, supposing that the name is the precise key in the
-        storage."""
+        """Get a parameter from the parameters dict, which stores the parameters found from the "fuzzy" search.
+
+        Parameters
+        ----------
+        name : str
+            Name of parameter from `par_names` or `mapper`.
+
+        Returns
+        -------
+        Parameter
+            Parameter from `_pars_dict`.
+        """
         try:
             return _pars_dict[name]
         except KeyError:
