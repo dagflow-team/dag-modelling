@@ -2,33 +2,31 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Mapping, Sequence
 
-from nested_mapping import NestedMapping
-
-from ..parameters import Parameter
 from ..core.node import Node
 from ..core.output import Output
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, KeysView
+    from collections.abc import Callable
+    from ..parameters import Parameter
 
     from numpy.typing import NDArray
 
 
 def make_fcn(
     node_or_output: Node | Output,
-    par_names: Sequence[Parameter] | Mapping[str, Parameter],
+    parameters: Sequence[Parameter] | Mapping[str, Parameter],
     safe: bool = True,
 ) -> Callable:
     """Retrun a function, which takes the parameter values as arguments and retruns the result of the node evaluation.
-    
+
     Supports positional and key-word arguments. Posiotion of parameter is
-    determined by index in the `par_names` list.
+    determined by index in the `parameters` list.
 
     Parameters
     ----------
     node_or_output : Node | Output
         A node (or output), depending (explicitly or implicitly) on the parameters.
-    par_names : list[str] | tuple[str, ...] | None
+    parameters : Sequence[Parameter] | Mapping[str, Parameter]
         The names of the set of parameters that the function will depend on.
     safe : bool
         If `safe=True`, the parameters will be resetted to old values after evaluation.
@@ -37,7 +35,7 @@ def make_fcn(
     Returns
     -------
     Callable
-        Function that depends on set of parameters with `par_names` names.
+        Function that depends on set of parameters with `parameters` names.
     """
     # to avoid extra checks in the function, we prepare the corresponding getter here
     output, outputs = None, None
@@ -49,7 +47,9 @@ def make_fcn(
         else:
             outputs = tuple(node_or_output.outputs.pos_edges_list)
     else:
-        raise ValueError(f"`node_or_output` must be Node | Output, but given {node_or_output}, {type(node_or_output)=}!")
+        raise ValueError(
+            f"`node_or_output` must be Node | Output, but given {node_or_output}, {type(node_or_output)=}!"
+        )
 
     match safe, output:
         case True, None:
@@ -76,10 +76,12 @@ def make_fcn(
 
     # the dict with parameters
     _pars_dict = {}
-    if isinstance(par_names, Mapping):
-        _pars_dict = {parname: parameter for parname, parameter in par_names.items()}
-    elif isinstance(par_names, Sequence):
-        _pars_dict = {f"par{idx}": parameter for idx, parameter in enumerate(par_names)}
+    if isinstance(parameters, Mapping):
+        _pars_dict = dict(parameters)
+    elif isinstance(parameters, Sequence):
+        _pars_dict = {f"par{idx}": parameter for idx, parameter in enumerate(parameters)}
+    else:
+        raise RuntimeError(f"Couldn't obtain {type(parameters)=}")
 
     if not safe:
 
@@ -88,7 +90,7 @@ def make_fcn(
         ) -> NDArray | tuple[NDArray, ...] | None:
             if len(args) > len(_pars_dict):
                 raise RuntimeError(
-                    f"Too much parameter values provided: {len(args)} [>{len(_pars_dict)}]"
+                    f"Too many posiitional values are provided: {len(args)} [>{len(_pars_dict)}]"
                 )
             for par, val in zip(_pars_dict.values(), args):
                 par.value = val
@@ -103,7 +105,7 @@ def make_fcn(
     def fcn_safe(*args: float | int, **kwargs: float | int) -> NDArray | tuple[NDArray, ...] | None:
         if len(args) > len(_pars_dict):
             raise RuntimeError(
-                f"Too much parameter values provided: {len(args)} [>{len(_pars_dict)}]"
+                f"Too many posiitional values are provided: {len(args)} [>{len(_pars_dict)}]"
             )
 
         pars = []
