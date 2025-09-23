@@ -462,7 +462,7 @@ class NodeStorage(NestedMapping):
         datax(filename, **odict)
 
     def to_root(self, filename: str, **kwargs) -> None:
-        from ..export.to_root import ExportToRootVisitor
+        from ..tools.to_root import ExportToRootVisitor
 
         visitor = ExportToRootVisitor(filename, **kwargs)
         self.visit(visitor)
