@@ -15,6 +15,27 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
+def _use_hdf_strings(data: NDArray) -> NDArray:
+    from h5py import string_dtype
+
+    str_dtype = string_dtype(encoding="utf-8", length=None)
+
+    dtypes = data.dtype
+    new_dtype = []
+    need_conversion = False
+    for name, dtype in dtypes.descr:
+        if dtype == "|O":
+            new_dtype.append((name, str_dtype))
+            need_conversion = True
+        else:
+            new_dtype.append((name, dtype))
+
+    if not need_conversion:
+        return data
+
+    return data.astype(new_dtype)
+
+
 def _save_records(
     filename: Path,
     *,
@@ -46,6 +67,7 @@ def _save_records(
         case (*_, "hdf5"):
             with File(filename, "w") as f:
                 for key, record in records.items():
+                    record = _use_hdf_strings(record)
                     f.create_dataset(key, data=record)
         case (*_, "root"):
             from uproot import recreate
