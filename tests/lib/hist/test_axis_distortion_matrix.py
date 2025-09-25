@@ -37,8 +37,7 @@ from dag_modelling.plot.graphviz import savegraph
 )
 @mark.parametrize(
     "mode",
-    # ("exact", "linear", "pointwise"),
-    ("pointwise",),
+    ("exact", "linear", "pointwise"),
 )
 def test_AxisDistortionMatrix(
     setname: str, dtype: str, mode: Literal["exact", "linear", "pointwise"], output_path: str

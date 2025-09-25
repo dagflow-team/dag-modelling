@@ -154,8 +154,8 @@ def to_TGraph2(output, *, substitutions: dict[str, str] = {}):
     ytitle = output.dd.axis_label(1, axistype="mesh", root=True) or "Index [#]"
     ztitle = labels.rootaxis
 
-    graph = TGraph2D(x.size, x.ravel(), y.ravel(), z.ravel())
-    graph.SetTitle(f"{title};{xtitle};{ytitle};{ztitle}")
+    ctitle = f"{title};{xtitle};{ytitle};{ztitle}"
+    graph = TGraph2D("", ctitle, x.size, x.ravel(), y.ravel(), z.ravel())
 
     return graph
 
@@ -234,13 +234,13 @@ class ExportToRootVisitor(NestedMappingVisitor):
         name = path
         hist = objects.pop("hist", None)
         if hist is not None:
-            logger.log(INFO2, f"write {'/'.join(key)} [{self._i_element}/{self._n_elements}]")
+            logger.log(INFO2, f"write hist {'/'.join(key)} [{self._i_element}/{self._n_elements}]")
             self._cwd.WriteTObject(hist, name, "overwrite")
             name = f"{name}_graph"
 
         graph = objects.pop("graph", None)
         if graph is not None:
-            logger.log(INFO2, f"write {'/'.join(key)} [{self._i_element}/{self._n_elements}]")
+            logger.log(INFO2, f"write graph {'/'.join(key)} [{self._i_element}/{self._n_elements}]")
             self._cwd.WriteTObject(graph, name, "overwrite")
 
         if objects:
