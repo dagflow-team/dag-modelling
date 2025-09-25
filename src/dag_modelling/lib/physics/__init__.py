@@ -1,0 +1,4 @@
+from .energy_resolution import EnergyResolution
+from .energy_resolution_sigma_rel_a_b_c import EnergyResolutionSigmaRelABC
+
+del energy_resolution_sigma_rel_a_b_c, energy_resolution
