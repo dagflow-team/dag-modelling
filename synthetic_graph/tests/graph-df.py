@@ -1,12 +1,12 @@
 import numpy as np
 import argparse
 import timeit
-from dagflow.core.graph import Graph
-from dagflow.bundles.file_reader import FileReader
-from dagflow.plot.graphviz import savegraph
-from dagflow.lib.arithmetic import Sum
-from dagflow.lib.common import Array
-from dagflow.core.storage import NodeStorage
+from dag_modelling.core.graph import Graph
+from dag_modelling.bundles.file_reader import FileReader
+from dag_modelling.plot.graphviz import savegraph
+from dag_modelling.lib.arithmetic import Sum
+from dag_modelling.lib.common import Array
+from dag_modelling.core.storage import NodeStorage
 
 
 np.random.seed(33)
