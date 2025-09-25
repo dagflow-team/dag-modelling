@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 import timeit
-from synthetic_graph.graph_cython import Sum, Input
+from synthetic_graph.graph_cython import SumDouble, Input
 
 
 np.random.seed(33)
@@ -19,7 +19,7 @@ def make_test_graph(datasize=1, width=6, length=7):
         thislayer = []
 
         for igroup in range(n_groups):
-            head = Sum()
+            head = SumDouble(shape=[datasize])
             nsums += 1
 
             if prevlayer:
