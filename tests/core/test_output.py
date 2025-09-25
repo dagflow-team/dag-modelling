@@ -1,6 +1,6 @@
-from dagflow.core.graph import Graph
-from dagflow.lib.common import Array
-from dagflow.lib.arithmetic import Sum
+from dag_modelling.core.graph import Graph
+from dag_modelling.lib.common import Array
+from dag_modelling.lib.arithmetic import Sum
 
 
 def test_Output_01():
@@ -8,7 +8,7 @@ def test_Output_01():
     array_in = (value,)
     array_alt = (value + 1,)
     with Graph(close_on_exit=True):
-        va = Array("test", array_in)
+        va = Array("test", array_in, mode="fill")
         s = Sum("add")
         va >> s
     out = s.outputs[0]
@@ -24,10 +24,11 @@ def test_Output_02():
     array_in = (value,)
     array_alt = (value + 1,)
     with Graph(close_on_exit=True):
-        va = Array("test", array_in)
+        va = Array("test", array_in, mode="fill")
         sm1 = Sum("add 1")
         sm2 = Sum("add 2")
-        va >> sm1 >> sm2
+        va >> sm1
+        sm1 >> sm2
 
     output1 = va.outputs[0]
     output2 = sm1.outputs[0]

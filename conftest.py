@@ -1,26 +1,6 @@
-from os import chdir, environ, getcwd, listdir, mkdir
-from os.path import isdir
+from os import environ, makedirs
 
 from pytest import fixture
-
-
-def pytest_sessionstart(session):
-    """
-    Called after the Session object has been created and
-    before performing collection and entering the run test loop.
-
-    Automatic change path to the `dag-flow/tests` and create `tests/output` dir
-    """
-    while path := getcwd():
-        if (lastdir := path.split("/")[-1]) == "tests":
-            break
-        elif ".git" in listdir(path):
-            chdir("./tests")
-            break
-        else:
-            chdir("..")
-    if not isdir("output"):
-        mkdir("output")
 
 
 def pytest_addoption(parser):
@@ -31,7 +11,15 @@ def pytest_addoption(parser):
         help="set debug=True for all the graphs in tests",
     )
     parser.addoption(
-        "--include-long-time-tests", action="store_true", default=False, help="include long-time tests"
+        "--include-long-time-tests",
+        action="store_true",
+        default=False,
+        help="include long-time tests",
+    )
+    parser.addoption(
+        "--output-path",
+        default="output/tests",
+        help="choose the location of output materials",
     )
 
 
@@ -43,17 +31,21 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("--include-long-time-tests", [option_value])
 
 
-########################################
-# Create global variables (fixtures) for a pytest run
-########################################
+@fixture(scope="session")
+def output_path(request):
+    loc = request.config.option.output_path
+    makedirs(loc, exist_ok=True)
+    return loc
+
+
 @fixture(scope="session")
 def debug_graph(request):
     return request.config.option.debug_graph
 
 
 @fixture()
-def testname():
-    """Returns corrected full name of a test"""
+def test_name():
+    """Returns corrected full name of a test."""
     name = environ.get("PYTEST_CURRENT_TEST").split(":")[-1].split(" ")[0]
     name = name.replace("[", "_").replace("]", "")
     return name

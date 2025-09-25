@@ -4,7 +4,7 @@ from numpy import abs, allclose, float64
 from pytest import mark
 from yaml import safe_dump
 
-from dagflow.bundles.load_parameters import load_parameters
+from dag_modelling.bundles.load_parameters import load_parameters
 
 # TODO: add test for offset
 

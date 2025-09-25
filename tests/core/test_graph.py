@@ -1,9 +1,9 @@
-from dagflow.core.graph import Graph
-from dagflow.plot.graphviz import GraphDot
-from dagflow.lib.common import Dummy
+from dag_modelling.core.graph import Graph
+from dag_modelling.plot.graphviz import GraphDot
+from dag_modelling.lib.common import Dummy
 
 
-def test_01():
+def test_01(output_path: str):
     """Simple test of the graph plotter"""
     with Graph() as g:
         n1 = Dummy("node1")
@@ -23,10 +23,10 @@ def test_01():
     g.close()
 
     d = GraphDot(g)
-    d.savegraph("output/test1_00.png")
+    d.savegraph(f"{output_path}/test1_00.png")
 
 
-def test_02():
+def test_02(output_path: str):
     """Simple test of the graph plotter"""
     with Graph() as g:
         n1 = Dummy("node1")
@@ -46,14 +46,14 @@ def test_02():
     g.close()
 
     d = GraphDot(g)
-    d.savegraph("output/test2_00.png")
+    d.savegraph(f"{output_path}/test2_00.png")
 
     final.data
     d = GraphDot(g)
-    d.savegraph("output/test2_01.png")
+    d.savegraph(f"{output_path}/test2_01.png")
 
 
-def test_02a():
+def test_02a(output_path: str):
     """Simple test of the graph plotter"""
     with Graph() as g:
         n1 = Dummy("node1")
@@ -71,8 +71,8 @@ def test_02a():
     g.close()
 
     d = GraphDot(g)
-    d.savegraph("output/test2a_00.png")
+    d.savegraph(f"{output_path}/test2a_00.png")
 
     print(out4.data)
     d = GraphDot(g)
-    d.savegraph("output/test2a_01.png")
+    d.savegraph(f"{output_path}/test2a_01.png")

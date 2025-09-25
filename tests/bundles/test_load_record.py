@@ -3,7 +3,7 @@ import tempfile
 import h5py
 import numpy as np
 import pandas as pd
-from dagflow.bundles.load_record import load_record
+from dag_modelling.bundles.load_record import load_record
 
 
 def _save_data(filename, object_name, data):

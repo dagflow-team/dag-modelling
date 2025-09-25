@@ -14,6 +14,7 @@ matplotlibrc
 .coverage
 coverage.xml
 cov.*
+.venv/
 
 # Transient files (vim, etc)
 *~
@@ -25,6 +26,11 @@ cov.*
 .lark-cache*
 *.bak
 *.backup
+
+# build
+dist
+build
+*.egg*
 
 # vim
 UltiSnips/*
