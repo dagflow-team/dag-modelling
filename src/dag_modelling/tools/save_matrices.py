@@ -5,8 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from h5py import File
-from numpy import ndarray, savez_compressed
-from pandas import DataFrame
+from numpy import savetxt, savez_compressed
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -15,68 +14,48 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def _use_hdf_strings(data: NDArray) -> NDArray:
-    from h5py import string_dtype
-
-    str_dtype = string_dtype(encoding="utf-8", length=None)
-
-    dtypes = data.dtype
-    new_dtype = []
-    need_conversion = False
-    for name, dtype in dtypes.descr:
-        if dtype == "|O":
-            new_dtype.append((name, str_dtype))
-            need_conversion = True
-        else:
-            new_dtype.append((name, dtype))
-
-    if not need_conversion:
-        return data
-
-    return data.astype(new_dtype)
-
-
-def _save_records(
+def _save_matrices(
     filename: Path,
     *,
-    dataframes: Mapping[str, DataFrame],
-    records: Mapping[str, NDArray],
+    matrices: Mapping[str, NDArray],
     tsv_kwargs: Mapping[str, Any] = {},
-    pdhdf_kwargs: Mapping[str, Any] = {},
     tsv_include_parent_name: bool = False,
     tsv_allow_no_key: bool = False,
     tsv_mode: Literal["flat", "folder"] = "folder",
+    root_reproducible: bool = False,
 ) -> None:
     Path(filename.parent).mkdir(parents=True, exist_ok=True)
 
     print_filename_global = True
     match filename.name.split("."):
         case (*_, "-"):
-            for name, df in dataframes.items():
+            for name, matrix in matrices.items():
                 print(name)
-                print(df)
+                print(matrix)
             print_filename_global = False
         case (*_, "npz"):
-            savez_compressed(filename, **records)
-        case (*_, "pd", "hdf5"):
-            mode = "w"
-            pdhdf_kwargs = dict(pdhdf_kwargs, index=False)
-            for key, df in dataframes.items():
-                df.to_hdf(filename, key=key, mode=mode, **pdhdf_kwargs)
-                mode = "a"
+            savez_compressed(filename, **matrices)
         case (*_, "hdf5"):
             with File(filename, "w") as f:
-                for key, record in records.items():
-                    record = _use_hdf_strings(record)
-                    f.create_dataset(key, data=record)
+                for key, matrix in matrices.items():
+                    f.create_dataset(key, data=matrix)
         case (*_, "root"):
-            from uproot import recreate
-
-            file = recreate(filename)
-            for key, record in records.items():
-                file[key] = record
+            try:
+                from ROOT import TFile, TMatrixD
+            except ImportError as ex:
+                raise RuntimeError("ROOT not found") from ex
+            else:
+                if root_reproducible:
+                    filename_str = f"{filename!s}?reproducible={filename.name}"
+                else:
+                    filename_str = str(filename)
+                file = TFile(filename_str, "recreate")
+                for name, matrix in matrices.items():
+                    Matrix = TMatrixD(matrix.shape[0], matrix.shape[1], matrix.ravel())
+                    file.WriteTObject(Matrix, name, "overwrite")
+                file.Close()
         case (*_, "tsv" | "txt") | (*_, "tsv" | "txt", "gz" | "bz2"):
-            name_no_key = len(dataframes) == 1 and tsv_allow_no_key
+            name_no_key = len(matrices) == 1 and tsv_allow_no_key
             print_filename_global = False
             match (tsv_mode, name_no_key):
                 case _, True:
@@ -106,13 +85,12 @@ def _save_records(
                     raise ValueError(tsv_mode)
 
             tsv_kwargs = dict(tsv_kwargs)
-            tsv_kwargs.setdefault("index", False)
-            tsv_kwargs.setdefault("sep", "\t")
-            tsv_kwargs.setdefault("float_format", "%.17g")
+            tsv_kwargs.setdefault("delimiter", "\t")
+            tsv_kwargs.setdefault("fmt", "%.17g")
 
-            for key, df in dataframes.items():
+            for key, matrix in matrices.items():
                 koutput = namefcn(key)
-                df.to_csv(koutput, **tsv_kwargs)
+                savetxt(koutput, matrix, **tsv_kwargs)
                 if not print_filename_global:
                     print(f"Write {koutput}")
         case _:
@@ -122,25 +100,14 @@ def _save_records(
         print(f"Write {filename}")
 
 
-def save_records(
-    data: Mapping[str, NDArray | DataFrame],
+def save_matrices(
+    matrices: Mapping[str, NDArray],
     filenames: Path | str | Sequence[Path | str],
-    to_records_kwargs: dict = {},
     **kwargs,
 ) -> None:
-    records, dataframes = {}, {}
-    for key, value in data.items():
-        match value:
-            case ndarray():
-                records[key] = value
-                dataframes[key] = DataFrame(value)
-            case DataFrame():
-                records[key] = value.to_records(**to_records_kwargs)
-                dataframes[key] = value
-
     if isinstance(filenames, (Path, str)):
-        _save_records(Path(filenames), dataframes=dataframes, records=records, **kwargs)
+        _save_matrices(Path(filenames), matrices=matrices, **kwargs)
         return
 
     for filename in filenames:
-        _save_records(Path(filename), dataframes=dataframes, records=records, **kwargs)
+        _save_matrices(Path(filename), matrices=matrices, **kwargs)

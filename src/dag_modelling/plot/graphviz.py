@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 try:
     import pygraphviz as G
 except ImportError:
+    logger.warning("Unable to import pygraphviz. Corresponding functions will not work.")
+
     GraphDot = None
 
     def savegraph(*args, **kwargs):
@@ -196,8 +198,8 @@ else:
             cls,
             nodes: Sequence[Node],
             *args,
-            mindepth: int | None = None,
-            maxdepth: int | None = None,
+            min_depth: int | None = None,
+            max_depth: int | None = None,
             minsize: int | None = None,
             keep_direction: bool = False,
             **kwargs,
@@ -206,18 +208,18 @@ else:
 
             gd = cls(None, *args, **kwargs)
             label = [node0.name]
-            if mindepth is not None:
-                label.append(f"{mindepth=:+d}")
-            if maxdepth is not None:
-                label.append(f"{maxdepth=:+d}")
+            if min_depth is not None:
+                label.append(f"{min_depth=:+d}")
+            if max_depth is not None:
+                label.append(f"{max_depth=:+d}")
             if minsize is not None:
                 label.append(f"{minsize=:d}")
             gd.set_label(", ".join(label))
 
             gd._transform_from_nodes(
                 nodes,
-                mindepth=mindepth,
-                maxdepth=maxdepth,
+                min_depth=min_depth,
+                max_depth=max_depth,
                 minsize=minsize,
                 keep_direction=keep_direction,
             )
@@ -247,14 +249,14 @@ else:
             self,
             node: Node,
             *,
-            mindepth: int | None = None,
-            maxdepth: int | None = None,
+            min_depth: int | None = None,
+            max_depth: int | None = None,
             depth: int = 0,
             minsize: int | None = None,
         ) -> bool:
             if node in self._nodes_map_dag:
                 return False
-            if not num_in_range(depth, mindepth, maxdepth):
+            if not num_in_range(depth, min_depth, max_depth):
                 return False
             # print(f"{depth=: 2d}: {node.name}")
 
@@ -275,8 +277,8 @@ else:
             node: Node,
             *,
             including_self: bool = False,
-            mindepth: int | None = None,
-            maxdepth: int | None = None,
+            min_depth: int | None = None,
+            max_depth: int | None = None,
             minsize: int | None = None,
             keep_direction: bool = False,
             depth: int = 0,
@@ -287,7 +289,7 @@ else:
             visited_nodes.add(node)
 
             if including_self and not self._add_node_only(
-                node, mindepth=mindepth, maxdepth=maxdepth, depth=depth, minsize=minsize
+                node, min_depth=min_depth, max_depth=max_depth, depth=depth, minsize=minsize
             ):
                 return
 
@@ -302,8 +304,8 @@ else:
                         parent_node,
                         including_self=True,
                         depth=newdepth,
-                        mindepth=mindepth,
-                        maxdepth=maxdepth,
+                        min_depth=min_depth,
+                        max_depth=max_depth,
                         minsize=minsize,
                         keep_direction=keep_direction,
                         visited_nodes=visited_nodes,
@@ -314,8 +316,8 @@ else:
                     node,
                     including_self=False,
                     depth=depth,
-                    mindepth=mindepth,
-                    maxdepth=maxdepth,
+                    min_depth=min_depth,
+                    max_depth=max_depth,
                     minsize=minsize,
                     keep_direction=keep_direction,
                     ignore_visit=True,
@@ -327,8 +329,8 @@ else:
             node: Node,
             *,
             including_self: bool = False,
-            mindepth: int | None = None,
-            maxdepth: int | None = None,
+            min_depth: int | None = None,
+            max_depth: int | None = None,
             minsize: int | None = None,
             keep_direction: bool = False,
             depth: int = 0,
@@ -341,7 +343,7 @@ else:
                 return
             visited_nodes.add(node)
             if including_self and not self._add_node_only(
-                node, mindepth=mindepth, maxdepth=maxdepth, depth=depth, minsize=minsize
+                node, min_depth=min_depth, max_depth=max_depth, depth=depth, minsize=minsize
             ):
                 return
 
@@ -353,8 +355,8 @@ else:
                         including_self=True,
                         depth=newdepth,
                         keep_direction=keep_direction,
-                        mindepth=mindepth,
-                        maxdepth=maxdepth,
+                        min_depth=min_depth,
+                        max_depth=max_depth,
                         minsize=minsize,
                         visited_nodes=visited_nodes,
                     )
@@ -364,8 +366,8 @@ else:
                             child_input.node,
                             depth=newdepth,
                             keep_direction=keep_direction,
-                            mindepth=mindepth,
-                            maxdepth=maxdepth,
+                            min_depth=min_depth,
+                            max_depth=max_depth,
                             minsize=minsize,
                             visited_nodes=visited_nodes,
                             ignore_visit=True,
