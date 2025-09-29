@@ -5,10 +5,9 @@ from os import listdir
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from numpy import concatenate, double, dtype, frombuffer, linspace, ndarray
-
 from nested_mapping.tools.map import make_reorder_function
 from nested_mapping.typing import properkey
+from numpy import concatenate, double, dtype, frombuffer, linspace, ndarray
 
 from ..tools.logger import INFO1, INFO2, INFO3, logger
 
@@ -17,9 +16,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     import ROOT
-    from numpy.typing import NDArray
-
     from nested_mapping.typing import KeyLike, TupleKey
+    from numpy.typing import NDArray
 
 file_readers = {}
 
@@ -396,13 +394,11 @@ class FileReaderROOTUpROOT(FileReader):
 
     def _get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
-        y, x = obj.to_numpy()
-        return x[:-1], y
+        return _uproot_load_graph(obj)
 
     def _get_array(self, object_name: str) -> NDArray:
         obj = self._get_object(object_name)
-        y, _ = obj.to_numpy()
-        return y
+        return _uproot_load_array(obj)
 
     def _get_record(self, object_name: str) -> dict[str, NDArray]:
         tree = self._get_object(object_name)
@@ -410,6 +406,48 @@ class FileReaderROOTUpROOT(FileReader):
 
     def keys(self) -> tuple[str, ...]:
         return tuple(key.split(";", 1)[0] for key in self._file.GetListOfKeys())
+
+
+def _uproot_load_array(object) -> NDArray:
+    # At the moment uproot does not support reading numpy data from TMatrixT
+    if not type(object).__name__.startswith("Model_TMatrixT"):
+        raise RuntimeError("Can only read arrays from TMatrixT instance via uproot")
+
+    nrows = object.all_members["fNrows"]
+    ncols = object.all_members["fNcols"]
+
+    array = object.all_members["fElements"].reshape(nrows, ncols)
+
+    if array.dtype.byteorder == ">":
+        array = array.astype(array.dtype.type)
+
+    return array
+
+
+def _uproot_load_graph(object) -> tuple[NDArray, NDArray]:
+    # At the moment uproot does not support reading numpy data from TGraph*
+    from uproot import behaviors
+
+    if isinstance(object, behaviors.TH1.TH1):
+        y, x = object.to_numpy()
+        return x[:-1], y
+    elif isinstance(
+        object,
+        (
+            behaviors.TGraph.TGraph,
+            behaviors.TGraphErrors.TGraphErrors,
+            behaviors.TGraphAsymmErrors.TGraphAsymmErrors,
+        ),
+    ):
+        x = object.all_members["fX"]
+        y = object.all_members["fY"]
+        if x.dtype.byteorder == ">":
+            x = x.astype(x.dtype.type)
+        if y.dtype.byteorder == ">":
+            y = y.astype(y.dtype.type)
+        return x, y
+
+    raise RuntimeError("Can only read graph from TH1*/TGraph* instance via uproot")
 
 
 with suppress(ImportError):
