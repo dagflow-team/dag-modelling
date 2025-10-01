@@ -27,9 +27,13 @@ _log_float_format = ".3g"
 class HistGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str]) -> tuple[NDArray, NDArray]:
-        file_name, object_name = names
+    def __getitem__(self, names: tuple[str | Path, str] | str | Path) -> tuple[NDArray, NDArray]:
+        if isinstance(names, tuple):
+            file_name, object_name = names
+        else:
+            file_name, object_name = names, None
         fr = FileReader[file_name]
+
         return fr.get_hist(object_name)
 
 
@@ -39,9 +43,13 @@ _HistGetter = HistGetter()
 class GraphGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str]) -> tuple[NDArray, NDArray]:
-        file_name, object_name = names
+    def __getitem__(self, names: tuple[str | Path, str] | str | Path) -> tuple[NDArray, NDArray]:
+        if isinstance(names, tuple):
+            file_name, object_name = names
+        else:
+            file_name, object_name = names, None
         fr = FileReader[file_name]
+
         return fr.get_graph(object_name)
 
 
@@ -51,9 +59,13 @@ _GraphGetter = GraphGetter()
 class ArrayGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str]) -> NDArray:
-        file_name, object_name = names
+    def __getitem__(self, names: tuple[str | Path, str] | str | Path) -> NDArray:
+        if isinstance(names, tuple):
+            file_name, object_name = names
+        else:
+            file_name, object_name = names, None
         fr = FileReader[file_name]
+
         return fr.get_array(object_name)
 
 
@@ -63,9 +75,15 @@ _ArrayGetter = ArrayGetter()
 class RecordGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str]) -> NDArray | dict[str, NDArray]:
-        file_name, object_name = names
+    def __getitem__(
+        self, names: tuple[str | Path, str] | str | Path
+    ) -> NDArray | dict[str, NDArray]:
+        if isinstance(names, tuple):
+            file_name, object_name = names
+        else:
+            file_name, object_name = names, None
         fr = FileReader[file_name]
+
         return fr.get_record(object_name)
 
 
@@ -141,7 +159,7 @@ class FileReader(metaclass=FileReaderMeta):
     _file: Any = None
     _file_name: Path = Path("")
     _opened_files: dict[str, FileReader] = FileReaderMeta._opened_files
-    _read_objects: dict[str, Any]
+    _read_objects: dict[str | None, Any]
 
     def __init__(self, file_name: str | Path):
         self._file_name = Path(file_name)
@@ -171,11 +189,12 @@ class FileReader(metaclass=FileReaderMeta):
     def keys(self) -> tuple[str, ...]:
         raise RuntimeError("not implemented method")
 
-    def _get_object_impl(self, object_name: str, **kwargs) -> Any:
+    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
         raise RuntimeError("not implemented method")
 
-    def _get_object(self, object_name: str, **kwargs) -> Any:
-        object_name = object_name.replace(".", "_")
+    def _get_object(self, object_name: str | None, **kwargs) -> Any:
+        if object_name is not None:
+            object_name = object_name.replace(".", "_")
         with suppress(KeyError):
             return self._read_objects[object_name]
 
@@ -187,10 +206,10 @@ class FileReader(metaclass=FileReaderMeta):
         except KeyError as e:
             raise KeyError(f"Can not read {object_name} from {self._file_name!s}") from e
 
-    def _get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         x, y = self._get_graph(object_name)
         logger.log(
             INFO2,
@@ -200,10 +219,10 @@ class FileReader(metaclass=FileReaderMeta):
         )
         return x, y
 
-    def _get_hist(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_hist(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         x, y = self._get_hist(object_name)
         logger.log(
             INFO2,
@@ -214,10 +233,10 @@ class FileReader(metaclass=FileReaderMeta):
         )
         return x, y
 
-    def _get_array(self, object_name: str) -> NDArray:
+    def _get_array(self, object_name: str | None) -> NDArray:
         raise RuntimeError("not implemented method")
 
-    def get_array(self, object_name: str) -> NDArray:
+    def get_array(self, object_name: str | None) -> NDArray:
         a = self._get_array(object_name)
         logger.log(
             INFO2,
@@ -226,10 +245,10 @@ class FileReader(metaclass=FileReaderMeta):
         )
         return a
 
-    def _get_record(self, object_name: str) -> NDArray | dict[str, NDArray]:
+    def _get_record(self, object_name: str | None) -> NDArray | dict[str, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_record(self, object_name: str) -> NDArray | dict[str, NDArray]:
+    def get_record(self, object_name: str | None) -> NDArray | dict[str, NDArray]:
         rec = self._get_record(object_name)
 
         match rec:
@@ -253,28 +272,28 @@ class FileReader(metaclass=FileReaderMeta):
 class FileReaderArray(FileReader):
     _extension: str = ""
 
-    def _get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         return self._get_xy(object_name)
 
-    def _get_hist(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         emin, emax, h = self._get_emin_emax_h(object_name)
         if not (emin[1:] == emax[:-1]).all():
             raise ValueError("Inconsistent histogram edges")
         edges = concatenate((emin, emax[-1:]))
         return edges, h
 
-    def _get_array(self, object_name: str) -> NDArray:
+    def _get_array(self, object_name: str | None) -> NDArray:
         return self._get_object(object_name)
 
-    def _get_record(self, object_name: str) -> NDArray:
+    def _get_record(self, object_name: str | None) -> NDArray:
         return self._get_object(object_name)
 
-    def _get_xy(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_xy(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         data = self._get_object(object_name)
         cols = data.dtype.names
         return data[cols[0]], data[cols[1]]
 
-    def _get_emin_emax_h(self, object_name: str) -> tuple[NDArray, NDArray, NDArray]:
+    def _get_emin_emax_h(self, object_name: str | None) -> tuple[NDArray, NDArray, NDArray]:
         data = self._get_object(object_name)
         cols = data.dtype.names
         return data[cols[0]], data[cols[1]], data[cols[2]]
@@ -293,8 +312,9 @@ class FileReaderNPZ(FileReaderArray):
         super()._close()
         del self._file
 
-    def _get_object_impl(self, object_name: str, **kwargs) -> Any:
+    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
+        assert object_name is not None
         return self._file[object_name]
 
     def keys(self) -> tuple[str, ...]:
@@ -314,11 +334,12 @@ class FileReaderHDF5(FileReaderArray):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str, **kwargs) -> Any:
+    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
+        assert object_name is not None
         return self._file[object_name]
 
-    def _get_array(self, object_name: str) -> NDArray:
+    def _get_array(self, object_name: str | None) -> NDArray:
         ret = self._get_object(object_name)
         return ret[:]
 
@@ -332,7 +353,10 @@ class FileReaderTSV(FileReaderArray):
     def __init__(self, file_name: str | Path) -> None:
         super().__init__(file_name)
 
-    def _get_filenames(self, object_name: str) -> tuple[str, ...]:
+    def _get_filenames(self, object_name: str | None) -> tuple[str, ...]:
+        if object_name is None:
+            return (str(self._file_name), f"{self._file_name}.bz2")
+
         uncompressed = (
             str(self._file_name / f"{object_name}{self._extension}"),
             f"{self._file_name.parent/self._file_name.stem}_{object_name}{self._extension}",
@@ -341,7 +365,9 @@ class FileReaderTSV(FileReaderArray):
 
         return uncompressed + tuple(f"{fname}.bz2" for fname in uncompressed)
 
-    def _get_object_impl(self, object_name: str, return_record: bool = True) -> Any:
+    def _get_object_impl(
+        self, object_name: str | None | None, return_record: bool = True, **kwargs
+    ) -> Any:
         filenames = self._get_filenames(object_name)
 
         if return_record:
@@ -349,7 +375,7 @@ class FileReaderTSV(FileReaderArray):
 
             for filename in filenames:
                 with suppress(FileNotFoundError):
-                    df = read_table(filename, comment="#", sep=None, engine="python")
+                    df = read_table(filename, comment="#", sep=r"\t|\s+", engine="python")
                     logger.log(INFO1, f"Read: {filename}")
                     return df.to_records(index=False)
         else:
@@ -363,7 +389,7 @@ class FileReaderTSV(FileReaderArray):
 
         raise FileNotFoundError(", ".join(map(str, filenames)))
 
-    def _get_array(self, object_name: str) -> NDArray:
+    def _get_array(self, object_name: str | None) -> NDArray:
         return self._get_object(object_name, return_record=False)
 
     def keys(self) -> tuple[str, ...]:
@@ -383,24 +409,25 @@ class FileReaderROOTUpROOT(FileReader):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str, **kwargs) -> Any:
+    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
+        assert object_name is not None
         return self._file[object_name]
 
-    def _get_hist(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
         y, x = obj.to_numpy()
         return x, y
 
-    def _get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
         return _uproot_load_graph(obj)
 
-    def _get_array(self, object_name: str) -> NDArray:
+    def _get_array(self, object_name: str | None) -> NDArray:
         obj = self._get_object(object_name)
         return _uproot_load_array(obj)
 
-    def _get_record(self, object_name: str) -> dict[str, NDArray]:
+    def _get_record(self, object_name: str | None) -> dict[str, NDArray]:
         tree = self._get_object(object_name)
         return {key: tree[key].array().to_numpy().copy() for key in tree.keys()}
 
@@ -479,14 +506,15 @@ with suppress(ImportError):
             if self._reader_uproot is not None:
                 self._reader_uproot._close()
 
-        def _get_object_impl(self, object_name: str, **kwargs) -> Any:
+        def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
             assert not kwargs
+            assert object_name is not None
             ret = self._file.Get(object_name)
             if not ret:
                 raise KeyError(object_name)
             return ret
 
-        def _get_hist(self, object_name: str) -> tuple[NDArray, NDArray]:
+        def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
             import ROOT
 
             obj = self._get_object(object_name)
@@ -495,7 +523,7 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to hist")
 
-        def _get_graph(self, object_name: str) -> tuple[NDArray, NDArray]:
+        def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
             import ROOT
 
             obj = self._get_object(object_name)
@@ -506,7 +534,7 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to graph")
 
-        def _get_array(self, object_name: str) -> NDArray:
+        def _get_array(self, object_name: str | None) -> NDArray:
             import ROOT
 
             obj = self._get_object(object_name)
@@ -520,7 +548,7 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to array")
 
-        def _get_record(self, object_name: str) -> dict[str, NDArray]:
+        def _get_record(self, object_name: str | None) -> dict[str, NDArray]:
             return self.reader_uproot.get_record(object_name)
 
         def keys(self) -> tuple[str, ...]:

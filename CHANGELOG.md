@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.14.1] - 2025-10-XX
 
-- [feat] enable the file reader to read data from `TMatrixT`/`TGraph*` classes with uproot.
+- feature: enable the file reader to read data from `TMatrixT`/`TGraph*` classes with uproot.
+- feature: enable TSV file reader to read just a file without object name.
 
 ## [0.14.0] - 2025-09-25
 
-- [feat] add `save_matrices` function similar to `save_records`, but for matrices. Saves dicitonary
+- feature: add `save_matrices` function similar to `save_records`, but for matrices. Saves dicitonary
     with matrices as hdf5, npz, root, tsv or archived tsv.
 - [chore] minor changes and cleaning.
 
