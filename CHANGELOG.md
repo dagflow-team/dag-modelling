@@ -6,10 +6,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.14.1] - 2025-10-XX
+## [0.14.1] - 2025-10-02
 
 - feature: enable the file reader to read data from `TMatrixT`/`TGraph*` classes with uproot.
-- feature: enable TSV file reader to read just a file without object name.
+- feature: enable TSV file reader to read just a single file without object name.
 
 ## [0.14.0] - 2025-09-25
 
