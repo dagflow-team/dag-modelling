@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Mapping
 from pathlib import Path
-
-from numpy import asarray
-from schema import And, Optional, Or, Schema, Use
+from typing import TYPE_CHECKING
 
 from nested_mapping.tools.map import make_reorder_function
 from nested_mapping.typing import strkey
+from numpy import asarray
+from schema import And, Optional, Or, Schema, Use
 
 from ..core.storage import NodeStorage
 from ..lib.common import Array
@@ -18,6 +20,9 @@ from ..tools.schema import (
     LoadYaml,
 )
 from .file_reader import FileReader, file_readers, iterate_filenames_and_objectnames
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 _schema_cfg = Schema(
     {
@@ -98,3 +103,36 @@ def load_array(acfg: Mapping | None = None, *, array_kwargs: Mapping = {}, **kwa
     NodeStorage.update_current(storage, strict=True)
 
     return storage
+
+
+def load_array_data(acfg: Mapping | None = None, **kwargs) -> NodeStorage:
+    acfg = dict(acfg or {}, **kwargs)
+    cfg = _validate_cfg(acfg)
+
+    name = (cfg["name"],)
+    filenames = cfg["filenames"]
+    keys = cfg["replicate_outputs"]
+    file_keys = cfg["replicate_files"]
+    name_function = cfg["name_function"]
+    skip = cfg["skip"]
+    key_order = cfg["key_order"]
+    output_key_order = cfg["output_key_order"]
+    dtype = cfg["dtype"]
+
+    storage = NodeStorage(default_containers=True)
+    data_storage = storage("data")
+    reorder_output_key = make_reorder_function(output_key_order)
+    for _, filename, _, key in iterate_filenames_and_objectnames(
+        filenames, file_keys, keys, skip=skip, key_order=key_order
+    ):
+        skey = strkey(key)
+        logger.log(INFO3, f"Process {skey}")
+
+        array = FileReader.array[filename, name_function(skey, key)]
+        output_key = (name,) + reorder_output_key(key)
+        data_storage[output_key] = asarray(array, dtype)
+
+    NodeStorage.update_current(storage, strict=True)
+
+    return storage
+
