@@ -38,7 +38,7 @@ docker build -t dag-modelling:test .
 ```
 3. Run docker container and install dag-modelling within it
 ```bash
-docker run -v  dag-modelling:tests bash
+docker run -v .:/app -it dag-modelling:tests bash
 pip install -e ".[test]"
 ```
 4. Check that pytest works well
