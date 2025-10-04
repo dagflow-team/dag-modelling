@@ -1,0 +1,11 @@
+.git/
+env/
+venv/
+.env/
+.venv/
+.gitignore
+.gitlab-ci.yml
+.ptr-vommit-vonfig.yaml
+README.md
+Dockerfile
+src/
