@@ -64,13 +64,16 @@ with Graph(debug=debug) as graph:
     graph.close()
 
     print("Result:", m.outputs["result"].data) # must print [0. 3. 12.]
-    savegraph(graph, "dagmodelling_example_1a.png")
+    savegraph(graph, "dag_modelling_example_1a.png")
 ```
 The printed result must be `[0. 3. 12.]`, and the created image looks as
-![](https://raw.githubusercontent.com/dagflow-team/dag-modelling/refs/heads/0.9.0/example/dagmodelling_example_1a.png)
+
+![graph example](example/dag_modelling_example_1a.png)
 
 
-For more examples see [example/example.py](https://github.com/dagflow-team/dag-modelling/blob/master/example/example.py) or [tests](https://github.com/dagflow-team/dag-modelling/tree/master/tests).
+For more examples see [example/example.py](example/example.py) or [tests](tests).
+
+Please, note, that examples are using `pygraphviz` package, which is optional and not requested by default.
 
 ## Repositories and additional modules
 

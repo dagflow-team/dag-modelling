@@ -5,7 +5,7 @@ requires = [ "packaging", "setuptools", "wheel" ]
 
 [project]
 name = "dag-modelling"
-version = "0.14.1"
+version = "0.14.2"
 description = "The dag-modelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
 readme = "README.md"
 license = "MIT"
@@ -29,7 +29,6 @@ dependencies = [
   "ordered-set",
   "pandas",
   "plotille",
-  "pygraphviz",
   "pyyaml",
   "schema",
   "scipy",
@@ -37,7 +36,8 @@ dependencies = [
   "uproot",
 ]
 
-optional-dependencies.test = [ "coverage", "pytest", "pytest-cov" ]
+optional-dependencies.extra = [ "pygraphviz" ]
+optional-dependencies.test = [ "coverage", "pygraphviz", "pytest", "pytest-cov" ]
 urls."Bug Tracker" = "https://github.com/dagflow-team/dag-modelling/issues"
 urls."DAGModelling Team" = "https://github.com/dagflow-team"
 urls.documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
