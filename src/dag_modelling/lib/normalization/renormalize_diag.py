@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.type_functions import (
     AllPositionals,
-    check_shape_of_inputs,
     check_inputs_are_square_matrices,
     check_inputs_equivalence,
+    check_shape_of_inputs,
     evaluate_dtype_of_outputs,
 )
 from ..abstract import OneToOneNode
@@ -72,7 +73,7 @@ class RenormalizeDiag(OneToOneNode):
         self.function = self._functions_dict[self._mode]
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _norming(matrix: NDArray) -> None:
     for icol in range(matrix.shape[-1]):
         colsum = matrix[:, icol].sum()
@@ -113,9 +114,9 @@ def _renorm_offdiag_python(matrix: NDArray, out: NDArray, scale: float, ndiag: i
     _norming(out)
 
 
-_renorm_diag_numba: Callable[[NDArray, NDArray, float, float], None] = njit(cache=True)(
-    _renorm_diag_python
-)
-_renorm_offdiag_numba: Callable[[NDArray, NDArray, float, float], None] = njit(cache=True)(
-    _renorm_offdiag_python
-)
+_renorm_diag_numba: Callable[[NDArray, NDArray, float, float], None] = njit(
+    cache=NUMBA_CACHE_ENABLE
+)(_renorm_diag_python)
+_renorm_offdiag_numba: Callable[[NDArray, NDArray, float, float], None] = njit(
+    cache=NUMBA_CACHE_ENABLE
+)(_renorm_offdiag_python)

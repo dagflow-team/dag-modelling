@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from ...core.type_functions import AllPositionals, check_node_has_inputs, check_dimension_of_inputs
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
+from ...core.type_functions import AllPositionals, check_dimension_of_inputs, check_node_has_inputs
 from ..abstract import OneToOneNode
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _bincenter(edges: NDArray[double], centers: NDArray[double]) -> None:
     nbins = len(centers)
     for i in range(nbins):
@@ -20,8 +21,7 @@ def _bincenter(edges: NDArray[double], centers: NDArray[double]) -> None:
 
 
 class BinCenter(OneToOneNode):
-    """
-    The node finds centers of bins by the edges
+    """The node finds centers of bins by the edges.
 
     inputs:
         `i`: array with edges of bins (N)
@@ -37,7 +37,7 @@ class BinCenter(OneToOneNode):
             _bincenter(_input, _output)
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self, check_named=True)
         check_dimension_of_inputs(self, (AllPositionals, *self.inputs.kw.keys()), ndim=1)
         for _input, _output in zip(self.inputs, self.outputs):

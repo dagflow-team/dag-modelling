@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import allclose, pi
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     AllPositionals,
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from ...core.output import Output
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def __resolution(e_true: double, e_rec: double, rel_sigma: double) -> double:
     _invtwopisqrt = 1.0 / sqrt(2.0 * pi)
     sigma = e_true * rel_sigma
@@ -31,7 +32,7 @@ def __resolution(e_true: double, e_rec: double, rel_sigma: double) -> double:
     return exp(-0.5 * reldiff * reldiff) * _invtwopisqrt / sigma
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _resolution(
     rel_sigma: NDArray[double],
     edges: NDArray[double],
