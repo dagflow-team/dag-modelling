@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from ...core.type_functions import AllPositionals, check_node_has_inputs, check_dimension_of_inputs
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
+from ...core.type_functions import AllPositionals, check_dimension_of_inputs, check_node_has_inputs
 from ..abstract import OneToOneNode
 
 if TYPE_CHECKING:
@@ -12,16 +13,15 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _binwidth(edges: NDArray[double], width: NDArray[double]) -> None:
     nbins = len(width)
     for i in range(nbins):
-        width[i] = edges[i+1] - edges[i]
+        width[i] = edges[i + 1] - edges[i]
 
 
 class BinWidth(OneToOneNode):
-    """
-    The node finds widths of bins by the edges
+    """The node finds widths of bins by the edges.
 
     inputs:
         `i`: array with edges of bins (N)
@@ -37,7 +37,7 @@ class BinWidth(OneToOneNode):
             _binwidth(_input, _output)
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self, check_named=True)
         check_dimension_of_inputs(self, (AllPositionals, *self.inputs.kw.keys()), ndim=1)
         for _input, _output in zip(self.inputs, self.outputs):

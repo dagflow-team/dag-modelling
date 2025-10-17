@@ -7,6 +7,7 @@ from numba import njit
 from numpy import empty, outer, zeros
 
 from ...core.exception import InitializationError
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...parameters import AnyGaussianParameter, GaussianParameter, NormalizedGaussianParameter
 from ..abstract import OneToOneNode
 
@@ -155,7 +156,7 @@ def compute_covariance_matrix(
     return out
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _step_in_numba(res: NDArray, inpdata: NDArray, coeff: float, icol: int) -> None:
     for j in range(len(inpdata)):
         res[j, icol] += coeff * inpdata[j]

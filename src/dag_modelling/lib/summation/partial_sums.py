@@ -6,10 +6,11 @@ from numba import njit
 from numpy import integer
 
 from ...core.exception import TypeFunctionError
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.type_functions import (
     AllPositionals,
-    check_node_has_inputs,
     check_dimension_of_inputs,
+    check_node_has_inputs,
     check_shape_of_inputs,
     check_subtype_of_inputs,
     copy_dtype_from_inputs_to_outputs,
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from ...core.input import Input
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _psum(data: NDArray, range: NDArray, out: NDArray):
     out[0] = data[range[0] : range[1]].sum()
 

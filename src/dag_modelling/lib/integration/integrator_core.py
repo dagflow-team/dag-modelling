@@ -6,6 +6,7 @@ from numba import njit
 from numpy import empty, floating, integer, multiply
 
 from ...core.exception import CalculationError, CriticalError, TypeFunctionError, UnclosedGraphError
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.type_functions import (
     check_dimension_of_inputs,
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
     from ...core.types import ShapeLike
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _integrate1d(result: NDArray, data: NDArray, orders_x: NDArray):
     """Summing up `data` within `orders_x` and puts the result into `result`.
 
@@ -39,7 +40,7 @@ def _integrate1d(result: NDArray, data: NDArray, orders_x: NDArray):
         iprev = inext
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _integrate2d(result: NDArray, data: NDArray, orders_x: NDArray, orders_y: NDArray):
     """Summing up `data` within `orders_x` and `orders_y` and then puts the
     result into `result`.
@@ -57,7 +58,7 @@ def _integrate2d(result: NDArray, data: NDArray, orders_x: NDArray, orders_y: ND
         iprev = inext
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _integrate2to1d(result: NDArray, data: NDArray, orders: NDArray):
     """Summing up `data` within `orders` and then puts the result into
     `result`. The 21-dimensional version of integration, where y dimension is

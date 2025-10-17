@@ -2,6 +2,7 @@ from numba import njit
 from numpy import add, copyto
 from numpy.typing import NDArray
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInputAddAndKeepSingleOutput
 from ...core.type_functions import (
     AllPositionals,
@@ -14,14 +15,14 @@ from ...core.type_functions import (
 from ..abstract import ManyToOneNode
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _settodiag1(inarray: NDArray, outmatrix: NDArray):
     outmatrix[:] = 0
     for i in range(inarray.size):
         outmatrix[i, i] = inarray[i]
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _addtodiag(inarray: NDArray, outmatrix: NDArray):
     for i in range(inarray.size):
         outmatrix[i, i] += inarray[i]
@@ -69,7 +70,7 @@ class SumMatOrDiag(ManyToOneNode):
             add(output_data, input_data, out=output_data)
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self)
         copy_shape_from_inputs_to_outputs(self, 0, "result")
         self._ndim = check_inputs_consistency_with_square_matrices_or_diagonals(self)

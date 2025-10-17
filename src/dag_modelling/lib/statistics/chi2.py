@@ -7,6 +7,7 @@ from numpy import empty, square, subtract
 from scipy.linalg import solve_triangular
 
 from ...core.exception import TypeFunctionError
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.type_functions import (
     AllPositionals,
     check_dimension_of_inputs,
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _chi2_1d_add(
     data: NDArray,
     theory: NDArray,
@@ -112,9 +113,7 @@ class Chi2(ManyToOneNode):
         for data, theory, errors in self._triplets_tuple:
             # errors is triangular decomposition of covariance matrix (L)
             subtract(data, theory, out=buffer)
-            solve_triangular(
-                errors, buffer, lower=self.matrix_is_lower, overwrite_b=True
-            )
+            solve_triangular(errors, buffer, lower=self.matrix_is_lower, overwrite_b=True)
             square(buffer, out=buffer)
             ret += buffer.sum()
 
@@ -147,9 +146,7 @@ class Chi2(ManyToOneNode):
 
         result = self.outputs[0]
         result.dd.shape = (1,)
-        evaluate_dtype_of_outputs(
-            self, AllPositionals, "result"
-        )  # eval dtype of result
+        evaluate_dtype_of_outputs(self, AllPositionals, "result")  # eval dtype of result
 
     def _post_allocate(self) -> None:
         super()._post_allocate()
@@ -158,8 +155,7 @@ class Chi2(ManyToOneNode):
         self._errors_tuple = tuple(self._input_data[2::3])  # input: 2
 
         self._triplets_tuple = tuple(
-            tuple(x)
-            for x in zip(self._data_tuple, self._theory_tuple, self._errors_tuple)
+            tuple(x) for x in zip(self._data_tuple, self._theory_tuple, self._errors_tuple)
         )  # pyright: ignore [reportAttributeAccessIssue]
 
         # NOTE: buffer is needed only for 2d case

@@ -4,7 +4,12 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from ...core.type_functions import AllPositionals, check_size_of_inputs, check_inputs_have_same_dtype
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
+from ...core.type_functions import (
+    AllPositionals,
+    check_inputs_have_same_dtype,
+    check_size_of_inputs,
+)
 from ..abstract import OneToOneNode
 
 if TYPE_CHECKING:
@@ -14,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class LinearFunction(OneToOneNode):
-    """Calculates y_i = a*x_i + b"""
+    """Calculates y_i = a*x_i + b."""
 
     __slots__ = ("_a", "_b")
     _a: Input
@@ -37,7 +42,7 @@ class LinearFunction(OneToOneNode):
             _linear_function(indata, outdata, a, b)
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _linear_function(inp: NDArray, out: NDArray, a: float, b: float):
     for i in range(len(inp)):
         out[i] = a * inp[i] + b

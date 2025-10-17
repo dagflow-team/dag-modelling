@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Literal
 from numba import njit
 from numpy import add, matmul, sqrt
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.type_functions import (
     check_inputs_are_matrices_or_diagonals,
     check_inputs_are_matrix_multipliable,
@@ -46,7 +47,7 @@ def _random_with_covariance_L(
         _random_with_covariance_L_2d(mean, cov_L, result, gen)
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _random_with_covariance_L_1d(
     mean: NDArray[double],
     cov_L: NDArray[double],
@@ -57,7 +58,7 @@ def _random_with_covariance_L_1d(
         result[i] = mean[i] + cov_L[i] * gen.normal()
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _random_fill_normal(data: NDArray[double], gen: Generator) -> None:
     for i in range(len(data)):
         data[i] = gen.normal()
@@ -74,7 +75,7 @@ def _random_with_covariance_L_2d(
     add(result, mean, out=result)
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _random_normal(
     mean: NDArray[double],
     errors: NDArray[double],
@@ -85,16 +86,14 @@ def _random_normal(
         result[i] = mean[i] + errors[i] * gen.normal()
 
 
-@njit(cache=True)
-def _random_normal_stats(
-    mean: NDArray[double], result: NDArray[double], gen: Generator
-) -> None:
+@njit(cache=NUMBA_CACHE_ENABLE)
+def _random_normal_stats(mean: NDArray[double], result: NDArray[double], gen: Generator) -> None:
     func = lambda x: x + sqrt(x) * gen.normal()
     for i in range(len(result)):
         result[i] = func(mean[i])
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _poisson(mean: NDArray[double], result: NDArray[double], gen: Generator):
     for i in range(len(result)):
         result[i] = gen.poisson(mean[i])
@@ -126,17 +125,13 @@ class MonteCarlo(BlockToOneNode):
         "_generator",
     )
 
-    _mode: Literal[
-        "asimov", "normal", "normal-stats", "normal-unit", "poisson", "covariance"
-    ]
+    _mode: Literal["asimov", "normal", "normal-stats", "normal-unit", "poisson", "covariance"]
     _generator: Generator | None
 
     def __new__(
         cls,
         name: str,
-        mode: Literal[
-            "asimov", "normal", "normal-stats", "normal-unit", "poisson", "covariance"
-        ],
+        mode: Literal["asimov", "normal", "normal-stats", "normal-unit", "poisson", "covariance"],
         *args,
         generator: Generator | None = None,
         _baseclass: bool = True,
@@ -146,15 +141,11 @@ class MonteCarlo(BlockToOneNode):
             return super().__new__(cls)
 
         subclass = cls._determine_subclass(mode)
-        return subclass(name, mode, *args, generator=generator, _baseclass=False, **kwargs)  # pyright: ignore [reportArgumentType]
+        return subclass(
+            name, mode, *args, generator=generator, _baseclass=False, **kwargs
+        )  # pyright: ignore [reportArgumentType]
 
-    def __init__(
-        self,
-        name: str,
-        *args,
-        generator: Generator | None = None,
-        **kwargs
-    ):
+    def __init__(self, name: str, *args, generator: Generator | None = None, **kwargs):
         self._generator = self._create_generator() if generator is None else generator
         super().__init__(name, *args, **kwargs)
         self._functions_dict.update({"asimov": self._function_asimov})
@@ -426,9 +417,7 @@ class MonteCarloLocScale(MonteCarlo):
         for callback in self._input_nodes_callbacks:
             callback()
 
-        for (indata, covariance_L), outdata in zip(
-            self._blocks_input_data, self._output_data
-        ):
+        for (indata, covariance_L), outdata in zip(self._blocks_input_data, self._output_data):
             _random_with_covariance_L(
                 indata,
                 covariance_L,
@@ -460,9 +449,7 @@ class MonteCarloLocScale(MonteCarlo):
         check_number_of_outputs(self, n // 2)
 
         if self.mode == "covariance":
-            check_inputs_are_matrices_or_diagonals(
-                self, slice(1, n, 2), check_square=True
-            )
+            check_inputs_are_matrices_or_diagonals(self, slice(1, n, 2), check_square=True)
 
         for i in range(n // 2):
             check_inputs_are_matrix_multipliable(self, i, i + 1)
