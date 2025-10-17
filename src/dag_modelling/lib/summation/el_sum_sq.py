@@ -1,11 +1,12 @@
 from numba import njit
 from numpy.typing import NDArray
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInputAddAndKeepSingleOutput
 from ..abstract import ManyToOneNode
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _sumsq(data: NDArray, out: NDArray):
     sm = 0.0
     for v in data:

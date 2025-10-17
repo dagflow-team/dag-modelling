@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     AllPositionals,
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from ...core.output import Output
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _rel_sigma(
     a: double,
     b: double,
@@ -90,6 +91,4 @@ class EnergyResolutionSigmaRelABC(Node):
         check_shape_of_inputs(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))
         check_dimension_of_inputs(self, AllPositionals, 1)
         copy_from_inputs_to_outputs(self, "Energy", "RelSigma")
-        assign_axes_from_inputs_to_outputs(
-            self, "Energy", "RelSigma", assign_meshes=True
-        )
+        assign_axes_from_inputs_to_outputs(self, "Energy", "RelSigma", assign_meshes=True)

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.type_functions import (
     AllPositionals,
     check_dimension_of_inputs,
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _cnp_uncertainty(
     data: NDArray[double],
     theory: NDArray[double],
@@ -32,7 +33,7 @@ def _cnp_uncertainty(
         result[i] = coeff / sqrt(1.0 / data[i] + 2.0 / theory[i])
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _cnp_variance(
     data: NDArray[double],
     theory: NDArray[double],
@@ -93,9 +94,7 @@ class CNPStat(BlockToOneNode):
 
         i = 0
         for i, output_data in enumerate(self._output_data):
-            _cnp_uncertainty(
-                self._input_data[2 * i], self._input_data[2 * i + 1], output_data
-            )
+            _cnp_uncertainty(self._input_data[2 * i], self._input_data[2 * i + 1], output_data)
 
     def _cnp_variance(self) -> None:
         for callback in self._input_nodes_callbacks:
@@ -103,9 +102,7 @@ class CNPStat(BlockToOneNode):
 
         i = 0
         for i, output_data in enumerate(self._output_data):
-            _cnp_variance(
-                self._input_data[2 * i], self._input_data[2 * i + 1], output_data
-            )
+            _cnp_variance(self._input_data[2 * i], self._input_data[2 * i + 1], output_data)
             i += 2
 
     def _type_function(self) -> None:

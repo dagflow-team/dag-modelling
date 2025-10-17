@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 from numba import njit
-from numpy import finfo, result_type
+from numpy import result_type
 
 from ...core.exception import CalculationError, InitializationError
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     check_dimension_of_inputs,
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from ...core.output import Output
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _is_sorted(array: NDArray) -> bool:
     previous = array[0]
     for i in range(1, len(array)):
@@ -34,7 +35,7 @@ def _is_sorted(array: NDArray) -> bool:
     return True
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _shift_last_edge_inside_right(
     fine: NDArray, idxs: NDArray, coarse: NDArray, tolerance: float
 ) -> None:
@@ -45,7 +46,7 @@ def _shift_last_edge_inside_right(
             idxs[i] = overflow_idx - 1
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _shift_last_edge_inside_left(
     fine: NDArray, idxs: NDArray, coarse: NDArray, tolerance: float
 ) -> None:
@@ -118,9 +119,7 @@ class SegmentIndex(Node):
         """The function to determine the dtype and shape of the ouput."""
         check_dimension_of_inputs(self, ("coarse",), 1)
         check_number_of_inputs(self, 2)
-        copy_from_inputs_to_outputs(
-            self, 1, 0, dtype=False, shape=True, edges=False, meshes=False
-        )
+        copy_from_inputs_to_outputs(self, 1, 0, dtype=False, shape=True, edges=False, meshes=False)
         self._indices.dd.dtype = "i"
 
         dtype = result_type(*(inp.dd.dtype for inp in self.inputs))
@@ -133,9 +132,7 @@ class SegmentIndex(Node):
         coarse = self._coarse.data.ravel()
         fine = self._fine.data.ravel()
         if not _is_sorted(coarse):
-            raise CalculationError(
-                "Coarse array is not sorted", node=self, input=self._coarse
-            )
+            raise CalculationError("Coarse array is not sorted", node=self, input=self._coarse)
         out[:] = coarse.searchsorted(fine, side=self.mode)
         if self.mode == "right":
             _shift_last_edge_inside_right(fine, out, coarse, self._tolerance)

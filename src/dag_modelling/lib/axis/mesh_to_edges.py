@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from ...core.type_functions import AllPositionals, check_node_has_inputs, check_dimension_of_inputs
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
+from ...core.type_functions import AllPositionals, check_dimension_of_inputs, check_node_has_inputs
 from ..abstract import OneToOneNode
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _binedges(centers: NDArray[double], edges: NDArray[double]) -> None:
     ncenters = len(centers)
     for i in range(1, ncenters):
@@ -22,8 +23,8 @@ def _binedges(centers: NDArray[double], edges: NDArray[double]) -> None:
 
 
 class MeshToEdges(OneToOneNode):
-    """
-    Computes the bin edges based on the mesh (bin centers). The left-most and the right-most edges are inferred.
+    """Computes the bin edges based on the mesh (bin centers). The left-most
+    and the right-most edges are inferred.
 
     inputs:
         `i`: array with mesh (N)
@@ -39,7 +40,7 @@ class MeshToEdges(OneToOneNode):
             _binedges(indata, outdata)
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self, check_named=True)
         check_dimension_of_inputs(self, (AllPositionals, *self.inputs.kw.keys()), ndim=1)
         for _input, _output in zip(self.inputs, self.outputs):

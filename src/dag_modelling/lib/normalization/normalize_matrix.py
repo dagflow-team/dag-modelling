@@ -4,8 +4,13 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInputAddNewOutput
-from ...core.type_functions import AllPositionals, check_dimension_of_inputs, check_inputs_equivalence
+from ...core.type_functions import (
+    AllPositionals,
+    check_dimension_of_inputs,
+    check_inputs_equivalence,
+)
 from ..abstract import OneToOneNode
 
 if TYPE_CHECKING:
@@ -57,7 +62,7 @@ class NormalizeMatrix(OneToOneNode):
         self.function = self._functions_dict[self._mode]
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _norm_rows(matrix: NDArray, out: NDArray):
     ncols = matrix.shape[1]
     for row in range(matrix.shape[0]):
@@ -71,7 +76,7 @@ def _norm_rows(matrix: NDArray, out: NDArray):
             out[row, column] += matrix[row, column] / total_sum
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _norm_columns(matrix: NDArray, out: NDArray):
     nrows = matrix.shape[0]
     for column in range(matrix.shape[1]):

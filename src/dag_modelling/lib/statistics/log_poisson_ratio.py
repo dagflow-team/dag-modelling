@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import log
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ..abstract import ManyToOneNode
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@njit(cache=True)
+@njit(cache=NUMBA_CACHE_ENABLE)
 def _log_poisson_ratio(
     data: NDArray,
     theory: NDArray,

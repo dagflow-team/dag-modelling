@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import allclose, digitize, fabs
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     check_dimension_of_inputs,
@@ -52,12 +53,8 @@ class AxisDistortionMatrixPointwise(Node):
         )
         self._edges_original = self._add_input("EdgesOriginal", positional=False)
         self._edges_target = self._add_input("EdgesTarget", positional=False)
-        self._distortion_original = self._add_input(
-            "DistortionOriginal", positional=False
-        )  # X
-        self._distortion_target = self._add_input(
-            "DistortionTarget", positional=False
-        )  # Y
+        self._distortion_original = self._add_input("DistortionOriginal", positional=False)  # X
+        self._distortion_target = self._add_input("DistortionTarget", positional=False)  # Y
         self._result = self._add_output("matrix")  # output: 0
 
         self._functions_dict.update(
@@ -110,9 +107,7 @@ class AxisDistortionMatrixPointwise(Node):
 
 
 @njit
-def _project_y_to_x_linear(
-    y: float, x0: float, x1: float, y0: float, y1: float
-) -> float:
+def _project_y_to_x_linear(y: float, x0: float, x1: float, y0: float, y1: float) -> float:
     """Project Y to X linearly.
 
     For the case of constant height the middle x is returned. Note:
@@ -139,10 +134,7 @@ def _axisdistortion_pointwise_python(
     )
     matrix[:, :] = 0.0
 
-    if (
-        distortion_original[0] >= edges_original[-1]
-        or distortion_original[-1] < edges_original[0]
-    ):
+    if distortion_original[0] >= edges_original[-1] or distortion_original[-1] < edges_original[0]:
         return
 
     n_bins_x = edges_original.size - 1
@@ -375,6 +367,6 @@ def _axisdistortion_pointwise_python(
     #     print("break due to lack of advancement")                                                      # debug
 
 
-_axisdistortion_pointwise_numba: Callable[
-    [NDArray, NDArray, NDArray, NDArray, NDArray], None
-] = njit(cache=True)(_axisdistortion_pointwise_python)
+_axisdistortion_pointwise_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = (
+    njit(cache=NUMBA_CACHE_ENABLE)(_axisdistortion_pointwise_python)
+)

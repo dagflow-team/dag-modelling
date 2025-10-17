@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import allclose
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     check_dimension_of_inputs,
@@ -52,9 +53,7 @@ class AxisDistortionMatrix(Node):
         self._edges_original = self._add_input("EdgesOriginal", positional=False)
         self._edges_target = self._add_input("EdgesTarget", positional=False)
         self._edges_modified = self._add_input("EdgesModified", positional=False)
-        self._edges_backward = self._add_input(
-            "EdgesModifiedBackwards", positional=False
-        )
+        self._edges_backward = self._add_input("EdgesModifiedBackwards", positional=False)
         self._result = self._add_output("matrix")  # output: 0
 
         self._functions_dict.update(
@@ -130,9 +129,7 @@ def _axisdistortion_python(
     right_axis = 0
     idxx0, idxx1, idxy = -1, -1, 0
     leftx_fine, lefty_fine = threshold, threshold
-    while (
-        leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target
-    ):
+    while leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target:
         left_edge_from_x = edges_original[idxx0 + 1] < edges_backwards[idxx1 + 1]
         if left_edge_from_x:
             leftx_fine, lefty_fine = (
@@ -191,6 +188,6 @@ def _axisdistortion_python(
         # left_axis = right_axis
 
 
-_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = (
-    njit(cache=True)(_axisdistortion_python)
-)
+_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = njit(
+    cache=NUMBA_CACHE_ENABLE
+)(_axisdistortion_python)

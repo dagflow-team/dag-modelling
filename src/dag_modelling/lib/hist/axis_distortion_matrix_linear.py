@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import allclose
 
+from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
     check_dimension_of_inputs,
@@ -176,6 +177,6 @@ def _axisdistortion_linear_python(
         # left_axis = right_axis
 
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = (
-    njit(cache=True)(_axisdistortion_linear_python)
-)
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
+    cache=NUMBA_CACHE_ENABLE
+)(_axisdistortion_linear_python)

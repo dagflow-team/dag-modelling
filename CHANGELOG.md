@@ -1,10 +1,13 @@
-
 # Change Log
 
 All notable changes to this project will be documented in this file.
- 
+
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+
+## [0.14.3] - 2025-10-17
+
+- chore: disable `numba` caching as it may cause problems for parallel execution. Configurable.
 
 ## [0.14.2] - 2025-10-16
 
@@ -18,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.14.0] - 2025-09-25
 
 - feature: add `save_matrices` function similar to `save_records`, but for matrices. Saves dicitonary
-    with matrices as hdf5, npz, root, tsv or archived tsv.
+  with matrices as hdf5, npz, root, tsv or archived tsv.
 - [chore] minor changes and cleaning.
 
 ## [0.13.0] - 2025-09-08
@@ -36,17 +39,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Merge upstream changes for profiling.
 
 ## [0.10.0] - 2025-07-24
-  
+
 Major updates:
+
 - Merge upstream changes
 - Import `dgf_detector` nodes for:
-    * energy resolution histogram smearing
-    * rebinning
-    * distortion of histogram via x axis
+  - energy resolution histogram smearing
+  - rebinning
+  - distortion of histogram via x axis
 - Import `dgf_statistics` nodes for:
-    * χ², CNP stat errors, log Poisson ratio
-    * MonteCarlo random sampling
- 
+  - χ², CNP stat errors, log Poisson ratio
+  - MonteCarlo random sampling
+
 ## [0.9.0] - 2025-04-07
-  
+
 The pre-release version
