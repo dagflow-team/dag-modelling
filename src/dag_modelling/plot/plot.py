@@ -182,6 +182,9 @@ class plot_auto:
                 self._zlabel = self._ylabel
                 self._ylabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
 
+        if self._plotoptions.get("swap_hist_2d_xy", False):
+            self._xlabel, self._ylabel = self._ylabel, self._xlabel
+
     def annotate_axes(
         self,
         /,
@@ -222,6 +225,9 @@ class plot_auto:
 
         if yscale := self._plotoptions.get("yscale"):
             ax.set_yscale(yscale)
+
+        if self._plotoptions.get("invert_yaxis"):
+            ax.invert_yaxis()
 
         if legend:
             ax.legend()
@@ -381,7 +387,7 @@ def plot_array_2d_hist_pcolorfast(
     **kwargs,
 ) -> tuple:
     xedges, yedges = edges
-    return pcolorfast(xedges, yedges, Z.T, *args, **kwargs)
+    return pcolorfast(xedges, yedges, Z, *args, **kwargs)
 
 
 def plot_array_2d_hist_pcolormesh(
@@ -392,7 +398,7 @@ def plot_array_2d_hist_pcolormesh(
     **kwargs,
 ) -> tuple:
     x, y = meshgrid(edges[0], edges[1], indexing="ij")
-    return pcolormesh(x, y, Z, *args, **kwargs)
+    return pcolormesh(x, y, Z.T, *args, **kwargs)
 
 
 def plot_array_2d_hist_pcolor(
@@ -403,7 +409,7 @@ def plot_array_2d_hist_pcolor(
     **kwargs,
 ) -> tuple:
     x, y = meshgrid(edges[0], edges[1], indexing="ij")
-    return pcolor(x, y, Z, *args, **kwargs)
+    return pcolor(x, y, Z.T, *args, **kwargs)
 
 
 def plot_array_2d_hist_imshow(
@@ -418,7 +424,7 @@ def plot_array_2d_hist_imshow(
         extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
         kwargs.setdefault("extent", extent)
     kwargs.setdefault("origin", "lower")
-    return imshow(Z.T, *args, **kwargs)
+    return imshow(Z, *args, **kwargs)
 
 
 def plot_array_2d_hist_matshow(
@@ -433,7 +439,7 @@ def plot_array_2d_hist_matshow(
         xedges, yedges = edges
         extent = [xedges[0], xedges[-1], yedges[-1], yedges[0]]
         kwargs.setdefault("extent", extent)
-    return matshow(Z.T, *args, **kwargs)
+    return matshow(Z, *args, **kwargs)
 
 
 plot_array_2d_hist_methods = {
@@ -456,6 +462,10 @@ def plot_array_2d_hist(
     smethod: str = (
         "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
     )
+    if plotoptions.get("swap_hist_2d_xy", False):
+        edges = (edges[1], edges[0])
+    else:
+        dZ = dZ.T
     try:
         function = plot_array_2d_hist_methods[smethod]
     except KeyError as e:
@@ -514,7 +524,9 @@ def plot_array_2d_vs_slicesx(
 
 
 def plot_array_2d_vs_slicesy(Z: NDArray, meshes: tuple[NDArray, ...], *args, **kwargs):
-    return plot_array_2d_vs_slicesx(Z.T, tuple(mesh.T for mesh in reversed(meshes)), *args, **kwargs)
+    return plot_array_2d_vs_slicesx(
+        Z.T, tuple(mesh.T for mesh in reversed(meshes)), *args, **kwargs
+    )
 
 
 def plot_array_2d_vs_surface(
