@@ -6,7 +6,7 @@ requires = [ "packaging", "setuptools", "wheel" ]
 [project]
 name = "dag-modelling"
 version = "0.14.3"
-description = "The dag-modelling package is a python implementation of the dataflow programming with the lazy graph evaluation."
+description = "A python implementation of the vectorized direct acyclic graph programming with lazy evaluation"
 readme = "README.md"
 license = "MIT"
 maintainers = [ { name = "DAGModelling Team", email = "dagflow@jinr.ru" } ]
