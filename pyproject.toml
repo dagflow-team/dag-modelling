@@ -5,7 +5,7 @@ requires = [ "packaging", "setuptools", "wheel" ]
 
 [project]
 name = "dag-modelling"
-version = "0.14.3"
+version = "0.14.4"
 description = "A python implementation of the vectorized direct acyclic graph programming with lazy evaluation"
 readme = "README.md"
 license = "MIT"
