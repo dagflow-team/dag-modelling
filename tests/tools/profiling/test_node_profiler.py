@@ -71,7 +71,7 @@ def test_t_percentage(graph_0):
     _, _n = graph_0
     profiler = NodeProfiler(_n).estimate_target_nodes()
     some_group = Series({"time": [0, 0, 0, 0, 0]})
-    profiler._estimations_table["time"].values[:] = 0
+    profiler._estimations_table["time"] = 0
     with raises(ZeroDivisionError) as excinfo:
         profiler._t_percentage(some_group)
     assert "is zero" in str(excinfo.value)
