@@ -185,7 +185,7 @@ class Abs(OneToOneNode):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._labels.setdefault("mark", "|x|")
+        self._labels.setdefault("mark", r"\|x\|")
 
     def _function(self):
         for callback in self._input_nodes_callbacks:

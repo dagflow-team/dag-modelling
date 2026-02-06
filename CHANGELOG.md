@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.15.0] - 2026-02-17
+
+- feature: add `tools.graph_walker` — a generic tool to walk over the whole graph.
+- feature: add dynamic versioning.
+- chore: drastically improve performance of export to graphviz.
+- chore: set minimal Python version to 3.12.
+
+## [0.14.4] - 2026-02-06
+
+- feature: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate plotting matrices.
+- chore: node labels cleaning.
+
 ## [0.14.3] - 2025-10-17
 
 - chore: disable `numba` caching as it may cause problems for parallel execution. Configurable.
