@@ -15,14 +15,19 @@ def format_latex(k: str, s: str | Any, /, *args, protect_latex: bool = True, **k
     if not isinstance(s, str):
         return s
 
-    if "{" not in s:
+    if "{" not in s:  # }
         return s
 
     should_protect_latex = protect_latex and k in {"latex", "axis", "xaxis", "rootaxis"}
     if should_protect_latex and "{" in s and "{{" not in s:  # }} }
         return s
 
-    return s.format(*args, **kwargs)
+    try:
+        return s.format(*args, **kwargs)
+    except (IndexError, KeyError) as e:
+        raise RuntimeError(
+            f"Unable to format string:\n{s}\nWith arguments:\n- {args}\n- {kwargs}"
+        ) from e
 
 
 def format_dict(
