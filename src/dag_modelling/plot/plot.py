@@ -129,7 +129,7 @@ class plot_auto:
         if plotoptions := self._output.labels.plotoptions:
             self._plotoptions = dict(plotoptions, **self._plotoptions)
 
-        if (masked_value := self._plotoptions.get("mask_value", None)) is not None:
+        if (masked_value := self._plotoptions.get("mask_value")) is not None:
             kwargs = dict(kwargs, masked_value=masked_value)
 
         data = _mask_if_needed(self._output.data, *args, **kwargs)
@@ -148,7 +148,7 @@ class plot_auto:
         elif isinstance(self._object, NodeBase):
             self._output = self._object.outputs[0]
         else:
-            if masked_value := self._plotoptions.get("mask_value", None):
+            if (masked_value := self._plotoptions.get("mask_value")) is not None:
                 kwargs = dict(kwargs, masked_value=masked_value)
             self._get_array_data(*args, **kwargs)
             return
@@ -182,9 +182,10 @@ class plot_auto:
                 self._zlabel = self._ylabel
                 self._ylabel = self._output.dd.axis_label(1) or labels.yaxis_unit or "Index [#]"
 
-    def annotate_axes(
-        self,
-        /,
+        if self._plotoptions.get("swap_hist_2d_xy", False):
+            self._xlabel, self._ylabel = self._ylabel, self._xlabel
+
+    def annotate_axes( self, /,
         ax: Axes | None = None,
         *,
         legend: bool = False,
@@ -214,14 +215,17 @@ class plot_auto:
             with suppress(AttributeError):
                 ax.set_zlabel(self._zlabel)
 
-        if aspect := self._plotoptions.get("aspect"):
+        if (aspect := self._plotoptions.get("aspect")) is not None:
             ax.set_aspect(aspect)
 
-        if xscale := self._plotoptions.get("xscale"):
+        if (xscale := self._plotoptions.get("xscale")) is not None:
             ax.set_xscale(xscale)
 
-        if yscale := self._plotoptions.get("yscale"):
+        if (yscale := self._plotoptions.get("yscale")) is not None:
             ax.set_yscale(yscale)
+
+        if self._plotoptions.get("invert_yaxis", False):
+            ax.invert_yaxis()
 
         if legend:
             ax.legend()
@@ -230,7 +234,7 @@ class plot_auto:
             xlim = ax.get_xlim()
             ax.plot(xlim, xlim, **plot_diagonal)
 
-        if subplots_adjust_kw := self._plotoptions.get("subplots_adjust"):
+        if (subplots_adjust_kw := self._plotoptions.get("subplots_adjust")) is not None:
             plt.subplots_adjust(**subplots_adjust_kw)
 
         if show_path:
@@ -250,7 +254,7 @@ class plot_auto:
                     fontsize="x-small",
                 )
 
-        if self._plotoptions.get("show"):
+        if self._plotoptions.get("show", False):
             plt.show()
 
     @property
@@ -381,7 +385,7 @@ def plot_array_2d_hist_pcolorfast(
     **kwargs,
 ) -> tuple:
     xedges, yedges = edges
-    return pcolorfast(xedges, yedges, Z.T, *args, **kwargs)
+    return pcolorfast(xedges, yedges, Z, *args, **kwargs)
 
 
 def plot_array_2d_hist_pcolormesh(
@@ -392,7 +396,7 @@ def plot_array_2d_hist_pcolormesh(
     **kwargs,
 ) -> tuple:
     x, y = meshgrid(edges[0], edges[1], indexing="ij")
-    return pcolormesh(x, y, Z, *args, **kwargs)
+    return pcolormesh(x, y, Z.T, *args, **kwargs)
 
 
 def plot_array_2d_hist_pcolor(
@@ -403,7 +407,7 @@ def plot_array_2d_hist_pcolor(
     **kwargs,
 ) -> tuple:
     x, y = meshgrid(edges[0], edges[1], indexing="ij")
-    return pcolor(x, y, Z, *args, **kwargs)
+    return pcolor(x, y, Z.T, *args, **kwargs)
 
 
 def plot_array_2d_hist_imshow(
@@ -418,7 +422,7 @@ def plot_array_2d_hist_imshow(
         extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
         kwargs.setdefault("extent", extent)
     kwargs.setdefault("origin", "lower")
-    return imshow(Z.T, *args, **kwargs)
+    return imshow(Z, *args, **kwargs)
 
 
 def plot_array_2d_hist_matshow(
@@ -433,7 +437,7 @@ def plot_array_2d_hist_matshow(
         xedges, yedges = edges
         extent = [xedges[0], xedges[-1], yedges[-1], yedges[0]]
         kwargs.setdefault("extent", extent)
-    return matshow(Z.T, *args, **kwargs)
+    return matshow(Z, *args, **kwargs)
 
 
 plot_array_2d_hist_methods = {
@@ -456,6 +460,10 @@ def plot_array_2d_hist(
     smethod: str = (
         "pcolormesh" if (method := plotoptions.get("method", "auto")) == "auto" else method
     )
+    if plotoptions.get("swap_hist_2d_xy", False):
+        edges = (edges[1], edges[0])
+    else:
+        dZ = dZ.T
     try:
         function = plot_array_2d_hist_methods[smethod]
     except KeyError as e:
@@ -514,7 +522,9 @@ def plot_array_2d_vs_slicesx(
 
 
 def plot_array_2d_vs_slicesy(Z: NDArray, meshes: tuple[NDArray, ...], *args, **kwargs):
-    return plot_array_2d_vs_slicesx(Z.T, tuple(mesh.T for mesh in reversed(meshes)), *args, **kwargs)
+    return plot_array_2d_vs_slicesx(
+        Z.T, tuple(mesh.T for mesh in reversed(meshes)), *args, **kwargs
+    )
 
 
 def plot_array_2d_vs_surface(
