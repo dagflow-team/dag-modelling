@@ -185,9 +185,7 @@ class plot_auto:
         if self._plotoptions.get("swap_hist_2d_xy", False):
             self._xlabel, self._ylabel = self._ylabel, self._xlabel
 
-    def annotate_axes(
-        self,
-        /,
+    def annotate_axes( self, /,
         ax: Axes | None = None,
         *,
         legend: bool = False,
@@ -256,7 +254,7 @@ class plot_auto:
                     fontsize="x-small",
                 )
 
-        if (self._plotoptions.get("show")) is not None:
+        if self._plotoptions.get("show", False):
             plt.show()
 
     @property
