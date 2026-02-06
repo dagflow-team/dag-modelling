@@ -129,7 +129,7 @@ class plot_auto:
         if plotoptions := self._output.labels.plotoptions:
             self._plotoptions = dict(plotoptions, **self._plotoptions)
 
-        if (masked_value := self._plotoptions.get("mask_value", None)) is not None:
+        if (masked_value := self._plotoptions.get("mask_value")) is not None:
             kwargs = dict(kwargs, masked_value=masked_value)
 
         data = _mask_if_needed(self._output.data, *args, **kwargs)
@@ -148,7 +148,7 @@ class plot_auto:
         elif isinstance(self._object, NodeBase):
             self._output = self._object.outputs[0]
         else:
-            if masked_value := self._plotoptions.get("mask_value", None):
+            if (masked_value := self._plotoptions.get("mask_value")) is not None:
                 kwargs = dict(kwargs, masked_value=masked_value)
             self._get_array_data(*args, **kwargs)
             return
@@ -217,16 +217,16 @@ class plot_auto:
             with suppress(AttributeError):
                 ax.set_zlabel(self._zlabel)
 
-        if aspect := self._plotoptions.get("aspect"):
+        if (aspect := self._plotoptions.get("aspect")) is not None:
             ax.set_aspect(aspect)
 
-        if xscale := self._plotoptions.get("xscale"):
+        if (xscale := self._plotoptions.get("xscale")) is not None:
             ax.set_xscale(xscale)
 
-        if yscale := self._plotoptions.get("yscale"):
+        if (yscale := self._plotoptions.get("yscale")) is not None:
             ax.set_yscale(yscale)
 
-        if self._plotoptions.get("invert_yaxis"):
+        if self._plotoptions.get("invert_yaxis", False):
             ax.invert_yaxis()
 
         if legend:
@@ -236,7 +236,7 @@ class plot_auto:
             xlim = ax.get_xlim()
             ax.plot(xlim, xlim, **plot_diagonal)
 
-        if subplots_adjust_kw := self._plotoptions.get("subplots_adjust"):
+        if (subplots_adjust_kw := self._plotoptions.get("subplots_adjust")) is not None:
             plt.subplots_adjust(**subplots_adjust_kw)
 
         if show_path:
@@ -256,7 +256,7 @@ class plot_auto:
                     fontsize="x-small",
                 )
 
-        if self._plotoptions.get("show"):
+        if (self._plotoptions.get("show")) is not None:
             plt.show()
 
     @property
