@@ -3,9 +3,10 @@
 [![python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/)
 [![pipeline](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/pipeline.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/commits/master)
 [![coverage report](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/coverage.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/-/commits/master)
-<!--- Uncomment here after adding docs!
-[![pages](https://img.shields.io/badge/pages-link-white.svg)](http://dagflow-team.pages.jinr.ru/dag-modelling)
--->
+[![github](https://img.shields.io/badge/github-public-blue?logo=github)](https://github.com/dagflow-team/dag-modelling)
+[![gitlab](https://img.shields.io/badge/gitlab-dev-blue?logo=gitlab)](https://git.jinr.ru/dagflow-team/dag-modelling)
+[![pypi-release](https://img.shields.io/badge/pypi-release-blue?logo=pypi&logoColor=green)](https://pypi.org/project/dag-modelling)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 The **DAGModelling** software is a python implementation of the dataflow programming with the lazy graph evaluation approach.
 
@@ -15,7 +16,7 @@ Main goals:
 *  Plotting with graphviz;
 *  Flexibility. The goal of DAG-Modelling is not to be efficient, but rather flexible.
 
-The framework is intented to be used for the statistical analysis of the data of *JUNO* and *Daya Bay* neutrino oscillation experiments.
+The framework is intended to be used for the statistical analysis of the data of *JUNO* and *Daya Bay* neutrino oscillation experiments.
 
 ## Installation
 
@@ -75,14 +76,10 @@ For more examples see [example/example.py](example/example.py) or [tests](tests)
 
 Please, note, that examples are using `pygraphviz` package, which is optional and not requested by default.
 
-## Repositories and additional modules
+## Additional modules
 
-- Main repo:
-    * Development/CI: https://git.jinr.ru/dagflow-team/dag-modelling
-    * Contact/pypi/mirror: https://github.com/dagflow-team/dag-modelling
-    * PYPI: https://pypi.org/project/dag-modelling
-- Supplementary python modules:
-    * [dgm-reactor-neutrino](https://github.com/dagflow-team/dgm-reactor-neutrino) — nodes related to reactor neutrino oscillations
-    * [dgm-fit](https://github.com/dagflow-team/dgm-fit) — fitter interface
-    * [Daya Bay model](https://github.com/dagflow-team/dgm-dayabay-dev) — implementation of the Daya Bay oscillation analysis, development version
+Supplementary python modules:
+* [dgm-reactor-neutrino](https://github.com/dagflow-team/dgm-reactor-neutrino) — nodes related to reactor neutrino oscillations.
+* [dgm-fit](https://github.com/dagflow-team/dgm-fit) — fitter interface.
+* [Daya Bay model](https://github.com/dagflow-team/dgm-dayabay-dev) — implementation of the Daya Bay oscillation analysis, development version.
 

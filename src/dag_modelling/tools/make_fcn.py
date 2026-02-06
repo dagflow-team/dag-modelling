@@ -7,9 +7,10 @@ from ..core.output import Output
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from ..parameters import Parameter
 
     from numpy.typing import NDArray
+
+    from ..parameters import Parameter
 
 
 def make_fcn(
@@ -17,9 +18,10 @@ def make_fcn(
     parameters: Sequence[Parameter] | Mapping[str, Parameter],
     safe: bool = True,
 ) -> Callable:
-    """Retrun a function, which takes the parameter values as arguments and retruns the result of the node evaluation.
+    """Return a function, which takes the parameter values as arguments and
+    returns the result of the node evaluation.
 
-    Supports positional and key-word arguments. Posiotion of parameter is
+    Supports positional and key-word arguments. Position of parameter is
     determined by index in the `parameters` list.
 
     Parameters
@@ -29,8 +31,9 @@ def make_fcn(
     parameters : Sequence[Parameter] | Mapping[str, Parameter]
         The names of the set of parameters that the function will depend on.
     safe : bool
-        If `safe=True`, the parameters will be resetted to old values after evaluation.
-        If `safe=False`, the parameters will be setted to the new values.
+        - `safe=True`, the parameters will be reset to old values after evaluation. Copies of the
+          data items will be returned.
+        - `safe=False`, the parameters will be left at the new values.
 
     Returns
     -------
