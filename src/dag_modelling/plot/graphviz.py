@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from numpy import printoptions, square
@@ -21,7 +22,9 @@ if TYPE_CHECKING:
 try:
     import pygraphviz as G
 except ImportError:
-    logger.critical("Unable to import `pygraphviz`. Ensure to install it with `pip install pygraphviz`.")
+    logger.critical(
+        "Unable to import `pygraphviz`. Ensure to install it with `pip install pygraphviz`."
+    )
     raise
 
 
@@ -654,10 +657,12 @@ class GraphDot:
     def set_label(self, label: str):
         self._graph.graph_attr["label"] = label
 
-    def savegraph(self, fname, *, quiet: bool = False):
+    def savegraph(self, fname: Path | str, *, quiet: bool = False):
+        if not isinstance(fname, Path):
+            fname = Path(fname)
         if not quiet:
             logger.log(INFO1, f"Write: {fname}")
-        if fname.endswith(".dot"):
+        if fname.suffix == ".dot":
             self._graph.write(fname)
         else:
             self._graph.layout(prog="dot")
@@ -866,3 +871,145 @@ def _format_data(data: NDArray | None, part: bool = False) -> str:
     else:
         datastr = str(data)
     return datastr.replace("\n", "\\l") + "\\l"
+
+
+class GraphNodesQueue:
+    __slots__ = (
+        "nodes",
+        "_new_nodes_queue",
+        "edges",
+        "open_outputs",
+        "open_inputs",
+        "_current_depth",
+        "min_depth",
+        "max_depth",
+    )
+
+    nodes: dict[Node, int]
+    _new_nodes_queue: dict[Node, int]
+    edges: dict[Input, tuple[Node, Node]]
+    open_outputs: list[Output]
+    open_inputs: list[Input]
+
+    _current_depth: int
+
+    min_depth: int | None
+    max_depth: int | None
+
+    def __init__(self, *, min_depth: int | None, max_depth: int | None):
+        self.nodes = {}
+        self._new_nodes_queue = {}
+        self.edges = {}
+        self.open_outputs = []
+        self.open_inputs = []
+        self._current_depth = 0
+        self.min_depth = min_depth
+        self.max_depth = max_depth
+
+    def process_from_node(
+        self,
+        node: Node,
+        *,
+        depth: int = 0,
+        cover_full_graph: bool = False,
+        process_initial_node: bool = True,
+    ):
+        """Main function
+        1. Add the node to the queue.
+        2. Go strictly backward from the node. Add nodes to the queue.
+        3. Go strictly forward from the node. Add nodes to the queue.
+        4. Add meshes and edges for all the nodes in the queue. Applies only to ones, not already included. Depth=depth-1.
+        5. Save the queue as a list of nodes.
+        6. Stop, if full coverage is not required.
+        7. For all nodes in the queue repeat steps 2-6.
+        """
+        self._current_depth = depth
+        if process_initial_node or not self._add_node(node):
+            return
+
+        self._current_depth = depth
+        self._build_new_nodes_queue_backward_from(node)
+
+        self._current_depth = depth
+        self._build_new_nodes_queue_forward_from(node)
+
+        self._current_depth = depth
+        self._add_meshes_edges()
+
+        self.nodes = self._new_nodes_queue
+
+        if not cover_full_graph:
+            self._new_nodes_queue = {}
+            return
+
+        # Continue here
+        while True:
+            queue = self._new_nodes_queue.copy()
+            self._new_nodes_queue = {}
+            for node, depth in queue.items():
+                self.process_from_node(
+                    node, depth=depth, cover_full_graph=False, process_initial_node=False
+                )
+
+            if not self._new_nodes_queue:
+                break
+            self.nodes.update(self._new_nodes_queue)
+
+    def _depth_outside_limits(self) -> bool:
+        if self.min_depth is not None and self._current_depth < self.min_depth:
+            return True
+
+        if self.max_depth is not None and self._current_depth > self.max_depth:
+            return True
+
+        return False
+
+    def _add_node(self, node: Node) -> bool:
+        if self._depth_outside_limits() or node in self._new_nodes_queue or node in self.nodes:
+            return False
+
+        self._new_nodes_queue[node] = self._current_depth
+
+        return True
+
+    def _build_new_nodes_queue_backward_from(self, node: Node):
+        self._current_depth -= 1
+        if self._depth_outside_limits():
+            return
+        for input in node.inputs.iter_all():
+            try:
+                parent_node = input.parent_node
+            except AttributeError:
+                self.open_inputs[input]
+                continue
+
+            if not input in self.edges:
+                self.edges[input, (parent_node, node)]  # pyright: ignore [reportArgumentType]
+            if not self._add_node(parent_node):
+                continue
+            self._build_new_nodes_queue_backward_from(parent_node)
+
+    def _build_new_nodes_queue_forward_from(self, node: Node):
+        self._current_depth += 1
+        if self._depth_outside_limits():
+            return
+        for output in node.outputs.iter_all():
+            if output.child_inputs:
+                for child_input in output.child_inputs:
+                    child_node = child_input.node
+                    if not self._add_node(child_node):
+                        continue
+                    self._build_new_nodes_queue_forward_from(child_node)
+            else:
+                self.open_outputs[output]
+
+    def _add_meshes_edges(self):
+        for node, self._current_depth in self._new_nodes_queue.items():
+            self._current_depth -= 1
+            if self._depth_outside_limits():
+                continue
+            for output in node.outputs.iter_all():
+                for edge in output.dd.axes_edges:
+                    self._add_node(edge.node)
+                for mesh in output.dd.axes_edges:
+                    self._add_node(mesh.node)
