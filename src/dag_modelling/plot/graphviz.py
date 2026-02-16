@@ -57,12 +57,14 @@ class GraphDot:
         "_edges",
         "_filter",
         "_filtered_nodes",
+        "_enable_mid_node"
     )
     _graph: G.AGraph
     _node_id_map: dict
     _nodes_map_dag: dict[Node, G.agraph.Node]
     _filter: dict[str, list[str | int]]
     _filtered_nodes: set
+    _enable_mid_node: bool
 
     _show: set[
         Literal[
@@ -89,6 +91,7 @@ class GraphDot:
         filter: Mapping[str, Sequence[str | int]] = {},
         label: str | None = None,
         agraph_kwargs: Mapping = {},
+        enable_mid_node: bool = True,
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -116,6 +119,7 @@ class GraphDot:
             self._show = set(show)
         self._filter = {k: list(v) for k, v in filter.items()}
         self._filtered_nodes = set()
+        self._enable_mid_node = enable_mid_node
 
         graphattr = dict(graphattr)
         graphattr.setdefault("rankdir", "LR")
@@ -145,7 +149,7 @@ class GraphDot:
             self._graph.node_attr.update(nodeattr)
 
         if isinstance(graph_or_node, Graph):
-            if label:
+            if label and enable_common_attrs:
                 self.set_label(label)
             self._transform_graph(graph_or_node)
         elif isinstance(graph_or_node, Node):
@@ -452,26 +456,31 @@ class GraphDot:
     def _add_edges_multi_alot(self, nodedag, output):
         if self._node_is_filtered(nodedag):
             return
-        vnode = self.get_id(output, "_mid")
 
-        edge_added = False
-        for input in output.child_inputs:
-            if self._add_edge(nodedag, output, input, vtarget=vnode):
-                edge_added = True
-                break
-        for input in output.child_inputs:
-            edge_added |= self._add_edge(nodedag, output, input, vsource=vnode)
+        if self._enable_mid_node:
+            virtual_mid_node = self.get_id(output, "_mid")
 
-        if edge_added:
-            self._graph.add_node(
-                vnode,
-                label="",
-                shape="cds",
-                width=0.1,
-                height=0.1,
-                color="forestgreen",
-                weight=10,
-            )
+            edge_added = False
+            for input in output.child_inputs:
+                if self._add_edge(nodedag, output, input, vtarget=virtual_mid_node):
+                    edge_added = True
+                    break
+            for input in output.child_inputs:
+                edge_added |= self._add_edge(nodedag, output, input, vsource=virtual_mid_node)
+
+            if edge_added:
+                self._graph.add_node(
+                    virtual_mid_node,
+                    label="",
+                    shape="cds",
+                    width=0.1,
+                    height=0.1,
+                    color="forestgreen",
+                    weight=10,
+                )
+        else:
+            for input in output.child_inputs:
+                self._add_edge(nodedag, output, input)
 
     def _add_edges_multi_few(self, iout: int, nodedag, output):
         if self._node_is_filtered(nodedag):
