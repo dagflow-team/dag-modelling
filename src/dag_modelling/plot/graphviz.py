@@ -92,6 +92,7 @@ class GraphDot:
         label: str | None = None,
         agraph_kwargs: Mapping = {},
         enable_mid_node: bool = True,
+        enable_common_attrs: bool = True
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -141,12 +142,13 @@ class GraphDot:
         self._edges: dict[str, EdgeDef] = {}
         self._graph = G.AGraph(directed=True, strict=False, **agraph_kwargs)
 
-        if graphattr:
-            self._graph.graph_attr.update(graphattr)
-        if edgeattr:
-            self._graph.edge_attr.update(edgeattr)
-        if nodeattr:
-            self._graph.node_attr.update(nodeattr)
+        if enable_common_attrs:
+            if graphattr:
+                self._graph.graph_attr.update(graphattr)
+            if edgeattr:
+                self._graph.edge_attr.update(edgeattr)
+            if nodeattr:
+                self._graph.node_attr.update(nodeattr)
 
         if isinstance(graph_or_node, Graph):
             if label and enable_common_attrs:
