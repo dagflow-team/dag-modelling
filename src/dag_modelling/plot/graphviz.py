@@ -57,7 +57,8 @@ class GraphDot:
         "_edges",
         "_filter",
         "_filtered_nodes",
-        "_enable_mid_node"
+        "_enable_mid_node",
+        "_hide_nodes_marked_hidden",
     )
     _graph: G.AGraph
     _node_id_map: dict
@@ -65,6 +66,7 @@ class GraphDot:
     _filter: dict[str, list[str | int]]
     _filtered_nodes: set
     _enable_mid_node: bool
+    _hide_nodes_marked_hidden: bool
 
     _show: set[
         Literal[
@@ -92,7 +94,8 @@ class GraphDot:
         label: str | None = None,
         agraph_kwargs: Mapping = {},
         enable_mid_node: bool = True,
-        enable_common_attrs: bool = True
+        enable_common_attrs: bool = True,
+        hide_nodes_marked_hidden: bool = True,
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -121,6 +124,7 @@ class GraphDot:
         self._filter = {k: list(v) for k, v in filter.items()}
         self._filtered_nodes = set()
         self._enable_mid_node = enable_mid_node
+        self._hide_nodes_marked_hidden = hide_nodes_marked_hidden
 
         graphattr = dict(graphattr)
         graphattr.setdefault("rankdir", "LR")
@@ -589,7 +593,8 @@ class GraphDot:
         if node in self._filtered_nodes:
             return True
 
-        if node.labels.node_hidden:
+        if self._hide_nodes_marked_hidden and node.labels.node_hidden:
+            self._filtered_nodes.add(node)
             return True
 
         if not node.labels.index_in_mask(self._filter):
@@ -894,6 +899,7 @@ class GraphNodesQueue:
         "_current_depth",
         "min_depth",
         "max_depth",
+        "_process_meshes_edges"
     )
 
     nodes: dict[Node, int]
@@ -907,7 +913,15 @@ class GraphNodesQueue:
     min_depth: int | None
     max_depth: int | None
 
-    def __init__(self, *, min_depth: int | None, max_depth: int | None):
+    _process_meshes_edges: bool
+
+    def __init__(
+        self,
+        *,
+        min_depth: int | None,
+        max_depth: int | None,
+        process_meshes_edges: bool = False
+    ):
         self.nodes = {}
         self._new_nodes_queue = {}
         self.edges = {}
@@ -916,40 +930,42 @@ class GraphNodesQueue:
         self._current_depth = 0
         self.min_depth = min_depth
         self.max_depth = max_depth
+        self._process_meshes_edges = process_meshes_edges
 
     def process_from_node(
         self,
         node: Node,
         *,
         depth: int = 0,
-        cover_full_graph: bool = False,
+        process_full_graph: bool = False,
         process_initial_node: bool = True,
     ):
         """Main function
         1. Add the node to the queue.
         2. Go strictly backward from the node. Add nodes to the queue.
         3. Go strictly forward from the node. Add nodes to the queue.
-        4. Add meshes and edges for all the nodes in the queue. Applies only to ones, not already included. Depth=depth-1.
+        4. Optionally: add meshes and edges for all the nodes in the queue. Applies only to ones, not already included. Depth=depth-1.
         5. Save the queue as a list of nodes.
         6. Stop, if full coverage is not required.
         7. For all nodes in the queue repeat steps 2-6.
         """
         self._current_depth = depth
-        if process_initial_node or not self._add_node(node):
+        if process_initial_node and not self._add_node(node):
             return
 
-        self._current_depth = depth
         self._build_new_nodes_queue_backward_from(node)
-
         self._current_depth = depth
+
         self._build_new_nodes_queue_forward_from(node)
-
         self._current_depth = depth
-        self._add_meshes_edges()
+
+        if self._process_meshes_edges:
+            self._add_meshes_edges()
+            self._current_depth = depth
 
         self.nodes = self._new_nodes_queue
 
-        if not cover_full_graph:
+        if not process_full_graph:
             self._new_nodes_queue = {}
             return
 
@@ -959,7 +975,10 @@ class GraphNodesQueue:
             self._new_nodes_queue = {}
             for node, depth in queue.items():
                 self.process_from_node(
-                    node, depth=depth, cover_full_graph=False, process_initial_node=False
+                    node,
+                    depth=depth,
+                    process_full_graph=False,
+                    process_initial_node=False,
                 )
 
             if not self._new_nodes_queue:
