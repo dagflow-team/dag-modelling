@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from numpy import printoptions, square
 
@@ -889,21 +889,25 @@ def _format_data(data: NDArray | None, part: bool = False) -> str:
     return datastr.replace("\n", "\\l") + "\\l"
 
 
-class GraphNodesQueue:
+class GraphWalker:
     __slots__ = (
         "nodes",
-        "_new_nodes_queue",
+        "_queue_nodes",
+        "_queue_meshes_edges",
         "edges",
         "open_outputs",
         "open_inputs",
         "_current_depth",
         "min_depth",
         "max_depth",
-        "_process_meshes_edges"
+        "_enable_process_meshes_edges",
+        "_enable_process_full_graph",
+        "_node_skip_fcn",
     )
 
     nodes: dict[Node, int]
-    _new_nodes_queue: dict[Node, int]
+    _queue_nodes: dict[Node, int]
+    _queue_meshes_edges: dict[Node, int]
     edges: dict[Input, tuple[Node, Node]]
     open_outputs: list[Output]
     open_inputs: list[Input]
@@ -913,97 +917,146 @@ class GraphNodesQueue:
     min_depth: int | None
     max_depth: int | None
 
-    _process_meshes_edges: bool
+    _enable_process_meshes_edges: bool
+    _enable_process_full_graph: bool
+
+    _node_skip_fcn: Callable[[Node], bool]
 
     def __init__(
         self,
         *,
         min_depth: int | None,
         max_depth: int | None,
-        process_meshes_edges: bool = False
+        process_meshes_edges: bool = False,
+        process_full_graph: bool = False,
+        node_skip_fcn: Callable[[Node], bool] = lambda _: False,
     ):
         self.nodes = {}
-        self._new_nodes_queue = {}
+        self._queue_nodes = {}
+        self._queue_meshes_edges = {}
         self.edges = {}
         self.open_outputs = []
         self.open_inputs = []
-        self._current_depth = 0
+        self.current_depth = 0
         self.min_depth = min_depth
         self.max_depth = max_depth
-        self._process_meshes_edges = process_meshes_edges
+        self._enable_process_meshes_edges = process_meshes_edges
+        self._enable_process_full_graph = process_full_graph
+
+        self._node_skip_fcn = node_skip_fcn
 
     def process_from_node(
         self,
         node: Node,
         *,
-        depth: int = 0,
-        process_full_graph: bool = False,
+        depth: int | None = 0,
+        process_full_graph: bool | None,
         process_initial_node: bool = True,
     ):
         """Main function
+
         1. Add the node to the queue.
         2. Go strictly backward from the node. Add nodes to the queue.
         3. Go strictly forward from the node. Add nodes to the queue.
-        4. Optionally: add meshes and edges for all the nodes in the queue. Applies only to ones, not already included. Depth=depth-1.
-        5. Save the queue as a list of nodes.
-        6. Stop, if full coverage is not required.
-        7. For all nodes in the queue repeat steps 2-6.
+        4. For each node in the queue:
+            a. Optionally: process nodes forward/backward.
+            b. Push queue to the list of nodes. The queue is copied to the queue of meshes/edges.
+            c. Optionally: process meshes/edges.
+            d. Repeat as long as new nodes are added to the queue.
         """
-        self._current_depth = depth
-        if process_initial_node and not self._add_node(node):
+        if process_full_graph is None:
+            process_full_graph = self._enable_process_full_graph
+
+        self.current_depth = depth
+        depth = self.current_depth
+        if process_initial_node and not self._add_node_to_queue(node):
             return
 
-        self._build_new_nodes_queue_backward_from(node)
-        self._current_depth = depth
+        self._build_queue_nodes_backward_from(node, depth=depth)
 
-        self._build_new_nodes_queue_forward_from(node)
-        self._current_depth = depth
+        self._build_queue_nodes_forward_from(node, depth=depth)
 
-        if self._process_meshes_edges:
-            self._add_meshes_edges()
-            self._current_depth = depth
+        while self.has_queue:
+            if self._enable_process_full_graph:
+                self._process_nodes_from_queue()
+            else:
+                self._push_queue_to_storage()
 
-        self.nodes = self._new_nodes_queue
+            if self._enable_process_meshes_edges:
+                self._process_queue_meshes_edges()
+            else:
+                self._queue_meshes_edges = {}
 
-        if not process_full_graph:
-            self._new_nodes_queue = {}
+    @property
+    def has_queue(self) -> bool:
+        return bool(self._queue_nodes or self._queue_meshes_edges)
+
+    @property
+    def current_depth(self) -> int:
+        return self._current_depth
+
+    @current_depth.setter
+    def current_depth(self, value: int | None):
+        if value is not None:
+            self._current_depth = value
+
+    def _push_queue_to_storage(self):
+        self.nodes.update(self._queue_nodes)
+        self._queue_meshes_edges.update(self._queue_nodes)
+        self._queue_nodes = {}
+
+    def _process_nodes_from_queue(self):
+        while self._queue_nodes:
+            self._process_nodes_from_queue_once()
+
+    def _process_nodes_from_queue_once(self):
+        """Goes forward/backward from each node from the queue."""
+        if not self._queue_nodes:
             return
+        queue = self._queue_nodes.copy()
+        self._push_queue_to_storage()
 
-        # Continue here
-        while True:
-            queue = self._new_nodes_queue.copy()
-            self._new_nodes_queue = {}
-            for node, depth in queue.items():
-                self.process_from_node(
-                    node,
-                    depth=depth,
-                    process_full_graph=False,
-                    process_initial_node=False,
-                )
-
-            if not self._new_nodes_queue:
-                break
-            self.nodes.update(self._new_nodes_queue)
+        for node, self.current_depth in queue.items():
+            if self._may_not_add_node(node):
+                continue
+            self.process_from_node(
+                node,
+                depth=self.current_depth,
+                process_full_graph=False,
+                process_initial_node=False,
+            )
+        return queue
 
     def _depth_outside_limits(self) -> bool:
-        if self.min_depth is not None and self._current_depth < self.min_depth:
+        if self.min_depth is not None and self.current_depth < self.min_depth:
             return True
 
-        if self.max_depth is not None and self._current_depth > self.max_depth:
+        if self.max_depth is not None and self.current_depth > self.max_depth:
             return True
 
         return False
 
-    def _add_node(self, node: Node) -> bool:
-        if self._depth_outside_limits() or node in self._new_nodes_queue or node in self.nodes:
+    def _node_already_added(self, node: Node) -> bool:
+        return node in self._queue_nodes or node in self.nodes
+
+    def _may_not_add_node(self, node: Node) -> bool:
+        return self._depth_outside_limits() or self._node_already_added(node) or self._node_skip_fcn(node)
+
+    def _add_node_to_queue(self, node: Node) -> bool:
+        if self._depth_outside_limits() or self._node_already_added(node):
             return False
 
-        self._new_nodes_queue[node] = self._current_depth
+        self._queue_nodes[node] = self._current_depth
 
         return True
 
-    def _build_new_nodes_queue_backward_from(self, node: Node):
-        self._current_depth -= 1
+    def _build_queue_nodes_backward_from(self, node: Node, depth: int | None = None):
+        """Go strictly backward from the node.
+        Add nodes to queue.
+        Stop if depth is too low.
+        """
+        self.current_depth = depth
+        self.current_depth -= 1
         if self._depth_outside_limits():
             return
         for input in node.inputs.iter_all():
@@ -1015,31 +1068,39 @@ class GraphNodesQueue:
 
             if not input in self.edges:
                 self.edges[input, (parent_node, node)]  # pyright: ignore [reportArgumentType]
-            if not self._add_node(parent_node):
+            if not self._add_node_to_queue(parent_node):
                 continue
-            self._build_new_nodes_queue_backward_from(parent_node)
+            self._build_queue_nodes_backward_from(parent_node)
 
-    def _build_new_nodes_queue_forward_from(self, node: Node):
-        self._current_depth += 1
+    def _build_queue_nodes_forward_from(self, node: Node, *, depth: int | None = None):
+        """Go strictly forward from the node.
+        Add nodes to queue.
+        Stop if depth is too high.
+        """
+        self.current_depth = depth
+        self.current_depth += 1
         if self._depth_outside_limits():
             return
         for output in node.outputs.iter_all():
             if output.child_inputs:
                 for child_input in output.child_inputs:
                     child_node = child_input.node
-                    if not self._add_node(child_node):
+                    if not self._add_node_to_queue(child_node):
                         continue
-                    self._build_new_nodes_queue_forward_from(child_node)
+                    self._build_queue_nodes_forward_from(child_node)
             else:
                 self.open_outputs[output]
 
-    def _add_meshes_edges(self):
-        for node, self._current_depth in self._new_nodes_queue.items():
-            self._current_depth -= 1
+    def _process_queue_meshes_edges(self):
+        """Add nodes of meshes and edges to the queue, if they are not already present."""
+        for node, self._current_depth in self._queue_meshes_edges.items():
+            self.current_depth -= 1
             if self._depth_outside_limits():
                 continue
             for output in node.outputs.iter_all():
                 for edge in output.dd.axes_edges:
-                    self._add_node(edge.node)
+                    self._add_node_to_queue(edge.node)
                 for mesh in output.dd.axes_edges:
-                    self._add_node(mesh.node)
+                    self._add_node_to_queue(mesh.node)
+
+        self._queue_meshes_edges = {}
