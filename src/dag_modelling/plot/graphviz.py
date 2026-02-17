@@ -284,33 +284,6 @@ class GraphDot:
 
         self.update_style()
 
-    def _add_node_only(
-        self,
-        node: Node,
-        *,
-        min_depth: int | None = None,
-        max_depth: int | None = None,
-        depth: int = 0,
-        min_size: int | None = None,
-    ) -> bool:
-        if node in self._nodes_map_dag:
-            return False
-        if not num_in_range(depth, min_depth, max_depth):
-            return False
-        # print(f"{depth=: 2d}: {node.name}")
-
-        try:
-            o0size = node.outputs[0].dd.size
-        except IndexError:
-            pass
-        else:
-            if depth <= 0 and not num_in_range(o0size, min_size):
-                return False
-
-        self._add_node(node, depth=depth)
-
-        return True
-
     def _add_node(self, nodedag: Node, *, depth: int | None = None) -> None:
         if nodedag in self._nodes_map_dag or self._node_is_filtered(nodedag):
             return
