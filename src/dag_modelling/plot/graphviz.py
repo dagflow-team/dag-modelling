@@ -260,6 +260,7 @@ class GraphDot:
                 return depth <= 0 and not num_in_range(o0size, min_size)
 
             gw_kwargs["node_skip_fcn"] = node_skip_fcn
+
         graph_walker = GraphWalker(
             min_depth=min_depth,
             max_depth=max_depth,
@@ -272,9 +273,9 @@ class GraphDot:
             if self._node_is_filtered(node):
                 return
 
-            graph_walkder.process_from_node(node)
+            graph_walker.process_from_node(node)
 
-        for node, depth in graph_walker.nodes:
+        for node, depth in graph_walker.nodes.items():
             self._add_node(node, depth=depth)
 
         for nodedag in self._nodes_map_dag:
@@ -868,6 +869,8 @@ class GraphWalker:
         "_current_depth",
         "min_depth",
         "max_depth",
+        "_enable_process_backward",
+        "_enable_process_forward",
         "_enable_process_meshes_edges",
         "_enable_process_full_graph",
         "_node_skip_fcn",
@@ -886,6 +889,9 @@ class GraphWalker:
     min_depth: int | None
     max_depth: int | None
 
+    _enable_process_backward: bool
+    _enable_process_forward: bool
+    _enable_process_backward: bool
     _enable_process_meshes_edges: bool
     _enable_process_full_graph: bool
 
@@ -898,9 +904,12 @@ class GraphWalker:
         *,
         min_depth: int | None,
         max_depth: int | None,
+        process_backward: bool = True,
+        process_forward: bool = True,
         process_meshes_edges: bool = False,
         process_full_graph: bool = False,
         node_skip_fcn: Callable[[Node], bool] = lambda _: False,
+        node_handler: NodeHandlerBase | None
     ):
         self.nodes = {}
         self._queue_nodes = {}
@@ -908,22 +917,32 @@ class GraphWalker:
         self.edges = {}
         self.open_outputs = []
         self.open_inputs = []
-        self.current_depth = 0
+        self._current_depth = 0
         self.min_depth = min_depth
         self.max_depth = max_depth
+        self._enable_process_backward = process_backward
+        self._enable_process_forward = process_forward
         self._enable_process_meshes_edges = process_meshes_edges
         self._enable_process_full_graph = process_full_graph
 
         self._node_skip_fcn = node_skip_fcn
 
-        self._node_handler = NodeHandlerDGM()
+        self._node_handler = node_handler or NodeHandlerDGM()
+
+        growth_disabled = not process_backward and not process_forward
+        if growth_disabled and process_full_graph:
+            raise RuntimeError("GraphWalker got conflicting arguments: "
+                               f"{process_full_graph=}, {process_backward=} and {process_forward=}")
+        if not process_backward and process_meshes_edges:
+            raise RuntimeError("GraphWalker got conflicting arguments: "
+                               f"{process_backward=} and {process_meshes_edges=}")
 
     def process_from_node(
         self,
         node: Node,
         *,
         depth: int | None = 0,
-        process_full_graph: bool | None,
+        process_full_graph: bool | None = None,
         process_initial_node: bool = True,
     ):
         """Main function
@@ -945,9 +964,11 @@ class GraphWalker:
         if process_initial_node and not self._add_node_to_queue(node):
             return
 
-        self._build_queue_nodes_backward_from(node, depth=depth)
+        if self._enable_process_backward:
+            self._build_queue_nodes_backward_from(node, depth=depth)
 
-        self._build_queue_nodes_forward_from(node, depth=depth)
+        if self._enable_process_forward:
+            self._build_queue_nodes_forward_from(node, depth=depth)
 
         while self.has_queue:
             if self._enable_process_full_graph:
