@@ -11,8 +11,8 @@ from ..core.graph import Graph
 from ..core.input import Input
 from ..core.node import Node
 from ..core.output import Output
-from ..tools.logger import INFO1, logger
 from ..tools.graph_walker import GraphWalker
+from ..tools.logger import INFO1, logger
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -213,6 +213,7 @@ class GraphDot:
         max_depth: int | None = None,
         min_size: int | None = None,
         keep_direction: bool = False,
+        process_meshes_edges: bool = False,
         **kwargs,
     ) -> GraphDot:
         node0 = nodes[0]
@@ -233,6 +234,7 @@ class GraphDot:
             max_depth=max_depth,
             min_size=min_size,
             keep_direction=keep_direction,
+            process_meshes_edges=process_meshes_edges,
         )
         return gd
 
