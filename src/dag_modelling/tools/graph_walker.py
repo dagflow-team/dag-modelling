@@ -137,11 +137,12 @@ class GraphWalker:
             else:
                 self._queue_meshes_edges = {}
 
-        logger.log(INFO1, f"Subgraph iteration done. Total collected:")
-        logger.log(INFO1, f"Nodes: {len(self.nodes)}")
-        logger.log(INFO1, f"Edges: {len(self.edges)}")
-        logger.log(INFO1, f"Inputs: {len(self.open_inputs)}")
-        logger.log(INFO1, f"Outputs: {len(self.open_outputs)}")
+        logger.log(
+            INFO2,
+            f"Subgraph iteration done: "
+            f"nodes={len(self.nodes)} edges={len(self.edges)} "
+            f"inputs={len(self.open_inputs)} outputs={len(self.open_outputs)}",
+        )
 
     @property
     def has_queue(self) -> bool:
@@ -216,7 +217,7 @@ class GraphWalker:
         Add nodes to queue.
         Stop if depth is too low.
         """
-        depth-=1
+        depth -= 1
         if self.depth_outside_limits(depth):
             return
         for input in self._node_handler.iter_inputs(node):
@@ -239,7 +240,7 @@ class GraphWalker:
         Add nodes to queue.
         Stop if depth is too high.
         """
-        depth+=1
+        depth += 1
         if self.depth_outside_limits(depth):
             return
         for output in self._node_handler.iter_outputs(node):
