@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable, Generator, Generic, TypeVar, override
 
 from numpy import printoptions, square
 
@@ -817,6 +818,45 @@ def _format_data(data: NDArray | None, part: bool = False) -> str:
     return datastr.replace("\n", "\\l") + "\\l"
 
 
+NodeT = TypeVar("NodeT")
+OutputT = TypeVar("OutputT")
+InputT = TypeVar("InputT")
+
+
+class NodeHandlerBase(Generic[NodeT, OutputT, InputT]):
+    __slots__ = ()
+
+    @abstractmethod
+    def iter_inputs(self, node: NodeT) -> Generator[InputT, None, None]:
+        pass
+
+    @abstractmethod
+    def iter_outputs(self, node: NodeT) -> Generator[OutputT, None, None]:
+        pass
+
+    @abstractmethod
+    def iter_meshes_edges(self, node: NodeT) -> Generator[OutputT, None, None]:
+        pass
+
+
+class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
+    __slots__ = ()
+
+    @override
+    def iter_inputs(self, node: Node) -> Generator[Input, None, None]:
+        yield from node.inputs.iter_all()
+
+    @override
+    def iter_outputs(self, node: Node) -> Generator[Output, None, None]:
+        yield from node.outputs.iter_all()
+
+    @override
+    def iter_meshes_edges(self, node: Node) -> Generator[Output, None, None]:
+        for output in node.outputs.iter_all():
+            yield from output.dd.axes_edges
+            yield from output.dd.axes_edges
+
+
 class GraphWalker:
     __slots__ = (
         "nodes",
@@ -831,6 +871,7 @@ class GraphWalker:
         "_enable_process_meshes_edges",
         "_enable_process_full_graph",
         "_node_skip_fcn",
+        "_node_handler",
     )
 
     nodes: dict[Node, int]
@@ -849,6 +890,8 @@ class GraphWalker:
     _enable_process_full_graph: bool
 
     _node_skip_fcn: Callable[[Node], bool]
+
+    _node_handler: NodeHandlerBase
 
     def __init__(
         self,
@@ -872,6 +915,8 @@ class GraphWalker:
         self._enable_process_full_graph = process_full_graph
 
         self._node_skip_fcn = node_skip_fcn
+
+        self._node_handler = NodeHandlerDGM()
 
     def process_from_node(
         self,
@@ -991,7 +1036,7 @@ class GraphWalker:
         self.current_depth -= 1
         if self._depth_outside_limits():
             return
-        for input in node.inputs.iter_all():
+        for input in self._node_handler.iter_inputs(node):
             try:
                 parent_node = input.parent_node
             except AttributeError:
@@ -1013,7 +1058,7 @@ class GraphWalker:
         self.current_depth += 1
         if self._depth_outside_limits():
             return
-        for output in node.outputs.iter_all():
+        for output in self._node_handler.iter_outputs(node):
             if output.child_inputs:
                 for child_input in output.child_inputs:
                     child_node = child_input.node
@@ -1029,10 +1074,7 @@ class GraphWalker:
             self.current_depth -= 1
             if self._depth_outside_limits():
                 continue
-            for output in node.outputs.iter_all():
-                for edge in output.dd.axes_edges:
-                    self._add_node_to_queue(edge.node)
-                for mesh in output.dd.axes_edges:
-                    self._add_node_to_queue(mesh.node)
+            for output in self._node_handler.iter_meshes_edges(node):
+                self._add_node_to_queue(output.node)
 
         self._queue_meshes_edges = {}
