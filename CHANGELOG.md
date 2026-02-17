@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.14.5] - 2026-02-??
+
+- feature: add dynamin versioning.
+
 ## [0.14.4] - 2026-02-06
 
-- feat: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate plotting matrices.
+- feature: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate plotting matrices.
 - chore: node labels cleaning.
 
 ## [0.14.3] - 2025-10-17
