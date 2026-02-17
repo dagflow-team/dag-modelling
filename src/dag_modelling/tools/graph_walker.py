@@ -6,6 +6,7 @@ from typing import Callable, Generator, Generic, TypeVar, override
 from ..core.input import Input
 from ..core.node import Node
 from ..core.output import Output
+from ..tools.logger import DEBUG, INFO1, INFO2, logger
 
 NodeT = TypeVar("NodeT")
 OutputT = TypeVar("OutputT")
@@ -20,7 +21,6 @@ class GraphWalker:
         "edges",
         "open_outputs",
         "open_inputs",
-        "_current_depth",
         "min_depth",
         "max_depth",
         "_enable_process_backward",
@@ -37,8 +37,6 @@ class GraphWalker:
     edges: dict[Input, tuple[Node, Node]]
     open_outputs: list[Output]
     open_inputs: list[Input]
-
-    _current_depth: int
 
     min_depth: int | None
     max_depth: int | None
@@ -71,7 +69,6 @@ class GraphWalker:
         self.edges = {}
         self.open_outputs = []
         self.open_inputs = []
-        self._current_depth = 0
         self.min_depth = min_depth
         self.max_depth = max_depth
         self._enable_process_backward = process_backward
@@ -99,7 +96,7 @@ class GraphWalker:
         self,
         node: Node,
         *,
-        depth: int | None = 0,
+        depth: int = 0,
         process_full_graph: bool | None = None,
         process_initial_node: bool = True,
     ):
@@ -117,9 +114,7 @@ class GraphWalker:
         if process_full_graph is None:
             process_full_graph = self._enable_process_full_graph
 
-        self.current_depth = depth
-        depth = self.current_depth
-        if process_initial_node and not self._add_node_to_queue(node):
+        if process_initial_node and not self._add_node_to_queue(node, depth=depth):
             return
 
         if self._enable_process_backward:
@@ -142,23 +137,15 @@ class GraphWalker:
             else:
                 self._queue_meshes_edges = {}
 
-        # print(f"Nodes: {len(self.nodes)}")
-        # print(f"Edges: {len(self.edges)}")
-        # print(f"Inputs: {len(self.open_inputs)}")
-        # print(f"Outputs: {len(self.open_outputs)}")
+        logger.log(INFO1, f"Subgraph iteration done. Total collected:")
+        logger.log(INFO1, f"Nodes: {len(self.nodes)}")
+        logger.log(INFO1, f"Edges: {len(self.edges)}")
+        logger.log(INFO1, f"Inputs: {len(self.open_inputs)}")
+        logger.log(INFO1, f"Outputs: {len(self.open_outputs)}")
 
     @property
     def has_queue(self) -> bool:
         return bool(self._queue_nodes or self._queue_meshes_edges)
-
-    @property
-    def current_depth(self) -> int:
-        return self._current_depth
-
-    @current_depth.setter
-    def current_depth(self, value: int | None):
-        if value is not None:
-            self._current_depth = value
 
     def _push_queue_to_storage(self):
         self.nodes.update(self._queue_nodes)
@@ -176,51 +163,61 @@ class GraphWalker:
         queue = self._queue_nodes.copy()
         self._push_queue_to_storage()
 
-        for node, self.current_depth in queue.items():
+        for node, depth in queue.items():
             self.process_from_node(
                 node,
-                depth=self.current_depth,
+                depth=depth,
                 process_full_graph=False,
                 process_initial_node=False,
             )
         return queue
 
-    def _depth_outside_limits(self) -> bool:
-        if self.min_depth is not None and self.current_depth < self.min_depth:
+    def depth_outside_limits(self, depth: int) -> bool:
+        if self.min_depth is not None and depth < self.min_depth:
+            logger.log(
+                DEBUG, f"  depth {depth} outside limits [{self.min_depth}, {self.max_depth}]"
+            )
             return True
 
-        if self.max_depth is not None and self.current_depth > self.max_depth:
+        if self.max_depth is not None and depth > self.max_depth:
+            logger.log(
+                DEBUG, f"  depth {depth} outside limits [{self.min_depth}, {self.max_depth}]"
+            )
             return True
 
         return False
 
     def _node_already_added(self, node: Node) -> bool:
-        return node in self._queue_nodes or node in self.nodes
+        if node in self._queue_nodes or node in self.nodes:
+            logger.log(DEBUG, "  node already added")
+            return True
 
-    def _may_not_add_node(self, node: Node) -> bool:
-        # print(f"? depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
+        return False
+
+    def _may_not_add_node(self, node: Node, depth: int) -> bool:
+        logger.log(INFO2, f"? d: {depth: 3d} {self._node_handler.get_string(node)}")
         return (
-            self._depth_outside_limits()
+            self.depth_outside_limits(depth)
             or self._node_already_added(node)
             or self._node_skip_fcn(node)
         )
 
-    def _add_node_to_queue(self, node: Node) -> bool:
-        if self._depth_outside_limits() or self._node_already_added(node):
+    def _add_node_to_queue(self, node: Node, *, depth: int) -> bool:
+        if self.depth_outside_limits(depth) or self._node_already_added(node):
             return False
 
-        self._queue_nodes[node] = self._current_depth
+        self._queue_nodes[node] = depth
+        logger.log(INFO2, f"+ d: {depth: 3d} {self._node_handler.get_string(node)}")
 
         return True
 
-    def _build_queue_nodes_backward_from(self, node: Node, depth: int | None = None):
+    def _build_queue_nodes_backward_from(self, node: Node, *, depth: int):
         """Go strictly backward from the node.
         Add nodes to queue.
         Stop if depth is too low.
         """
-        self.current_depth = depth
-        self.current_depth -= 1
-        if self._depth_outside_limits():
+        depth-=1
+        if self.depth_outside_limits(depth):
             return
         for input in self._node_handler.iter_inputs(node):
             try:
@@ -231,44 +228,43 @@ class GraphWalker:
 
             if not input in self.edges:
                 self.edges[input] = (parent_node, node)
-            if not self._add_node_to_queue(parent_node):
+            logger.log(INFO2, f"b d: {depth: 3d} {self._node_handler.get_string(parent_node)}")
+            if not self._add_node_to_queue(parent_node, depth=depth):
+                logger.log(DEBUG, "  skip")
                 continue
-            # print(f"b depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
-            self._build_queue_nodes_backward_from(parent_node)
+            self._build_queue_nodes_backward_from(parent_node, depth=depth)
 
-    def _build_queue_nodes_forward_from(self, node: Node, *, depth: int | None = None):
+    def _build_queue_nodes_forward_from(self, node: Node, *, depth: int):
         """Go strictly forward from the node.
         Add nodes to queue.
         Stop if depth is too high.
         """
-        self.current_depth = depth
-        self.current_depth += 1
-        if self._depth_outside_limits():
+        depth+=1
+        if self.depth_outside_limits(depth):
             return
         for output in self._node_handler.iter_outputs(node):
             if output.child_inputs:
                 for child_input in output.child_inputs:
                     child_node = child_input.node
-                    if not self._add_node_to_queue(child_node):
+                    logger.log(
+                        INFO2, f"f d: {depth: 3d} {self._node_handler.get_string(child_node)}"
+                    )
+                    if not self._add_node_to_queue(child_node, depth=depth):
+                        logger.log(DEBUG, "  skip")
                         continue
-                    # print(
-                    #     f"f depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}"
-                    # )
-                    self._build_queue_nodes_forward_from(child_node)
+                    self._build_queue_nodes_forward_from(child_node, depth=depth)
             else:
                 self.open_outputs.append(output)
 
     def _process_queue_meshes_edges(self):
         """Add nodes of meshes and edges to the queue, if they are not already present."""
-        if self._depth_outside_limits():
-            return
-        for node, self._current_depth in self._queue_meshes_edges.items():
-            self.current_depth -= 1
-            if self._depth_outside_limits():
+        for node, depth in self._queue_meshes_edges.items():
+            depth -= 1
+            if self.depth_outside_limits(depth):
                 continue
             for output in self._node_handler.iter_meshes_edges(node):
-                self._add_node_to_queue(output.node)
-                # print(f"depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
+                self._add_node_to_queue(output.node, depth=depth)
+                logger.log(INFO2, f"e d: {depth: 3d} {self._node_handler.get_string(node)}")
 
         self._queue_meshes_edges = {}
 
@@ -314,6 +310,8 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
     def get_string(self, node: Node) -> str:
         if (path := node.labels.path) is not None:
             return f"path:  {path}"
-        elif (name := node.labels) is not None:
+        elif (text := node.labels.text) is not None:
+            return f"text: {text}"
+        elif (name := node.labels.name) is not None:
             return f"label: {name}"
         return f"node:  {node!r}"
