@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from typing import Callable, Generator, Generic, TypeVar, override
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
 
 from ..core.input import Input
 from ..core.node import Node
@@ -14,41 +14,63 @@ OutputT = TypeVar("OutputT")
 InputT = TypeVar("InputT")
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(slots=True, kw_only=True, eq=False)
 class GraphWalker:
+    """Meta class for walking graph.
 
-    nodes: dict[Node, int]
-    _queue_nodes: dict[Node, int]
-    _queue_meshes_edges: dict[Node, int]
-    edges: dict[Input, tuple[Node, Node]]
-    open_outputs: list[Output]
-    open_inputs: list[Input]
+        Parameters
+        ----------
+        min_depth : int | None
+            Depth of graph walking in backward direction.
+        max_depth : int | None
+            Depth of graph walking in forward direction.
+        enable_process_forward : bool
+            Enable to process nodes in forward direction.
+        enable_process_backward : bool
+            Enable to process nodes in backward direction.
+        enable_process_meshes_edges : bool
+            Enable to process meshes and edges in process of walking.
+        enable_process_full_graph : bool
+            Enable to process full graph.
+        node_skip_fcn : Callable[[Noe], bool]
+            Skip function.
+        node_handler : NodeHandlerBase | None
+            Handler of nodes.
+    """
 
-    min_depth: int | None
+    min_depth: int | None = field(metadata={"docs": "left graph"})
     max_depth: int | None
 
-    _enable_process_forward: bool
-    _enable_process_backward: bool
-    _enable_process_meshes_edges: bool
-    _enable_process_full_graph: bool
+    nodes: dict[Node, int] = field(init=False, default_factory=dict)
+    _queue_nodes: dict[Node, int] = field(init=False, default_factory=dict)
+    _queue_meshes_edges: dict[Node, int] = field(init=False, default_factory=dict)
+    edges: dict[Input, tuple[Node, Node]] = field(init=False, default_factory=dict)
+    open_outputs: list[Output] = field(init=False, default_factory=list)
+    open_inputs: list[Input] = field(init=False, default_factory=list)
 
-    _node_skip_fcn: Callable[[Node], bool]
+    enable_process_forward: bool = True
+    enable_process_backward: bool = True
+    enable_process_meshes_edges: bool = False
+    enable_process_full_graph: bool = False
 
-    _node_handler: NodeHandlerBase
+    node_skip_fcn: Callable[[Node], bool] = lambda _: False
 
-    def __post_init__(self):
-        self._node_handler = self._node_handler or NodeHandlerDGM()
+    _node_handler: NodeHandlerBase = field(init=False)
+    node_handler: InitVar[NodeHandlerBase | None] = None
 
-        growth_disabled = not self._enable_process_backward and not self._enable_process_forward
-        if growth_disabled and self._enable_process_full_graph:
+    def __post_init__(self, node_handler):
+        self._node_handler = node_handler or NodeHandlerDGM()
+
+        growth_disabled = not self.enable_process_backward and not self.enable_process_forward
+        if growth_disabled and self.enable_process_full_graph:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
-                f"{self._enable_process_full_graph=}, {self._enable_process_backward=} and {self._enable_process_forward=}"
+                f"{self.enable_process_full_graph=}, {self.enable_process_backward=} and {self.enable_process_forward=}"
             )
-        if not self._enable_process_backward and self._enable_process_meshes_edges:
+        if not self.enable_process_backward and self.enable_process_meshes_edges:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
-                f"{self._enable_process_backward=} and {self._enable_process_meshes_edges=}"
+                f"{self.enable_process_backward=} and {self.enable_process_meshes_edges=}"
             )
 
     def process_from_node(
@@ -71,27 +93,27 @@ class GraphWalker:
             d. Repeat as long as new nodes are added to the queue.
         """
         if process_full_graph is None:
-            process_full_graph = self._enable_process_full_graph
+            process_full_graph = self.enable_process_full_graph
 
         if process_initial_node and not self._add_node_to_queue(node, depth=depth):
             return
 
-        if self._enable_process_backward:
+        if self.enable_process_backward:
             self._build_queue_nodes_backward_from(node, depth=depth)
 
-        if self._enable_process_forward:
+        if self.enable_process_forward:
             self._build_queue_nodes_forward_from(node, depth=depth)
 
         iteration = 0
         while self.has_queue:
             iteration += 1
 
-            if self._enable_process_full_graph:
+            if self.enable_process_full_graph:
                 self._process_nodes_from_queue()
             else:
                 self._push_queue_to_storage()
 
-            if self._enable_process_meshes_edges:
+            if self.enable_process_meshes_edges:
                 self._process_queue_meshes_edges()
             else:
                 self._queue_meshes_edges = {}
@@ -159,7 +181,7 @@ class GraphWalker:
         return (
             self.depth_outside_limits(depth)
             or self._node_already_added(node)
-            or self._node_skip_fcn(node)
+            or self.node_skip_fcn(node)
         )
 
     def _add_node_to_queue(self, node: Node, *, depth: int) -> bool:
