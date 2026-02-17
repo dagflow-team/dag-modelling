@@ -812,6 +812,10 @@ class NodeHandlerBase(Generic[NodeT, OutputT, InputT]):
     def iter_meshes_edges(self, node: NodeT) -> Generator[OutputT, None, None]:
         pass
 
+    @abstractmethod
+    def get_string(self, node: NodeT) -> str:
+        pass
+
 
 class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
     __slots__ = ()
@@ -829,6 +833,14 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
         for output in node.outputs.iter_all():
             yield from output.dd.axes_edges
             yield from output.dd.axes_edges
+
+    @override
+    def get_string(self, node: Node) -> str:
+        if (path := node.labels.path) is not None:
+            return f"path:  {path}"
+        elif (name := node.labels) is not None:
+            return f"label: {name}"
+        return f"node:  {node!r}"
 
 
 class GraphWalker:
@@ -882,7 +894,7 @@ class GraphWalker:
         process_meshes_edges: bool = False,
         process_full_graph: bool = False,
         node_skip_fcn: Callable[[Node], bool] = lambda _: False,
-        node_handler: NodeHandlerBase | None
+        node_handler: NodeHandlerBase | None = None,
     ):
         self.nodes = {}
         self._queue_nodes = {}
@@ -904,11 +916,15 @@ class GraphWalker:
 
         growth_disabled = not process_backward and not process_forward
         if growth_disabled and process_full_graph:
-            raise RuntimeError("GraphWalker got conflicting arguments: "
-                               f"{process_full_graph=}, {process_backward=} and {process_forward=}")
+            raise RuntimeError(
+                "GraphWalker got conflicting arguments: "
+                f"{process_full_graph=}, {process_backward=} and {process_forward=}"
+            )
         if not process_backward and process_meshes_edges:
-            raise RuntimeError("GraphWalker got conflicting arguments: "
-                               f"{process_backward=} and {process_meshes_edges=}")
+            raise RuntimeError(
+                "GraphWalker got conflicting arguments: "
+                f"{process_backward=} and {process_meshes_edges=}"
+            )
 
     def process_from_node(
         self,
@@ -943,7 +959,10 @@ class GraphWalker:
         if self._enable_process_forward:
             self._build_queue_nodes_forward_from(node, depth=depth)
 
+        iteration = 0
         while self.has_queue:
+            iteration += 1
+
             if self._enable_process_full_graph:
                 self._process_nodes_from_queue()
             else:
@@ -953,6 +972,11 @@ class GraphWalker:
                 self._process_queue_meshes_edges()
             else:
                 self._queue_meshes_edges = {}
+
+        # print(f"Nodes: {len(self.nodes)}")
+        # print(f"Edges: {len(self.edges)}")
+        # print(f"Inputs: {len(self.open_inputs)}")
+        # print(f"Outputs: {len(self.open_outputs)}")
 
     @property
     def has_queue(self) -> bool:
@@ -984,8 +1008,6 @@ class GraphWalker:
         self._push_queue_to_storage()
 
         for node, self.current_depth in queue.items():
-            if self._may_not_add_node(node):
-                continue
             self.process_from_node(
                 node,
                 depth=self.current_depth,
@@ -1007,6 +1029,7 @@ class GraphWalker:
         return node in self._queue_nodes or node in self.nodes
 
     def _may_not_add_node(self, node: Node) -> bool:
+        # print(f"? depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
         return (
             self._depth_outside_limits()
             or self._node_already_added(node)
@@ -1034,13 +1057,14 @@ class GraphWalker:
             try:
                 parent_node = input.parent_node
             except AttributeError:
-                self.open_inputs[input]
+                self.open_inputs.append(input)
                 continue
 
             if not input in self.edges:
-                self.edges[input, (parent_node, node)]  # pyright: ignore [reportArgumentType]
+                self.edges[input] = (parent_node, node)
             if not self._add_node_to_queue(parent_node):
                 continue
+            # print(f"b depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
             self._build_queue_nodes_backward_from(parent_node)
 
     def _build_queue_nodes_forward_from(self, node: Node, *, depth: int | None = None):
@@ -1058,17 +1082,23 @@ class GraphWalker:
                     child_node = child_input.node
                     if not self._add_node_to_queue(child_node):
                         continue
+                    # print(
+                    #     f"f depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}"
+                    # )
                     self._build_queue_nodes_forward_from(child_node)
             else:
-                self.open_outputs[output]
+                self.open_outputs.append(output)
 
     def _process_queue_meshes_edges(self):
         """Add nodes of meshes and edges to the queue, if they are not already present."""
+        if self._depth_outside_limits():
+            return
         for node, self._current_depth in self._queue_meshes_edges.items():
             self.current_depth -= 1
             if self._depth_outside_limits():
                 continue
             for output in self._node_handler.iter_meshes_edges(node):
                 self._add_node_to_queue(output.node)
+                # print(f"depth: {self._current_depth: 3d} {self._node_handler.get_string(node)}")
 
         self._queue_meshes_edges = {}
