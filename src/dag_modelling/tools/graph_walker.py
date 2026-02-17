@@ -2,34 +2,20 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from typing import Callable, Generator, Generic, TypeVar, override
+from dataclasses import dataclass
 
 from ..core.input import Input
 from ..core.node import Node
 from ..core.output import Output
-from ..tools.logger import DEBUG, INFO1, INFO2, logger
+from ..tools.logger import DEBUG, INFO2, logger
 
 NodeT = TypeVar("NodeT")
 OutputT = TypeVar("OutputT")
 InputT = TypeVar("InputT")
 
 
+@dataclass(slots=True, kw_only=True)
 class GraphWalker:
-    __slots__ = (
-        "nodes",
-        "_queue_nodes",
-        "_queue_meshes_edges",
-        "edges",
-        "open_outputs",
-        "open_inputs",
-        "min_depth",
-        "max_depth",
-        "_enable_process_backward",
-        "_enable_process_forward",
-        "_enable_process_meshes_edges",
-        "_enable_process_full_graph",
-        "_node_skip_fcn",
-        "_node_handler",
-    )
 
     nodes: dict[Node, int]
     _queue_nodes: dict[Node, int]
@@ -41,7 +27,6 @@ class GraphWalker:
     min_depth: int | None
     max_depth: int | None
 
-    _enable_process_backward: bool
     _enable_process_forward: bool
     _enable_process_backward: bool
     _enable_process_meshes_edges: bool
@@ -51,45 +36,19 @@ class GraphWalker:
 
     _node_handler: NodeHandlerBase
 
-    def __init__(
-        self,
-        *,
-        min_depth: int | None,
-        max_depth: int | None,
-        process_backward: bool = True,
-        process_forward: bool = True,
-        process_meshes_edges: bool = False,
-        process_full_graph: bool = False,
-        node_skip_fcn: Callable[[Node], bool] = lambda _: False,
-        node_handler: NodeHandlerBase | None = None,
-    ):
-        self.nodes = {}
-        self._queue_nodes = {}
-        self._queue_meshes_edges = {}
-        self.edges = {}
-        self.open_outputs = []
-        self.open_inputs = []
-        self.min_depth = min_depth
-        self.max_depth = max_depth
-        self._enable_process_backward = process_backward
-        self._enable_process_forward = process_forward
-        self._enable_process_meshes_edges = process_meshes_edges
-        self._enable_process_full_graph = process_full_graph
+    def __post_init__(self):
+        self._node_handler = self._node_handler or NodeHandlerDGM()
 
-        self._node_skip_fcn = node_skip_fcn
-
-        self._node_handler = node_handler or NodeHandlerDGM()
-
-        growth_disabled = not process_backward and not process_forward
-        if growth_disabled and process_full_graph:
+        growth_disabled = not self._enable_process_backward and not self._enable_process_forward
+        if growth_disabled and self._enable_process_full_graph:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
-                f"{process_full_graph=}, {process_backward=} and {process_forward=}"
+                f"{self._enable_process_full_graph=}, {self._enable_process_backward=} and {self._enable_process_forward=}"
             )
-        if not process_backward and process_meshes_edges:
+        if not self._enable_process_backward and self._enable_process_meshes_edges:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
-                f"{process_backward=} and {process_meshes_edges=}"
+                f"{self._enable_process_backward=} and {self._enable_process_meshes_edges=}"
             )
 
     def process_from_node(
