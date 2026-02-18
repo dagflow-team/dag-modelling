@@ -21,9 +21,9 @@ class GraphWalker:
         Parameters
         ----------
         min_depth : int | None
-            Depth of graph walking in backward direction.
+            Depth of graph walking in backward direction, parameters is less or equal to 0.
         max_depth : int | None
-            Depth of graph walking in forward direction.
+            Depth of graph walking in forward direction, parameters is larger or equal to 0.
         enable_process_forward : bool
             Enable to process nodes in forward direction.
         enable_process_backward : bool
