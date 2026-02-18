@@ -14,32 +14,33 @@ OutputT = TypeVar("OutputT")
 InputT = TypeVar("InputT")
 
 
+
 @dataclass(slots=True, kw_only=True, eq=False)
 class GraphWalker:
     """Meta class for walking graph.
 
         Parameters
         ----------
-        min_depth : int | None
-            Depth of graph walking in backward direction, parameters is less or equal to 0.
-        max_depth : int | None
-            Depth of graph walking in forward direction, parameters is larger or equal to 0.
-        enable_process_forward : bool
+        min_depth : int | None, default=None
+            Depth of graph walking in backward direction, parameters is less or equal than 0.
+        max_depth : int | None, default=None
+            Depth of graph walking in forward direction, parameters is larger or equal than 0.
+        enable_process_forward : bool, default=True
             Enable to process nodes in forward direction.
-        enable_process_backward : bool
+        enable_process_backward : bool, default=True
             Enable to process nodes in backward direction.
-        enable_process_meshes_edges : bool
+        enable_process_meshes_edges : bool, default=False
             Enable to process meshes and edges in process of walking.
-        enable_process_full_graph : bool
+        enable_process_full_graph : bool, default=False
             Enable to process full graph.
-        node_skip_fcn : Callable[[Node], bool]
+        node_skip_fcn : Callable[[Node], bool], default=lambda _: False
             Skip function.
-        node_handler : NodeHandlerBase | None
-            Handler of nodes.
+        node_handler : NodeHandlerBase | None, defalut=NodeHandlerDGM
+            Handler for nodes.
     """
 
-    min_depth: int | None
-    max_depth: int | None
+    min_depth: int | None = None
+    max_depth: int | None = None
 
     _nodes: dict[Node, int] = field(init=False, default_factory=dict)
     _queue_nodes: dict[Node, int] = field(init=False, default_factory=dict)
