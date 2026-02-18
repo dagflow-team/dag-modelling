@@ -66,9 +66,12 @@ class NodeProfiler(TimerProfiler):
             else:
                 nodes_rejected_types.add(node_type)
 
-        print(f"Node types to accept ({len(type_names_to_accept)}): {list(sorted(type_names_to_accept))}")
-        print(f"Accepted node types ({len(nodes_accepted_types)}): {list(sorted(nodes_accepted_types))}")
-        print(f"Rejected node types ({len(nodes_rejected_types)}): {list(sorted(nodes_rejected_types))}")
+        nodes_missing_types = type_names_to_accept.difference(nodes_accepted_types)
+
+        print(f"Node types to accept ({len(type_names_to_accept)}): {', '.join(sorted(type_names_to_accept))}")
+        print(f"Accepted node types ({len(nodes_accepted_types)}): {', '.join(sorted(nodes_accepted_types))}")
+        print(f"Rejected node types ({len(nodes_rejected_types)}): {', '.join(sorted(nodes_rejected_types))}")
+        print(f"Node types not seen ({len(nodes_missing_types)}): {', '.join(sorted(nodes_missing_types))}")
 
         return nodes_accepted
 
@@ -124,6 +127,7 @@ class NodeProfiler(TimerProfiler):
             f"\nNode Profiling {hex(id(self))}, "
             f"n_runs for each node: {self._n_runs}\n"
             f"nodes in subgraph: {len(self._target_nodes)}\n"
+            f"sources: {len(self._sources)}, sinks: {len(self._sinks)},\n"
             f"sort by: `{sort_by or 'default sorting'}`, "
             f"group by: `{group_by or 'no grouping'}`"
         )
