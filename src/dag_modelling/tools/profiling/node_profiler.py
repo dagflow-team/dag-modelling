@@ -53,14 +53,24 @@ class NodeProfiler(TimerProfiler):
         self._allowed_groupby = _ALLOWED_GROUPBY
 
     def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
-        def condition(node: Node):
-            for t in node_types:
-                if type(node).__name__ == t:
-                    return True
-                if isinstance(t, type) and isinstance(node, t):
-                    return True
+        type_names_to_accept = set(f if isinstance(f, str) else type(f).__name__ for f in node_types)
 
-        return list(filter(condition, nodes))
+        nodes_accepted = []
+        nodes_rejected_types = set()
+        nodes_accepted_types = set()
+
+        for node in nodes:
+            if (node_type:=type(node).__name__) in type_names_to_accept:
+                nodes_accepted.append(node)
+                nodes_accepted_types.add(node_type)
+            else:
+                nodes_rejected_types.add(node_type)
+
+        print(f"Node types to accept ({len(type_names_to_accept)}): {list(sorted(type_names_to_accept))}")
+        print(f"Accepted node types ({len(nodes_accepted_types)}): {list(sorted(nodes_accepted_types))}")
+        print(f"Rejected node types ({len(nodes_rejected_types)}): {list(sorted(nodes_rejected_types))}")
+
+        return nodes_accepted
 
     @classmethod
     def estimate_node(cls, node: Node, n_runs: int = 10_000):
