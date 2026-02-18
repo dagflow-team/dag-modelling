@@ -38,10 +38,10 @@ class GraphWalker:
             Handler of nodes.
     """
 
-    min_depth: int | None = field(metadata={"docs": "left graph"})
+    min_depth: int | None
     max_depth: int | None
 
-    nodes: dict[Node, int] = field(init=False, default_factory=dict)
+    _nodes: dict[Node, int] = field(init=False, default_factory=dict)
     _queue_nodes: dict[Node, int] = field(init=False, default_factory=dict)
     _queue_meshes_edges: dict[Node, int] = field(init=False, default_factory=dict)
     edges: dict[Input, tuple[Node, Node]] = field(init=False, default_factory=dict)
@@ -72,6 +72,10 @@ class GraphWalker:
                 "GraphWalker got conflicting arguments: "
                 f"{self.enable_process_backward=} and {self.enable_process_meshes_edges=}"
             )
+
+    @property
+    def nodes(self) -> dict[Node, int]:
+        return self._nodes
 
     def process_from_node(
         self,
