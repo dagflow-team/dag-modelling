@@ -266,7 +266,7 @@ class GraphDot:
         graph_walker = GraphWalker(
             min_depth=min_depth,
             max_depth=max_depth,
-            process_full_graph=not keep_direction,
+            enable_process_full_graph=not keep_direction,
             **gw_kwargs,
         )
 

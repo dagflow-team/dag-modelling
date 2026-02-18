@@ -32,7 +32,7 @@ class GraphWalker:
             Enable to process meshes and edges in process of walking.
         enable_process_full_graph : bool
             Enable to process full graph.
-        node_skip_fcn : Callable[[Noe], bool]
+        node_skip_fcn : Callable[[Node], bool]
             Skip function.
         node_handler : NodeHandlerBase | None
             Handler of nodes.
@@ -272,7 +272,6 @@ class NodeHandlerBase(Generic[NodeT, OutputT, InputT]):
 
 
 class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
-    __slots__ = ()
 
     @override
     def iter_inputs(self, node: Node) -> Generator[Input, None, None]:
