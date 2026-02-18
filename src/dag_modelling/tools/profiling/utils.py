@@ -48,8 +48,10 @@ def gather_related_nodes(sources: Sequence[Node], sinks: Sequence[Node]) -> set[
             for ch in __child_nodes_gen(cur_node):
                 if ch in sinks:
                     related_nodes.add(ch)
+                    related_nodes.update(stack)
+                    related_nodes.add(cur_node)
                 # If `_sinks` contains child node it would be already in `related_nodes`
-                if ch in related_nodes:
+                elif ch in related_nodes:
                     related_nodes.update(stack)
                     related_nodes.add(cur_node)
                 elif ch not in visited:
@@ -57,7 +59,7 @@ def gather_related_nodes(sources: Sequence[Node], sinks: Sequence[Node]) -> set[
                     cur_node = ch
                     last_in_path = False
                     break
-            # No unvisited childs found (`for` loop did not encounter a `break`)
+            # No unvisited children found (`for` loop did not encounter a `break`)
             else:
                 visited.add(cur_node)
             if len(stack) == 0:
@@ -74,8 +76,8 @@ def reveal_source_sink(nodes: Sequence[Node]) -> tuple[list[Node], list[Node]]:
     sinks = []
     for node in nodes:
         have_parents = any(n in nodes for n in __parent_nodes_gen(node))
-        have_childs = any(n in nodes for n in __child_nodes_gen(node))
-        if have_parents and have_childs:
+        have_children = any(n in nodes for n in __child_nodes_gen(node))
+        if have_parents and have_children:
             continue
         elif have_parents:
             sinks.append(node)
