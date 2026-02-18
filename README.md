@@ -1,6 +1,6 @@
 # Summary
 
-[![python](https://img.shields.io/badge/python-3.11-purple.svg)](https://www.python.org/)
+[![python](https://img.shields.io/badge/python-3.12-purple.svg)](https://www.python.org/)
 [![pipeline](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/pipeline.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/commits/master)
 [![coverage report](https://git.jinr.ru/dagflow-team/dag-modelling/badges/master/coverage.svg)](https://git.jinr.ru/dagflow-team/dag-modelling/-/commits/master)
 [![github](https://img.shields.io/badge/github-public-blue?logo=github)](https://github.com/dagflow-team/dag-modelling)
