@@ -41,9 +41,9 @@ def test_graph_walker(min_depth, max_depth, n_nodes, enable_process_full_graph, 
 
     for node, depth in graph_walker.nodes.items():
         n_nodes -= 1
-        if min_depth and depth < min_depth:
+        if min_depth is not None and depth < min_depth:
             raise RuntimeError("Too deep node")
-        if max_depth and depth > max_depth:
+        if max_depth is not None and depth > max_depth:
             raise RuntimeError("Too high node")
 
     assert n_nodes == 0, "Unnexpected number of visited nodes"
