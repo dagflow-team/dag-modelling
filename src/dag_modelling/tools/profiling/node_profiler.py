@@ -86,6 +86,7 @@ class NodeProfiler(TimerProfiler):
 
         Return the current `NodeProfiler` instance.
         """
+        self._start_perf_counter()
         self._estimations_table = DataFrame(
             {
                 "node": (str(node) for node in self._target_nodes),
@@ -94,6 +95,7 @@ class NodeProfiler(TimerProfiler):
                 "time": (self.estimate_node(node, self._n_runs) for node in self._target_nodes),
             }
         )
+        self._stop_perf_counter()
         return self
 
     def make_report(

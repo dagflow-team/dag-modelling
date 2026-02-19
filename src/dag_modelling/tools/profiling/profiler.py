@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
+from time import perf_counter
 from typing import TYPE_CHECKING
 
 from pandas import DataFrame, Index
 from tabulate import tabulate
 
-from .utils import reveal_source_sink
 from ..graph_walker import get_subgraph_nodes_between
+from .utils import reveal_source_sink
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -31,6 +32,7 @@ class Profiler(metaclass=ABCMeta):
         "_primary_col",
         "_aggregate_aliases",
         "_column_aliases",
+        "_execution_time_s",
     )
     _target_nodes: Sequence[Node]
     _sources: Sequence[Node]
@@ -41,6 +43,7 @@ class Profiler(metaclass=ABCMeta):
     _primary_col: str
     _column_aliases: dict[str | Callable, str]
     _aggregate_aliases: dict[str, str | Callable]
+    _execution_time_s: float
 
     def __init__(
         self,
@@ -60,6 +63,8 @@ class Profiler(metaclass=ABCMeta):
                 "or provide `sources` and `sinks` arguments "
                 "to automatically find the target nodes"
             )
+
+        self._execution_time_s = 0.0
 
     def _gather_related_nodes(self) -> list[Node]:
         """Find all nodes that lie on all possible paths between
@@ -160,6 +165,16 @@ class Profiler(metaclass=ABCMeta):
                     "You should use one of these: "
                     f"{self.__possible_aggregations()}"
                 )
+
+    def _start_perf_counter(self):
+        self._execution_time_s = perf_counter()
+
+    def _stop_perf_counter(self):
+        self._execution_time_s = perf_counter() - self._execution_time_s
+
+    @property
+    def execution_time_s(self) -> float:
+        return self._execution_time_s
 
     @abstractmethod
     def make_report(

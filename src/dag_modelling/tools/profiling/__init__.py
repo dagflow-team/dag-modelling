@@ -4,7 +4,7 @@ from .fit_simulation_profiling import FitSimulationProfiler
 from .framework_profiler import FrameworkProfiler
 from .memory_profiler import MemoryProfiler
 from .node_profiler import NodeProfiler
-from .utils import gather_related_nodes, reveal_source_sink
+from .utils import reveal_source_sink
 
 __all__ = [
     "NodeProfiler",
@@ -13,7 +13,6 @@ __all__ = [
     "CountCallsProfiler",
     "FitSimulationProfiler",
     "DelayNode",
-    "gather_related_nodes",
     "reveal_source_sink",
 ]
 

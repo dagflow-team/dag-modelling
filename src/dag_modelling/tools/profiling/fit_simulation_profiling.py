@@ -128,6 +128,7 @@ class FitSimulationProfiler(TimerProfiler):
             node.touch()
 
     def estimate_fit(self) -> FitSimulationProfiler:
+        self._start_perf_counter()
         self._touch_model_nodes()
         results = self._timeit_each_run(self._fit_step, n_runs=self.n_runs)
         source_short_names, sink_short_names = self._shorten_sources_sinks()
@@ -139,6 +140,7 @@ class FitSimulationProfiler(TimerProfiler):
                 "time": results,
             }
         )
+        self._stop_perf_counter()
         return self
 
     def _n_calls(self, _s: Series) -> Series:

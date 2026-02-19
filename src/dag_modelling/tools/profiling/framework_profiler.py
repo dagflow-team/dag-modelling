@@ -101,11 +101,13 @@ class FrameworkProfiler(TimerProfiler):
         return results
 
     def estimate_framework_time(self) -> FrameworkProfiler:
+        self._start_perf_counter()
         results = self._estimate_framework_time()
         sources_col, sinks_col = self._shorten_sources_sinks()
         self._estimations_table = DataFrame(
             {"source nodes": sources_col, "sink nodes": sinks_col, "time": results}
         )
+        self._stop_perf_counter()
         return self
 
     def make_report(

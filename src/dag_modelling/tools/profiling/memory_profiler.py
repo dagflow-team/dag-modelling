@@ -98,6 +98,7 @@ class MemoryProfiler(Profiler):
 
         Return current `MemoryProfiler` instance.
         """
+        self._start_perf_counter()
         if touch:
             self._touch_nodes()
 
@@ -114,6 +115,7 @@ class MemoryProfiler(Profiler):
             records["size"].append(sum(sizes))
 
         self._estimations_table = DataFrame(records)
+        self._stop_perf_counter()
         return self
 
     @property
