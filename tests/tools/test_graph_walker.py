@@ -81,7 +81,7 @@ def test_graph_walker(first_node, min_depth, max_depth, n_nodes, enable_process_
         if max_depth is not None and depth > max_depth:
             raise RuntimeError("Too high node")
 
-    assert n_nodes == 0, "Unnexpected number of visited nodes"
+    assert n_nodes == 0, "Unexpected number of visited nodes"
 
 
 @mark.parametrize(

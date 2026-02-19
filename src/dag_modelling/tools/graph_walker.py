@@ -306,6 +306,26 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
         return f"node:  {node!r}"
 
 
+def get_graph_nodes_all(node: Node, *, enable_process_meshes_edges: bool = False) -> list[Node]:
+    """Collect all the graph's nodes starting from "node".
+
+    Parameters
+    ----------
+    node : Node
+        Node to start checking graph from.
+    enable_process_meshes_edges : bool, default=False
+        If enabled, collect also mesh/edge nodes.
+
+    Returns
+    -------
+    list[Node]
+        List of nodes.
+    """
+    walker = GraphWalker(enable_process_meshes_edges=enable_process_meshes_edges)
+    walker.process_from_node(node)
+    return list(walker.nodes)
+
+
 def get_subgraph_nodes_between(
     sources: Sequence[Node], sinks: Sequence[Node], *, enable_process_meshes_edges: bool = False
 ) -> list[Node]:
@@ -322,7 +342,7 @@ def get_subgraph_nodes_between(
         Sequence of source nodes.
     sinks : Sequence[Node]
         Sequence of sink nodes.
-    enable_process_meshes_edges : bool
+    enable_process_meshes_edges : bool, default=False
         If enabled, collect also mesh/edge nodes.
 
     Returns
