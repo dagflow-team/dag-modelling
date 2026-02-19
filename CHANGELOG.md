@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - chore: drastically improve performance of export to graphviz.
 - chore: set minimal Python version to 3.12.
 
-
 ## [0.14.4] - 2026-02-06
 
 - feature: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate plotting matrices.
