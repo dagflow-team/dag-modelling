@@ -15,35 +15,35 @@ def nodes(debug_graph):
     names = "n1", "n2", "n3", "n4"
     with Graph(debug=debug_graph) as graph:
         initials = [Array(name, array, mode="fill") for name in names]
-        s = Sum("sum")
+        s0 = Sum("sum0")
         m = Product("product")
-        s2 = Sum("sum2")
+        s1 = Sum("sum1")
 
-        initials[:-1] >> s
+        initials[:-1] >> s0
         initials[-1] >> m
-        s >> m
+        s0 >> m
 
-        (initials[-1], s) >> s2
+        (initials[-1], s0) >> s1
 
     graph.close()
     nodes = {name: initial for name, initial in zip(names, initials)}
-    nodes.update({"sum": s, "product": m, "sum2": s2})
+    nodes.update({"sum0": s0, "product": m, "sum1": s1})
     return nodes
 
 
 @mark.parametrize(
     "first_node,min_depth,max_depth,n_nodes,enable_process_full_graph",
     [
-        ("sum", 0, 0, 1, True),
-        ("sum", None, None, 6, False),
-        ("sum", None, None, 7, True),
-        ("sum", -1, 1, 6, False),
-        ("sum", -1, 1, 7, True),
-        ("sum2", 0, 0, 1, True),
-        ("sum2", None, None, 6, False),
-        ("sum2", None, None, 7, True),
-        ("sum2", -1, 1, 3, False),
-        ("sum2", -1, 1, 4, True),
+        ("sum0", 0, 0, 1, True),
+        ("sum0", None, None, 6, False),
+        ("sum0", None, None, 7, True),
+        ("sum0", -1, 1, 6, False),
+        ("sum0", -1, 1, 7, True),
+        ("sum1", 0, 0, 1, True),
+        ("sum1", None, None, 6, False),
+        ("sum1", None, None, 7, True),
+        ("sum1", -1, 1, 3, False),
+        ("sum1", -1, 1, 4, True),
     ],
 )
 def test_graph_walker(first_node, min_depth, max_depth, n_nodes, enable_process_full_graph, nodes):
@@ -67,15 +67,15 @@ def test_graph_walker(first_node, min_depth, max_depth, n_nodes, enable_process_
 @mark.parametrize(
     "source_names,sink_names,subgraph_expect",
     [
-        (["n1"], ["product"], {"n1", "sum", "product"}),
-        (["n1", "n2"], ["product"], {"n1", "n2", "sum", "product"}),
-        (["n1", "n3"], ["product"], {"n1", "n3", "sum", "product"}),
-        (["n1", "n3"], ["product", "sum2"], {"n1", "n3", "sum", "product", "sum2"}),
+        (["n1"], ["product"], {"n1", "sum0", "product"}),
+        (["n1", "n2"], ["product"], {"n1", "n2", "sum0", "product"}),
+        (["n1", "n3"], ["product"], {"n1", "n3", "sum0", "product"}),
+        (["n1", "n3"], ["product", "sum1"], {"n1", "n3", "sum0", "product", "sum1"}),
     ],
 )
 def test_subgraphs(source_names, sink_names, subgraph_expect, nodes, output_path: str):
     gname = f"{output_path}/test_subgraphs.pdf"
-    savegraph(nodes["sum"], gname, transform_kwargs={"keep_direction": False})
+    savegraph(nodes["sum0"], gname, transform_kwargs={"keep_direction": False})
     print("Write:", gname)
 
     sources = list(map(nodes.__getitem__, source_names))
