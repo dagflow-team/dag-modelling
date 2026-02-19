@@ -216,7 +216,7 @@ class GraphWalker:
                 self.open_inputs.append(input)
                 continue
 
-            if not input in self.edges:
+            if input not in self.edges:
                 self.edges[input] = (parent_node, node)
             logger.log(INFO2, f"b d: {depth: 3d} {self._node_handler.get_string(parent_node)}")
             if not self._add_node_to_queue(parent_node, depth=depth):
