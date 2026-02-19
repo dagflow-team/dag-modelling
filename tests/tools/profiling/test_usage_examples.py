@@ -88,7 +88,7 @@ def test_full_guide(graph_0, output_path: str):
 
     ## FrameworkProfiler - estimate the overhead of the framework
     # In most cases, you want to measure the overhead for the _entire_ graph.
-    framework_profiler = FrameworkProfiler(nodes, n_runs=10_000, sinks=(sink_node,))
+    framework_profiler = FrameworkProfiler(sources=nodes, n_runs=10_000, sinks=(sink_node,))
 
     framework_profiler.estimate_framework_time()
 

@@ -30,7 +30,7 @@ def test_init_g0(monkeypatch, graph_0):
     sources, sinks = [a2, a3], [l_matrix]
     with raises(ValueError) as excinfo:
         Profiler(sources=sources, sinks=sinks)
-    assert "unreachable" in str(excinfo.value)
+    assert "no subgraph" in str(excinfo.value)
 
     with raises(ValueError) as excinfo:
         Profiler()
@@ -62,4 +62,4 @@ def test_init_g1(monkeypatch, graph_1):
     sources, sinks = [a0, a1], [s2]
     with raises(ValueError) as excinfo:
         Profiler(sources=sources, sinks=sinks)
-    assert "unreachable" in str(excinfo.value)
+    assert "no subgraph" in str(excinfo.value)

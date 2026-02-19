@@ -24,7 +24,7 @@ def test_init(graph_0):
 
     sources, sinks = [a1, a2], [s2]
     target_nodes = [a1, a2, p1, s2]
-    profiling = NodeProfiler(target_nodes, sources=sources, sinks=sinks)
+    profiling = NodeProfiler(sources=sources, sinks=sinks)
 
 
 def test_filter_nodes(graph_0):

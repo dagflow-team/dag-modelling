@@ -53,7 +53,7 @@ class NodeProfiler(TimerProfiler):
         self._allowed_groupby = _ALLOWED_GROUPBY
 
     def _filter_nodes(self, nodes: Sequence[Node], node_types: Sequence[type[Node] | str]):
-        type_names_to_accept = set(f if isinstance(f, str) else type(f).__name__ for f in node_types)
+        type_names_to_accept = set(f if isinstance(f, str) else f.__name__ for f in node_types)
 
         nodes_accepted = []
         nodes_rejected_types = set()

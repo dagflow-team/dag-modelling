@@ -53,9 +53,12 @@ class Profiler(metaclass=ABCMeta):
     ):
         self._sources = sources
         self._sinks = sinks
+
+        if target_nodes and (sources or sinks):
+            raise RuntimeError("Conflicting arguments: target_nodes and sources/sinks")
         if target_nodes:
             self._target_nodes = target_nodes
-        elif sources and sinks:
+        elif sources or sinks:
             self._target_nodes = self._gather_related_nodes()
         else:
             raise ValueError(
@@ -70,7 +73,9 @@ class Profiler(metaclass=ABCMeta):
         """Find all nodes that lie on all possible paths between
         `self._sources` and `self._sinks`"""
         related_nodes = get_subgraph_nodes_between(self._sources, self._sinks)
-        return list(related_nodes)
+        if not related_nodes:
+            raise ValueError("sources and sinks have no subgraph in between.")
+        return related_nodes
 
     def _reveal_source_sink(self) -> None:
         """Find sources and sinks for self._target_nodes."""
