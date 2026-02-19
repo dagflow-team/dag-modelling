@@ -309,9 +309,8 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
 def get_subgraph_nodes(
     sources: Sequence[Node], sinks: Sequence[Node], *, enable_process_meshes_edges: bool = False
 ) -> list[Node]:
-    """
-    Collect a nodes of a subgraph between sets of source nodes and sink nodes.
-    ---
+    """Collect a nodes of a subgraph between sets of source nodes and sink nodes.
+
     Nodes are obtained by finding intersection between all the nodes backward from sinks and nodes
     forward from sources.
 
@@ -323,6 +322,7 @@ def get_subgraph_nodes(
         Sequence of sink nodes.
     enable_process_meshes_edges : bool
         If enabled, collect also mesh/edge nodes.
+
     Returns
     -------
     list[Node]
