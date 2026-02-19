@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from numpy import printoptions, square
 
@@ -97,6 +97,7 @@ class GraphDot:
         enable_mid_node: bool = True,
         enable_common_attrs: bool = True,
         hide_nodes_marked_hidden: bool = True,
+        transform_kwargs: dict[str, Any] = {}
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -158,9 +159,9 @@ class GraphDot:
         if isinstance(graph_or_node, Graph):
             if label and enable_common_attrs:
                 self.set_label(label)
-            self._transform_graph(graph_or_node)
+            self._transform_graph(graph_or_node, **transform_kwargs)
         elif isinstance(graph_or_node, Node):
-            self._transform_from_nodes(graph_or_node)
+            self._transform_from_nodes(graph_or_node, **transform_kwargs)
         elif graph_or_node != None:
             raise RuntimeError("Invalid graph entry point")
 
