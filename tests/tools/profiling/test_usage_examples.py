@@ -6,8 +6,8 @@ from dag_modelling.tools.profiling import (
     FrameworkProfiler,
     MemoryProfiler,
     NodeProfiler,
-    gather_related_nodes,
 )
+from dag_modelling.tools.graph_walker import get_subgraph_nodes_between
 
 
 def test_minimal_example(graph_0, output_path: str):
@@ -47,8 +47,8 @@ def test_full_guide(graph_0, output_path: str):
 
     # If you are going to use the same subgraph for all profiling types
     #  or plan to modify the found set of related nodes,
-    #  you can call `gather_related_nodes` directrly
-    node_subgraph = gather_related_nodes(sources=(nodes[0], nodes[1]), sinks=(sink_node,))
+    #  you can call `get_subgraph_nodes_between` directrly
+    node_subgraph = get_subgraph_nodes_between(sources=(nodes[0], nodes[1]), sinks=(sink_node,))
     #       * do something with `node_subgraph` here *
     _ = NodeProfiler(list(node_subgraph))
 

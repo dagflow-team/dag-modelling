@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from pandas import DataFrame, Index
 from tabulate import tabulate
 
-from .utils import gather_related_nodes, reveal_source_sink
+from .utils import reveal_source_sink
+from ..graph_walker import get_subgraph_nodes_between
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -63,7 +64,7 @@ class Profiler(metaclass=ABCMeta):
     def _gather_related_nodes(self) -> list[Node]:
         """Find all nodes that lie on all possible paths between
         `self._sources` and `self._sinks`"""
-        related_nodes = gather_related_nodes(self._sources, self._sinks)
+        related_nodes = get_subgraph_nodes_between(self._sources, self._sinks)
         return list(related_nodes)
 
     def _reveal_source_sink(self) -> None:
