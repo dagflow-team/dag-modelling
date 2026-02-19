@@ -7,7 +7,7 @@ from dag_modelling.core.node import Node
 from dag_modelling.lib.arithmetic import Product, Sum
 from dag_modelling.lib.common import Array
 from dag_modelling.plot.graphviz import savegraph
-from dag_modelling.tools.graph_walker import GraphWalker, get_subgraph_nodes
+from dag_modelling.tools.graph_walker import GraphWalker, get_subgraph_nodes_between
 
 
 @pytest.fixture
@@ -105,7 +105,7 @@ def test_subgraphs(source_names, sink_names, subgraph_expect, nodes, output_path
 
     sources = list(map(nodes.__getitem__, source_names))
     sinks = list(map(nodes.__getitem__, sink_names))
-    subgraph = get_subgraph_nodes(sources, sinks)
+    subgraph = get_subgraph_nodes_between(sources, sinks)
 
     subgraph_names = set(node.name for node in subgraph)
     assert subgraph_names == subgraph_expect

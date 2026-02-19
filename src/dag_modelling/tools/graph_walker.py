@@ -306,7 +306,7 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
         return f"node:  {node!r}"
 
 
-def get_subgraph_nodes(
+def get_subgraph_nodes_between(
     sources: Sequence[Node], sinks: Sequence[Node], *, enable_process_meshes_edges: bool = False
 ) -> list[Node]:
     """Collect a nodes of a subgraph between sets of source nodes and sink nodes.
