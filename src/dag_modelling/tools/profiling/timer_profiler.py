@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from textwrap import shorten
-from time import perf_counter_ns
+from time import perf_counter_ns, perf_counter
 from typing import TYPE_CHECKING
 
 from numpy import empty, ndarray
@@ -64,7 +64,7 @@ class TimerProfiler(Profiler):
     `FrameworkProfiler` or `FitSimulationProfiler`
     """
 
-    __slots__ = ("_n_runs", "_timer")
+    __slots__ = ("_n_runs",)
     _n_runs: int
 
     def __init__(
@@ -98,9 +98,8 @@ class TimerProfiler(Profiler):
     def _timeit_all_runs(
         cls, stmt: Callable, n_runs: int, setup: Callable | None = None
     ) -> float:
-        """Estimate total time of the statement running multiple times. Use
-        `time.perf_counter_ns` internally to measure time in nanoseconds and
-        then convert it to seconds by dividing the total time by 1 billion.
+        """Estimate total time of the statement running multiple times.
+        From estimated time substract a time to perform a bare loop.
 
         Args:
             stmt (Callable): The function/method whose execution time is measured.
@@ -111,16 +110,23 @@ class TimerProfiler(Profiler):
         Returns:
             float: Execution time in seconds for `n_runs`.
         """
-        timer = perf_counter_ns
-        total_nanoseconds = 0
+        t_0 = perf_counter()
         for _ in range(n_runs):
             if setup is not None:
                 setup()
-            t_0 = timer()
             stmt()
-            t_1 = timer()
-            total_nanoseconds += t_1 - t_0
-        return total_nanoseconds / 1e9
+        total_seconds1 = perf_counter() - t_0
+
+        stmt_base = lambda: None
+        t_0 = perf_counter()
+        for _ in range(n_runs):
+            if setup is not None:
+                setup()
+            stmt_base()
+        total_seconds1_base = perf_counter() - t_0
+        total_seconds1-=total_seconds1_base
+
+        return total_seconds1
 
     @classmethod
     def _timeit_each_run(
@@ -148,7 +154,7 @@ class TimerProfiler(Profiler):
             stmt()
             t_1 = timer()
             nanoseconds[i] = t_1 - t_0
-        return nanoseconds / 1e9
+        return nanoseconds * 1e-9
 
     def _t_percentage(self, _s: Series) -> Series:
         """User-defined aggregate function to calculate the percentage of group

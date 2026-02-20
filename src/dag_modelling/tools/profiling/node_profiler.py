@@ -60,7 +60,7 @@ class NodeProfiler(TimerProfiler):
         nodes_accepted_types = set()
 
         for node in nodes:
-            if (node_type:=type(node).__name__) in type_names_to_accept:
+            if (node_type := type(node).__name__) in type_names_to_accept:
                 nodes_accepted.append(node)
                 nodes_accepted_types.add(node_type)
             else:
@@ -68,10 +68,18 @@ class NodeProfiler(TimerProfiler):
 
         nodes_missing_types = type_names_to_accept.difference(nodes_accepted_types)
 
-        print(f"Node types to accept ({len(type_names_to_accept)}): {', '.join(sorted(type_names_to_accept))}")
-        print(f"Accepted node types ({len(nodes_accepted_types)}): {', '.join(sorted(nodes_accepted_types))}")
-        print(f"Rejected node types ({len(nodes_rejected_types)}): {', '.join(sorted(nodes_rejected_types))}")
-        print(f"Node types not seen ({len(nodes_missing_types)}): {', '.join(sorted(nodes_missing_types))}")
+        print(
+            f"Node types to accept ({len(type_names_to_accept)}): {', '.join(sorted(type_names_to_accept))}"
+        )
+        print(
+            f"Accepted node types ({len(nodes_accepted_types)}): {', '.join(sorted(nodes_accepted_types))}"
+        )
+        print(
+            f"Rejected node types ({len(nodes_rejected_types)}): {', '.join(sorted(nodes_rejected_types))}"
+        )
+        print(
+            f"Node types not seen ({len(nodes_missing_types)}): {', '.join(sorted(nodes_missing_types))}"
+        )
 
         return nodes_accepted
 
@@ -87,14 +95,24 @@ class NodeProfiler(TimerProfiler):
         Return the current `NodeProfiler` instance.
         """
         self._start_perf_counter()
-        self._estimations_table = DataFrame(
-            {
-                "node": (str(node) for node in self._target_nodes),
-                "type": (type(node).__name__ for node in self._target_nodes),
-                "name": (node.name for node in self._target_nodes),
-                "time": (self.estimate_node(node, self._n_runs) for node in self._target_nodes),
-            }
+        columns = (
+            "node",
+            "type",
+            "name",
+            "time",
         )
+        index = range(len(self._target_nodes))
+        self._estimations_table = (df:=DataFrame(
+                columns=columns,
+                index=index
+        ))
+        for i, node in enumerate(self._target_nodes):
+            node_i = str(node)
+            type_i = type(node).__name__
+            name_i = node.name
+            time_i = self.estimate_node(node, self._n_runs)
+            df.iloc[i] = node_i, type_i, name_i, time_i
+
         self._stop_perf_counter()
         return self
 
