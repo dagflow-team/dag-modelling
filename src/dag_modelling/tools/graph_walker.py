@@ -61,7 +61,7 @@ class GraphWalker:
     def __post_init__(self, node_handler):
         self._node_handler = node_handler or NodeHandlerDGM()
 
-        growth_disabled = not self.enable_process_backward and not self.enable_process_forward
+        growth_disabled = not self.enable_process_backward or not self.enable_process_forward
         if growth_disabled and self.enable_process_full_graph:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
