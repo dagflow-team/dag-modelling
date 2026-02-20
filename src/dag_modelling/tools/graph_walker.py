@@ -306,22 +306,22 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
         return f"node:  {node!r}"
 
 
-def get_graph_nodes_all(node: Node, *, enable_process_meshes_edges: bool = False) -> list[Node]:
-    """Collect all the graph's nodes starting from "node".
+def get_subgraph_nodes_from(node: Node, **kwargs) -> list[Node]:
+    """Collect graph's nodes starting from "node".
 
     Parameters
     ----------
     node : Node
         Node to start checking graph from.
-    enable_process_meshes_edges : bool, default=False
-        If enabled, collect also mesh/edge nodes.
+    kwargs : dict
+        Keyword arguments to be passed to GraphWalker.
 
     Returns
     -------
     list[Node]
         List of nodes.
     """
-    walker = GraphWalker(enable_process_meshes_edges=enable_process_meshes_edges)
+    walker = GraphWalker(**kwargs)
     walker.process_from_node(node)
     return list(walker.nodes)
 
