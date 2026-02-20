@@ -46,6 +46,7 @@ _AGGREGATE_ALIASES: dict[str, str | Callable] = {
     "t_min": "min",
     "t_max": "max",
     "t_var": "var",
+    "n_nodes": "mean"
 }
 
 _DEFAULT_AGGREGATIONS = ("count", "single", "total", "fraction_percent")

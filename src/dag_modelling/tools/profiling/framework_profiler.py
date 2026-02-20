@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 # it is possible to group by two columns
 _ALLOWED_GROUPBY = (
-    ("source nodes", "sink nodes"),
+    ("source nodes", "sink nodes", "n_nodes"),
     "source nodes",
     "sink nodes",
 )
@@ -105,7 +105,7 @@ class FrameworkProfiler(TimerProfiler):
         results = self._estimate_framework_time()
         sources_col, sinks_col = self._shorten_sources_sinks()
         self._estimations_table = DataFrame(
-            {"source nodes": sources_col, "sink nodes": sinks_col, "time": results}
+                {"source nodes": sources_col, "sink nodes": sinks_col, "time": results, "n_nodes": len(self._target_nodes)}
         )
         self._stop_perf_counter()
         return self
@@ -113,7 +113,7 @@ class FrameworkProfiler(TimerProfiler):
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes"),
+        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes", "n_nodes"),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
@@ -123,7 +123,7 @@ class FrameworkProfiler(TimerProfiler):
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes"),
+        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes", "n_nodes"),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
