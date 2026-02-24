@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from ...core.node import Node
 from .timer_profiler import TimerProfiler
 
-_ALLOWED_GROUPBY = (("parameters", "endpoints", "eval mode"),)
+_ALLOWED_GROUPBY = (("parameters", "n_parameters", "endpoints", "eval mode"),)
 
 
 class FitSimulationProfiler(TimerProfiler):
@@ -54,11 +54,11 @@ class FitSimulationProfiler(TimerProfiler):
             if n_derivative_points < 2:
                 raise ValueError("Number of derivative points cannot be less than 2")
             self._n_derivative_points = n_derivative_points
-            self._default_aggregations = ("step", "call", "total", "n_steps", "n_calls")
+            self._default_aggregations = ("t_step", "call", "n_steps", "n_calls")
         elif mode == "simultaneous":
             self._fit_step = self._together_step
             self._n_derivative_points = 0
-            self._default_aggregations = ("call", "total", "n_calls")
+            self._default_aggregations = ("call", "n_calls")
         else:
             raise ValueError(f"Unknown mode: {mode}")
         self._mode = mode
@@ -69,7 +69,7 @@ class FitSimulationProfiler(TimerProfiler):
         for col_name in ("mean", "t_mean", "single"):
             self._column_aliases[col_name] = "t_step"
         for alias in ("single", "t_single"):
-            self._aggregate_aliases[alias.replace("single", "step")] = "mean"
+            self._aggregate_aliases[alias.replace("single", "t_step")] = "mean"
 
         # rename 'count' to 'n_steps'
         for col_name in ("count", "t_count"):
@@ -130,16 +130,23 @@ class FitSimulationProfiler(TimerProfiler):
     def estimate_fit(self) -> FitSimulationProfiler:
         self._start_perf_counter()
         self._touch_model_nodes()
-        results = self._timeit_each_run(self._fit_step, n_runs=self.n_runs)
+        # results = self._timeit_each_run(self._fit_step, n_runs=self.n_runs)
+        result = self._timeit_all_runs(self._fit_step, n_runs=self.n_runs)
         source_short_names, sink_short_names = self._shorten_sources_sinks()
-        self._estimations_table = DataFrame(
-            {
-                "parameters": source_short_names,
-                "endpoints": sink_short_names,
-                "eval mode": self._mode,
-                "time": results,
-            }
-        )
+
+        n_parameters = len(self._sources)
+        data = {
+            "parameters": source_short_names,
+            "n_parameters": n_parameters,
+            "endpoints": sink_short_names,
+            "eval mode": self._mode,
+            "t_step": result / self.n_runs,
+            "t_total": result,
+            "n_steps": self.n_runs,
+        }
+        if self._mode == "parameter-wise":
+            data["n_calls"] = (self._n_derivative_points * n_parameters + 1) * self.n_runs
+        self._estimations_table = DataFrame(data)
         self._stop_perf_counter()
         return self
 
@@ -165,7 +172,12 @@ class FitSimulationProfiler(TimerProfiler):
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = ("parameters", "endpoints", "eval mode"),
+        group_by: str | Sequence[str] | None = (
+            "parameters",
+            "n_parameters",
+            "endpoints",
+            "eval mode",
+        ),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
@@ -175,7 +187,12 @@ class FitSimulationProfiler(TimerProfiler):
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = ("parameters", "endpoints", "eval mode"),
+        group_by: str | Sequence[str] | None = (
+            "parameters",
+            "n_parameters",
+            "endpoints",
+            "eval mode",
+        ),
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
