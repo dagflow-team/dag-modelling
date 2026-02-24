@@ -9,6 +9,7 @@ from .timer_profiler import TimerProfiler
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Callable
 
     from ...core.node import Node
 
@@ -31,6 +32,8 @@ class FrameworkProfiler(TimerProfiler):
 
     __slots__ = "_replaced_fcns"
 
+    _replaced_fcns: dict[str, Callable]
+
     def __init__(
         self,
         target_nodes: Sequence[Node] = (),
@@ -51,8 +54,6 @@ class FrameworkProfiler(TimerProfiler):
         )
         self._default_aggregations = ("count", "single", "sum", "t_node_average")
         self._replaced_fcns = {}
-        if not (self._sources and self._sinks):
-            self._reveal_source_sink()
 
     def _t_single_node(self, _s: Series) -> Series:
         """Return mean framework time normilized by one node.
@@ -105,7 +106,12 @@ class FrameworkProfiler(TimerProfiler):
         results = self._estimate_framework_time()
         sources_col, sinks_col = self._shorten_sources_sinks()
         self._estimations_table = DataFrame(
-                {"source nodes": sources_col, "sink nodes": sinks_col, "time": results, "n_nodes": len(self._target_nodes)}
+            {
+                "source nodes": sources_col,
+                "sink nodes": sinks_col,
+                "time": results,
+                "n_nodes": len(self._target_nodes),
+            }
         )
         self._stop_perf_counter()
         return self
