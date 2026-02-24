@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from numpy import printoptions, square
 
@@ -10,6 +11,7 @@ from ..core.graph import Graph
 from ..core.input import Input
 from ..core.node import Node
 from ..core.output import Output
+from ..tools.graph_walker import GraphWalker
 from ..tools.logger import INFO1, logger
 
 if TYPE_CHECKING:
@@ -21,7 +23,9 @@ if TYPE_CHECKING:
 try:
     import pygraphviz as G
 except ImportError:
-    logger.critical("Unable to import `pygraphviz`. Ensure to install it with `pip install pygraphviz`.")
+    logger.critical(
+        "Unable to import `pygraphviz`. Ensure to install it with `pip install pygraphviz`."
+    )
     raise
 
 
@@ -54,12 +58,16 @@ class GraphDot:
         "_edges",
         "_filter",
         "_filtered_nodes",
+        "_enable_mid_node",
+        "_hide_nodes_marked_hidden",
     )
     _graph: G.AGraph
     _node_id_map: dict
     _nodes_map_dag: dict[Node, G.agraph.Node]
     _filter: dict[str, list[str | int]]
     _filtered_nodes: set
+    _enable_mid_node: bool
+    _hide_nodes_marked_hidden: bool
 
     _show: set[
         Literal[
@@ -86,6 +94,10 @@ class GraphDot:
         filter: Mapping[str, Sequence[str | int]] = {},
         label: str | None = None,
         agraph_kwargs: Mapping = {},
+        enable_mid_node: bool = True,
+        enable_common_attrs: bool = True,
+        hide_nodes_marked_hidden: bool = True,
+        transform_kwargs: dict[str, Any] = {}
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -113,6 +125,8 @@ class GraphDot:
             self._show = set(show)
         self._filter = {k: list(v) for k, v in filter.items()}
         self._filtered_nodes = set()
+        self._enable_mid_node = enable_mid_node
+        self._hide_nodes_marked_hidden = hide_nodes_marked_hidden
 
         graphattr = dict(graphattr)
         graphattr.setdefault("rankdir", "LR")
@@ -134,19 +148,20 @@ class GraphDot:
         self._edges: dict[str, EdgeDef] = {}
         self._graph = G.AGraph(directed=True, strict=False, **agraph_kwargs)
 
-        if graphattr:
-            self._graph.graph_attr.update(graphattr)
-        if edgeattr:
-            self._graph.edge_attr.update(edgeattr)
-        if nodeattr:
-            self._graph.node_attr.update(nodeattr)
+        if enable_common_attrs:
+            if graphattr:
+                self._graph.graph_attr.update(graphattr)
+            if edgeattr:
+                self._graph.edge_attr.update(edgeattr)
+            if nodeattr:
+                self._graph.node_attr.update(nodeattr)
 
         if isinstance(graph_or_node, Graph):
-            if label:
+            if label and enable_common_attrs:
                 self.set_label(label)
-            self._transform_graph(graph_or_node)
+            self._transform_graph(graph_or_node, **transform_kwargs)
         elif isinstance(graph_or_node, Node):
-            self._transform_from_nodes(graph_or_node)
+            self._transform_from_nodes(graph_or_node, **transform_kwargs)
         elif graph_or_node != None:
             raise RuntimeError("Invalid graph entry point")
 
@@ -197,8 +212,9 @@ class GraphDot:
         *args,
         min_depth: int | None = None,
         max_depth: int | None = None,
-        minsize: int | None = None,
+        min_size: int | None = None,
         keep_direction: bool = False,
+        process_meshes_edges: bool = False,
         **kwargs,
     ) -> GraphDot:
         node0 = nodes[0]
@@ -209,164 +225,67 @@ class GraphDot:
             label.append(f"{min_depth=:+d}")
         if max_depth is not None:
             label.append(f"{max_depth=:+d}")
-        if minsize is not None:
-            label.append(f"{minsize=:d}")
+        if min_size is not None:
+            label.append(f"{min_size=:d}")
         gd.set_label(", ".join(label))
 
         gd._transform_from_nodes(
             nodes,
             min_depth=min_depth,
             max_depth=max_depth,
-            minsize=minsize,
+            min_size=min_size,
             keep_direction=keep_direction,
+            process_meshes_edges=process_meshes_edges,
         )
         return gd
 
-    def _transform_from_nodes(self, nodes: Sequence[Node] | Node, **kwargs) -> None:
+    def _transform_from_nodes(
+        self,
+        nodes: Sequence[Node] | Node,
+        min_depth: int | None = None,
+        max_depth: int | None = None,
+        depth: int = 0,
+        min_size: int | None = None,
+        keep_direction: bool = True,
+        **kwargs,
+    ) -> None:
         if isinstance(nodes, Node):
             nodes = (nodes,)
+
+        gw_kwargs = {}
+        if min_size:
+
+            def node_skip_fcn(node: Node, depth: int) -> bool:
+                try:
+                    o0size = node.outputs[0].dd.size
+                except IndexError:
+                    return False
+                return depth <= 0 and not num_in_range(o0size, min_size)
+
+            gw_kwargs["node_skip_fcn"] = node_skip_fcn
+
+        graph_walker = GraphWalker(
+            min_depth=min_depth,
+            max_depth=max_depth,
+            enable_process_full_graph=not keep_direction,
+            **gw_kwargs,
+        )
 
         for node in nodes:
             logger.debug(f"Extending graph with node {node.labels.path or node.name}, {kwargs=}")
             if self._node_is_filtered(node):
                 return
 
-            self._add_nodes_backward_recursive(node, including_self=True, **kwargs)
-            self._add_nodes_forward_recursive(node, including_self=False, **kwargs)
+            graph_walker.process_from_node(node)
+
+        for node, depth in graph_walker.nodes.items():
+            self._add_node(node, depth=depth)
 
         for nodedag in self._nodes_map_dag:
             self._add_open_inputs(nodedag)
             self._add_edges(nodedag)
 
         self.update_style()
-
-    def _add_node_only(
-        self,
-        node: Node,
-        *,
-        min_depth: int | None = None,
-        max_depth: int | None = None,
-        depth: int = 0,
-        minsize: int | None = None,
-    ) -> bool:
-        if node in self._nodes_map_dag:
-            return False
-        if not num_in_range(depth, min_depth, max_depth):
-            return False
-        # print(f"{depth=: 2d}: {node.name}")
-
-        try:
-            o0size = node.outputs[0].dd.size
-        except IndexError:
-            pass
-        else:
-            if depth <= 0 and not num_in_range(o0size, minsize):
-                return False
-
-        self._add_node(node, depth=depth)
-
-        return True
-
-    def _add_nodes_backward_recursive(
-        self,
-        node: Node,
-        *,
-        including_self: bool = False,
-        min_depth: int | None = None,
-        max_depth: int | None = None,
-        minsize: int | None = None,
-        keep_direction: bool = False,
-        depth: int = 0,
-        visited_nodes: set[Node] = set(),
-    ) -> None:
-        if self._node_is_filtered(node):
-            return
-        visited_nodes.add(node)
-
-        if including_self and not self._add_node_only(
-            node, min_depth=min_depth, max_depth=max_depth, depth=depth, minsize=minsize
-        ):
-            return
-
-        newdepth = depth - 1
-        if newdepth < 0 or not keep_direction:
-            for input in node.inputs.iter_all():
-                try:
-                    parent_node = input.parent_node
-                except AttributeError:
-                    continue
-                self._add_nodes_backward_recursive(
-                    parent_node,
-                    including_self=True,
-                    depth=newdepth,
-                    min_depth=min_depth,
-                    max_depth=max_depth,
-                    minsize=minsize,
-                    keep_direction=keep_direction,
-                    visited_nodes=visited_nodes,
-                )
-
-        if not keep_direction:
-            self._add_nodes_forward_recursive(
-                node,
-                including_self=False,
-                depth=depth,
-                min_depth=min_depth,
-                max_depth=max_depth,
-                minsize=minsize,
-                keep_direction=keep_direction,
-                ignore_visit=True,
-                visited_nodes=visited_nodes,
-            )
-
-    def _add_nodes_forward_recursive(
-        self,
-        node: Node,
-        *,
-        including_self: bool = False,
-        min_depth: int | None = None,
-        max_depth: int | None = None,
-        minsize: int | None = None,
-        keep_direction: bool = False,
-        depth: int = 0,
-        visited_nodes: set[Node] = set(),
-        ignore_visit: bool = False,
-    ) -> None:
-        if self._node_is_filtered(node):
-            return
-        if depth != 0 and node in visited_nodes and not ignore_visit:
-            return
-        visited_nodes.add(node)
-        if including_self and not self._add_node_only(
-            node, min_depth=min_depth, max_depth=max_depth, depth=depth, minsize=minsize
-        ):
-            return
-
-        newdepth = depth + 1
-        for output in node.outputs.iter_all():
-            for child_input in output.child_inputs:
-                self._add_nodes_backward_recursive(
-                    child_input.node,
-                    including_self=True,
-                    depth=newdepth,
-                    keep_direction=keep_direction,
-                    min_depth=min_depth,
-                    max_depth=max_depth,
-                    minsize=minsize,
-                    visited_nodes=visited_nodes,
-                )
-
-                if newdepth > 0 or not keep_direction:
-                    self._add_nodes_forward_recursive(
-                        child_input.node,
-                        depth=newdepth,
-                        keep_direction=keep_direction,
-                        min_depth=min_depth,
-                        max_depth=max_depth,
-                        minsize=minsize,
-                        visited_nodes=visited_nodes,
-                        ignore_visit=True,
-                    )
 
     def _add_node(self, nodedag: Node, *, depth: int | None = None) -> None:
         if nodedag in self._nodes_map_dag or self._node_is_filtered(nodedag):
@@ -449,26 +368,31 @@ class GraphDot:
     def _add_edges_multi_alot(self, nodedag, output):
         if self._node_is_filtered(nodedag):
             return
-        vnode = self.get_id(output, "_mid")
 
-        edge_added = False
-        for input in output.child_inputs:
-            if self._add_edge(nodedag, output, input, vtarget=vnode):
-                edge_added = True
-                break
-        for input in output.child_inputs:
-            edge_added |= self._add_edge(nodedag, output, input, vsource=vnode)
+        if self._enable_mid_node:
+            virtual_mid_node = self.get_id(output, "_mid")
 
-        if edge_added:
-            self._graph.add_node(
-                vnode,
-                label="",
-                shape="cds",
-                width=0.1,
-                height=0.1,
-                color="forestgreen",
-                weight=10,
-            )
+            edge_added = False
+            for input in output.child_inputs:
+                if self._add_edge(nodedag, output, input, vtarget=virtual_mid_node):
+                    edge_added = True
+                    break
+            for input in output.child_inputs:
+                edge_added |= self._add_edge(nodedag, output, input, vsource=virtual_mid_node)
+
+            if edge_added:
+                self._graph.add_node(
+                    virtual_mid_node,
+                    label="",
+                    shape="cds",
+                    width=0.1,
+                    height=0.1,
+                    color="forestgreen",
+                    weight=10,
+                )
+        else:
+            for input in output.child_inputs:
+                self._add_edge(nodedag, output, input)
 
     def _add_edges_multi_few(self, iout: int, nodedag, output):
         if self._node_is_filtered(nodedag):
@@ -575,7 +499,8 @@ class GraphDot:
         if node in self._filtered_nodes:
             return True
 
-        if node.labels.node_hidden:
+        if self._hide_nodes_marked_hidden and node.labels.node_hidden:
+            self._filtered_nodes.add(node)
             return True
 
         if not node.labels.index_in_mask(self._filter):
@@ -654,10 +579,12 @@ class GraphDot:
     def set_label(self, label: str):
         self._graph.graph_attr["label"] = label
 
-    def savegraph(self, fname, *, quiet: bool = False):
+    def savegraph(self, fname: Path | str, *, quiet: bool = False):
+        if not isinstance(fname, Path):
+            fname = Path(fname)
         if not quiet:
             logger.log(INFO1, f"Write: {fname}")
-        if fname.endswith(".dot"):
+        if fname.suffix == ".dot":
             self._graph.write(fname)
         else:
             self._graph.layout(prog="dot")
