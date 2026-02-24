@@ -63,7 +63,7 @@ class FrameworkProfiler(TimerProfiler):
         return Series({"t_node_average": mean(_s) / len(self._target_nodes)})
 
     def _taint_nodes(self):
-        for node in self._target_nodes:
+        for node in self._sources:
             node.taint()
 
     @staticmethod
