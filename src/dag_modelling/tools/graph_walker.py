@@ -314,6 +314,8 @@ def get_subgraph_nodes(
     Nodes are obtained by finding intersection between all the nodes backward from sinks and nodes
     forward from sources.
 
+    Note, the order in the returned list of nodes is preserved to be similar to the backward iteration.
+
     Parameters
     ----------
     sources : Sequence[Node]
@@ -326,7 +328,7 @@ def get_subgraph_nodes(
     Returns
     -------
     list[Node]
-        List of nodes.
+        Ordered list of nodes.
     """
     walker_fwd = GraphWalker(enable_process_backward=False)
     walker_bwd = GraphWalker(
@@ -338,4 +340,4 @@ def get_subgraph_nodes(
 
     intersection = set(walker_fwd.nodes) & set(walker_bwd.nodes)
 
-    return [node for node in walker_fwd.nodes if node in intersection]
+    return [node for node in walker_bwd.nodes if node in intersection]
