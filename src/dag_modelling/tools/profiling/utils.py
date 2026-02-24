@@ -26,12 +26,13 @@ def reveal_source_sink(nodes: Sequence[Node]) -> tuple[list[Node], list[Node]]:
     sources = []
     sinks = []
     for node in nodes:
-        have_parents = any(n in nodes for n in __parent_nodes_gen(node))
-        have_children = any(n in nodes for n in __child_nodes_gen(node))
-        if have_parents and have_children:
+        has_parents = any(n in nodes for n in __parent_nodes_gen(node))
+        has_children = any(n in nodes for n in __child_nodes_gen(node))
+        if has_parents and has_children:
             continue
-        elif have_parents:
+        elif has_parents:
             sinks.append(node)
         else:
             sources.append(node)
+
     return sources, sinks

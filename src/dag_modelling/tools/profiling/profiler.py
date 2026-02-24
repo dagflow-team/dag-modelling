@@ -54,18 +54,31 @@ class Profiler(metaclass=ABCMeta):
         self._sources = sources
         self._sinks = sinks
 
-        if target_nodes and (sources or sinks):
-            raise RuntimeError("Conflicting arguments: target_nodes and sources/sinks")
+        generated_nodes = False
         if target_nodes:
             self._target_nodes = target_nodes
         elif sources or sinks:
             self._target_nodes = self._gather_related_nodes()
+            generated_nodes = True
         else:
             raise ValueError(
                 "You shoud provide profiler with `target_nodes` "
                 "or provide `sources` and `sinks` arguments "
                 "to automatically find the target nodes"
             )
+
+        generate_sinks = not bool(self._sinks)
+        generate_sources = not bool(self._sources)
+        if generate_sinks or generate_sources:
+            self._reveal_source_sink(sources=generate_sources, sinks=generate_sinks)
+
+        print(f"Profiler: {len(self._target_nodes)} target nodes"
+              f"{generated_nodes and ' [auto]' or ''}, "
+              f"{len(self._sources)} source nodes"
+              f"{generate_sources and ' [auto]' or ''}, "
+              f"{len(self._sinks)} sink nodes"
+              f"{generate_sinks and ' [auto]' or ''}"
+              )
 
         self._execution_time_s = 0.0
 
@@ -77,9 +90,13 @@ class Profiler(metaclass=ABCMeta):
             raise ValueError("sources and sinks have no subgraph in between.")
         return related_nodes
 
-    def _reveal_source_sink(self) -> None:
+    def _reveal_source_sink(self, *, sources: bool=True, sinks: bool=True) -> None:
         """Find sources and sinks for self._target_nodes."""
-        self._sources, self._sinks = reveal_source_sink(self._target_nodes)
+        source_nodes, sink_nodes = reveal_source_sink(self._target_nodes)
+        if sources:
+            self._sources = source_nodes
+        if sinks:
+            self._sinks = sink_nodes
 
     def register_aggregate_func(
         self, func: Callable, aliases: Sequence[str], column_name: str
