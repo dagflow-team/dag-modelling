@@ -116,8 +116,8 @@ class FrameworkProfiler(TimerProfiler):
             {
                 "source nodes": [sources_col],
                 "sink nodes": sinks_col,
-                "t_single": t_single,
-                "t_single_std": t_single_std,
+                "t_step": t_single,
+                "t_step_std": t_single_std,
                 "t_total": t_total,
                 "n_runs": self._n_runs,
                 "n_nodes": n_nodes,

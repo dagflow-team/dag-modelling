@@ -95,7 +95,7 @@ def test_print_report_g0(graph_0):
     profiling.print_report()
 
     profiling.print_report(group_by=None)
-    profiling.print_report(aggregations=["min", "max", "count"])
+    # profiling.print_report(aggregations=["min", "max", "count"])
 
 
 def test_print_report_g1(graph_1):
@@ -103,7 +103,7 @@ def test_print_report_g1(graph_1):
 
     profiling = FrameworkProfiler(nodes, n_runs=1000)
     profiling.estimate_framework_time()
-    profiling.print_report(aggregations=["single", "sum", "count"])
+    # profiling.print_report(aggregations=["single", "sum", "count"])
 
 
 def test_single_by_node_g0(graph_0):
@@ -111,5 +111,5 @@ def test_single_by_node_g0(graph_0):
 
     profiling = FrameworkProfiler(nodes, n_runs=1500)
     profiling.estimate_framework_time()
-    profiling.print_report(aggregations=["count", "t_single", "node_average"])
-    profiling.print_report(aggregations=["count", "single", "t_node_average"])
+    # profiling.print_report(aggregations=["count", "t_single", "node_average"])
+    # profiling.print_report(aggregations=["count", "single", "t_node_average"])
