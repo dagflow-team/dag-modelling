@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from pandas import DataFrame
 
@@ -90,7 +90,7 @@ class NodeProfiler(TimerProfiler):
         return cls._timeit_all_runs(stmt=node.function, n_runs=n_runs)
 
     def estimate_node_input_array_elements(self, node: Node) -> int:
-        return sum (input.dd.size for input in node.inputs.iter_all())
+        return sum(input.dd.size for input in node.inputs.iter_all())
 
     def estimate_target_nodes(self) -> NodeProfiler:
         """Estimate all nodes in `self.target_nodes`.
@@ -98,18 +98,9 @@ class NodeProfiler(TimerProfiler):
         Return the current `NodeProfiler` instance.
         """
         self._start_perf_counter()
-        columns = (
-            "node",
-            "type",
-            "name",
-            "time",
-            "n_input_array_elements"
-        )
+        columns = ("node", "type", "name", "time", "n_input_array_elements")
         index = range(len(self._target_nodes))
-        self._estimations_table = (df:=DataFrame(
-                columns=columns,
-                index=index
-        ))
+        self._estimations_table = (df := DataFrame(columns=columns, index=index))
         for i, node in enumerate(self._target_nodes):
             node_i = str(node)
             type_i = type(node).__name__
@@ -119,35 +110,51 @@ class NodeProfiler(TimerProfiler):
             df.iloc[i] = node_i, type_i, name_i, time_i, n_input_array_elements
 
         self._stop_perf_counter()
+
         return self
 
+    @override
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = "type",
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
-        average_by_runs: bool = True,
     ) -> DataFrame:
-        report = super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
-        if average_by_runs:
-            return self._compute_average(report)
-        return report
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+
+        estimations = self._estimations_table
+        estimations_grouped = estimations.groupby(by="type", as_index=False)
+        summary = estimations_grouped.aggregate(  # pyright: ignore [reportCallIssue]
+            **{
+                "n_nodes": ("type", "count"),
+                "t_total": ("time", "sum"),
+                "n_input_array_elements_average": ("n_input_array_elements", "mean"),
+                "n_input_array_elements_total": ("n_input_array_elements", "sum"),
+            }
+        ).sort_values("t_total", ascending=False, ignore_index=True)
+        summary["t_step"] = summary["t_total"]/self._n_runs
+        summary["fraction_step_percent"] = summary["t_step"]/summary["t_step"].sum()
+        summary["t_node_average"] = summary["t_step"]/summary["n_nodes"]
+
+        return summary
 
     def _print_total_time(self):
         total = self._total_estimations_time()
         print(f"total estimations time / n_runs: {total / self._n_runs:.9f} sec.")
         print(f"total estimations time: {total:.6f} sec.")
 
+    @override
     def print_report(
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = "type",
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+        report = self.make_report()
         print(
             f"\nNode Profiling {hex(id(self))}, "
             f"n_runs for each node: {self._n_runs}\n"
