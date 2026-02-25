@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from numpy import mean, ndarray
 from pandas import DataFrame, Series
 
 from .timer_profiler import TimerProfiler
@@ -10,6 +9,7 @@ from .timer_profiler import TimerProfiler
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Callable
+    from numpy.typing import NDArray
 
     from ...core.node import Node
 
@@ -84,7 +84,7 @@ class FrameworkProfiler(TimerProfiler):
             node.function = self._replaced_fcns[node]
         self._replaced_fcns = {}
 
-    def _estimate_framework_time(self) -> ndarray:
+    def _estimate_framework_time(self) -> NDArray:
         self._set_functions_empty()
 
         def evaluate_graph():
@@ -105,12 +105,23 @@ class FrameworkProfiler(TimerProfiler):
         self._start_perf_counter()
         results = self._estimate_framework_time()
         sources_col, sinks_col = self._shorten_sources_sinks()
+
+        t_total = results.sum()
+        t_single = t_total/self._n_runs
+        t_single_std = results.std()
+
+        n_nodes = len(self._target_nodes)
+        t_node = t_single/n_nodes
         self._estimations_table = DataFrame(
             {
-                "source nodes": sources_col,
+                "source nodes": [sources_col],
                 "sink nodes": sinks_col,
-                "time": results,
-                "n_nodes": len(self._target_nodes),
+                "t_single": t_single,
+                "t_single_std": t_single_std,
+                "t_total": t_total,
+                "n_runs": self._n_runs,
+                "n_nodes": n_nodes,
+                "t_node": t_node,
             }
         )
         self._stop_perf_counter()
@@ -119,21 +130,23 @@ class FrameworkProfiler(TimerProfiler):
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes", "n_nodes"),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+        return self._estimations_table.copy()
 
     def print_report(
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = ("source nodes", "sink nodes", "n_nodes"),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+        report = self.make_report()
         print(
             f"\nFramework Profiling {hex(id(self))}, "
             f"n_runs for given subgraph: {self._n_runs},\n"
