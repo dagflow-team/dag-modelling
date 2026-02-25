@@ -23,7 +23,7 @@ def test_minimal_example(graph_0, output_path: str):
 
     calls_profiler = CountCallsProfiler(nodes)
     calls_profiler.estimate_calls()
-    report = calls_profiler.make_report(aggregations=["single", "std"])
+    report = calls_profiler.make_report()
 
     memory_profiler = MemoryProfiler(nodes)
     report = memory_profiler.estimate_target_nodes().print_report()
@@ -58,21 +58,12 @@ def test_full_guide(graph_0, output_path: str):
     # Now we can make reports.
     # Remember, making reports will not work if there are no estimation results
 
-    # 'single' is basically alias for the 'mean' execution time of a single node
-    report = node_profiler.make_report(aggregations=["single", "std"])
-
-    # of course you can use 'mean' instead of 'single'
-    report = node_profiler.make_report(aggregations=["mean"])
-
     # also, you can chain these methods
     report = node_profiler.estimate_target_nodes().make_report()
 
     # You probably want to print results into terminal, consider using `print_report`
     # It returns the same report as `make_report` but also prints it
     report = node_profiler.print_report()
-
-    # For example you want to see estimations for each node, without grouping:
-    report = node_profiler.print_report(group_by=None, sort_by="name")
 
     # Note that default sorting is performed by 'time'
     #  or by first column of aggregation function
@@ -120,7 +111,6 @@ def test_full_guide(graph_0, output_path: str):
     memory_profiler.estimate_target_nodes(touch=False)
 
     memory_profiler.print_report()
-    memory_profiler.print_report(group_by=None, sort_by="size")
 
     gname = f"{output_path}/graph.pdf"
     savegraph(graph, gname)

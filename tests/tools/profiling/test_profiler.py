@@ -13,7 +13,8 @@ def test_init_g0(monkeypatch, graph_0):
     target_nodes = [p1, s1, s2]
     profiling = Profiler(target_nodes)
     assert profiling._target_nodes == target_nodes
-    assert profiling._sources == profiling._sinks == ()
+    assert profiling._sources == [p1]
+    assert profiling._sinks == [s1, s2]
 
     sources, sinks = [a2, a3], [s3]
     target_nodes = [a2, a3, s0, p1, s1, s2, s3]
