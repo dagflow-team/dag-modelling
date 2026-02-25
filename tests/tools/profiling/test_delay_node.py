@@ -41,12 +41,12 @@ def test_three_delay_nodes():
         profiling.estimate_target_nodes()
 
         report = profiling.make_report(group_by=None)
-        assert all(abs(report["time"] - sleep_t) < EPS)
+        assert all(abs(report["t_total"] - sleep_t) < EPS)
         profiling.print_report(group_by=None)
 
         fprofiling = FrameworkProfiler(nodes)
         fprofiling.estimate_framework_time()
 
         report = fprofiling.make_report(group_by=None)
-        assert all(report["time"] < EPS)
+        assert all(report["t_total"] < EPS)
         fprofiling.print_report()

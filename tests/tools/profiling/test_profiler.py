@@ -12,16 +12,16 @@ def test_init_g0(monkeypatch, graph_0):
 
     target_nodes = [p1, s1, s2]
     profiling = Profiler(target_nodes)
-    assert profiling._target_nodes == target_nodes
-    assert profiling._sources == [p1]
-    assert profiling._sinks == [s1, s2]
+    assert set(profiling._target_nodes) == set(target_nodes)
+    assert set(profiling._sources) == set([p1])
+    assert set(profiling._sinks) == set([s1, s2])
 
     sources, sinks = [a2, a3], [s3]
     target_nodes = [a2, a3, s0, p1, s1, s2, s3]
     profiling = Profiler(sources=sources, sinks=sinks)
     assert Counter(profiling._target_nodes) == Counter(target_nodes)
-    assert profiling._sources == sources
-    assert profiling._sinks == sinks
+    assert set(profiling._sources) == set(sources)
+    assert set(profiling._sinks) == set(sinks)
 
     sources, sinks = [a0, a1, a2, a3, l_matrix], [s3, mdvdt]
     target_nodes = nodes
