@@ -89,6 +89,9 @@ class NodeProfiler(TimerProfiler):
             input.touch()
         return cls._timeit_all_runs(stmt=node.function, n_runs=n_runs)
 
+    def estimate_node_input_array_elements(self, node: Node) -> int:
+        return sum (input.dd.size for input in node.inputs.iter_all())
+
     def estimate_target_nodes(self) -> NodeProfiler:
         """Estimate all nodes in `self.target_nodes`.
 
@@ -100,6 +103,7 @@ class NodeProfiler(TimerProfiler):
             "type",
             "name",
             "time",
+            "n_input_array_elements"
         )
         index = range(len(self._target_nodes))
         self._estimations_table = (df:=DataFrame(
@@ -111,7 +115,8 @@ class NodeProfiler(TimerProfiler):
             type_i = type(node).__name__
             name_i = node.name
             time_i = self.estimate_node(node, self._n_runs)
-            df.iloc[i] = node_i, type_i, name_i, time_i
+            n_input_array_elements = self.estimate_node_input_array_elements(node)
+            df.iloc[i] = node_i, type_i, name_i, time_i, n_input_array_elements
 
         self._stop_perf_counter()
         return self
