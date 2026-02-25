@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, override
 
 from numpy import sum as npsum
 from pandas import DataFrame, Series
@@ -136,7 +136,7 @@ class FitSimulationProfiler(TimerProfiler):
 
         n_parameters = len(self._sources)
         data = {
-            "parameters": source_short_names,
+            "parameters": [source_short_names],
             "n_parameters": n_parameters,
             "endpoints": sink_short_names,
             "eval mode": self._mode,
@@ -145,7 +145,10 @@ class FitSimulationProfiler(TimerProfiler):
             "n_steps": self.n_runs,
         }
         if self._mode == "parameter-wise":
-            data["n_calls"] = (self._n_derivative_points * n_parameters + 1) * self.n_runs
+            data["n_calls"] = (
+                n_calls := (self._n_derivative_points * n_parameters + 1) * self.n_runs
+            )
+            data["t_call"] = data["t_total"] / n_calls
         self._estimations_table = DataFrame(data)
         self._stop_perf_counter()
         return self
@@ -169,34 +172,28 @@ class FitSimulationProfiler(TimerProfiler):
             raise ZeroDivisionError("An empty group is received for t_call computation!")
         return Series({"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))})
 
+    @override
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = (
-            "parameters",
-            "n_parameters",
-            "endpoints",
-            "eval mode",
-        ),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+        return self._estimations_table.copy()
 
+    @override
     def print_report(
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = (
-            "parameters",
-            "n_parameters",
-            "endpoints",
-            "eval mode",
-        ),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None)
+        report = self.make_report()
         print(
             f"\nFit simulation Profiling {hex(id(self))}, "
             f"fit steps (n_runs): {self._n_runs},\n"
