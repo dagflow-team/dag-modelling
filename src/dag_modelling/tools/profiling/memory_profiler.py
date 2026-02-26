@@ -132,7 +132,7 @@ class MemoryProfiler(Profiler):
             records["n_elements"].append(size)
             records["n_bytes"].append(n_bytes)
 
-        self._estimations_table = DataFrame(records)
+        self._estimations_table = DataFrame(records).infer_objects()
         self._stop_perf_counter()
         return self
 
@@ -166,7 +166,7 @@ class MemoryProfiler(Profiler):
                 "n_bytes_total": ("n_bytes", "sum"),
                 "n_bytes_average": ("n_bytes", "mean"),
             }
-        ).sort_values("n_bytes_total", ascending=False, ignore_index=True)
+        ).sort_values("n_bytes_total", ascending=False, ignore_index=True).infer_objects()
 
         return summary
 

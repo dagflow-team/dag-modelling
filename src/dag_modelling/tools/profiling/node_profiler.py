@@ -108,6 +108,7 @@ class NodeProfiler(TimerProfiler):
             time_i = self.estimate_node(node, self._n_runs)
             n_input_array_elements = self.estimate_node_input_array_elements(node)
             df.iloc[i] = node_i, type_i, name_i, time_i, n_input_array_elements
+        self._estimations_table = df.infer_objects()
 
         self._stop_perf_counter()
 
@@ -137,7 +138,7 @@ class NodeProfiler(TimerProfiler):
         summary["fraction_step_percent"] = summary["t_step"]/summary["t_step"].sum()
         summary["t_node_average"] = summary["t_step"]/summary["n_nodes"]
 
-        return summary
+        return summary.infer_objects()
 
     def _print_total_time(self):
         total = self._total_estimations_time()

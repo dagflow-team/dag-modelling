@@ -123,7 +123,7 @@ class FrameworkProfiler(TimerProfiler):
                 "n_nodes": n_nodes,
                 "t_node": t_node,
             }
-        )
+        ).infer_objects()
         self._stop_perf_counter()
         return self
 

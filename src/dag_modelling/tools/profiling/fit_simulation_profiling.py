@@ -149,7 +149,7 @@ class FitSimulationProfiler(TimerProfiler):
                 n_calls := (self._n_derivative_points * n_parameters + 1) * self.n_runs
             )
             data["t_call"] = data["t_total"] / n_calls
-        self._estimations_table = DataFrame(data)
+        self._estimations_table = DataFrame(data).infer_objects()
         self._stop_perf_counter()
         return self
 
