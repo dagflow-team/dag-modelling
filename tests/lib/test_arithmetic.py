@@ -110,6 +110,25 @@ def test_Product_01(test_name, debug_graph, dtype, output_path: str):
 
     savegraph(graph, f"{output_path}/{test_name}.png")
 
+@mark.parametrize("dtype", ("d",))
+def test_Product_02(test_name, debug_graph, dtype, output_path: str):
+    arrays_in = tuple(arange(1000000, dtype=dtype) * i for i in (1, 2, 3))
+
+    with Graph(close_on_exit=True, debug=debug_graph) as graph:
+        arrays = tuple(
+            Array(f"arr_{i}", array_in, mode="fill")
+            for i, array_in in enumerate(arrays_in)
+        )
+        prod = Product("prod")
+        arrays >> prod
+
+    output = prod.outputs[0]
+    res = arrays_in[0] * arrays_in[1] * arrays_in[2]
+
+    from timeit import timeit
+    prod._function()
+    res = timeit(prod._function, number=1000)
+    print(res)
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("scaled", (False, True))

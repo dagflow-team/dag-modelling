@@ -43,24 +43,62 @@ class Difference(ManyToOneNode):
             subtract(output_data, input_data, out=output_data)
 
 
+from typing import override
+
+from numba import njit
+from numba.typed import List as NumbaList
+
+
+@njit
+def _multiply_numba(input_data_list, output_data):
+    input_data_0 = input_data_list[0]
+    for elem_i in range(input_data_0.size):
+        output_data[elem_i] = input_data_0[elem_i]
+    for array_j in range(1, len(input_data_list)):
+        input_data = input_data_list[array_j]
+
+        for elem_i in range(input_data.size):
+            output_data[elem_i] *= input_data[elem_i]
+
+
 class Product(ManyToOneNode):
     """Product of all the inputs together."""
 
-    __slots__ = ()
+    __slots__ = ("_numba_list",)
+
+    _numba_list: NumbaList
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("broadcastable", True)
         super().__init__(*args, **kwargs)
         self._labels.setdefault("mark", "Πᵢ")
 
+        self._numba_list = NumbaList()
+
+    # def _function(self):
+    #     for callback in self._input_nodes_callbacks:
+    #         callback()
+
+    #     output_data = self._output_data
+    #     copyto(output_data, self._input_data0)
+    #     for _input_data in self._input_data_other:
+    #         multiply(output_data, _input_data, out=output_data)
+
     def _function(self):
         for callback in self._input_nodes_callbacks:
             callback()
 
-        output_data = self._output_data
-        copyto(output_data, self._input_data0)
-        for _input_data in self._input_data_other:
-            multiply(output_data, _input_data, out=output_data)
+        _multiply_numba(self._numba_list, self._output_data)
+
+    @override
+    def _post_allocate(self):
+        super()._post_allocate()
+
+        if len(self._numba_list) > 0:
+            self._numba_list = NumbaList()
+
+        for data in self._input_data:
+            self._numba_list.append(data)
 
 
 class ProductShifted(ManyToOneNode):
