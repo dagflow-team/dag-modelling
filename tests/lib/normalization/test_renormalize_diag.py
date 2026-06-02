@@ -61,3 +61,37 @@ def test_RenormalizeDiag(test_name, debug_graph, ndiag, dtype, mode, scale, outp
     ograph = f"{output_path}/{test_name}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph, show="all")
+
+
+@mark.skip(reason="for manual tests")
+@mark.parametrize("mode", ("offdiag",))
+def test_RenormalizeDiag_benchmark(
+    test_name, debug_graph, mode, output_path: str, ndiag=1, scale=1.1, dtype="d"
+):
+    size = 2400
+    n_times = 1000
+    matrix = arange(size**2, dtype=dtype).reshape(size, size)
+    with Graph(close_on_exit=True, debug=debug_graph) as graph:
+        array_matrix = Array("matrix", matrix, mode="fill")
+        scale_diag = Array("scale", [scale], mode="fill")
+
+        prod = RenormalizeDiag("RenormalizeDiag", mode=mode, ndiag=ndiag)
+        array_matrix >> prod
+        scale_diag >> prod("scale")
+
+    actual = prod.get_data()
+
+    atol = finfo(dtype).resolution
+    # check that sum of every column equals 1
+
+    prod.function()
+
+    time1 = process_time()
+    for _ in range(n_times):
+        prod.function()
+    time2 = process_time()
+    print(f"time for mode={mode}: {(time2-time1)/n_times*1e6:.3f} μs")
+
+    ograph = f"{output_path}/{test_name}.png"
+    print(f"Write graph: {ograph}")
+    savegraph(graph, ograph, show="all")

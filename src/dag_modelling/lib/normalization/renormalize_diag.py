@@ -76,9 +76,13 @@ class RenormalizeDiag(OneToOneNode):
 @njit(cache=NUMBA_CACHE_ENABLE)
 def _norming(matrix: NDArray) -> None:
     for icol in range(matrix.shape[-1]):
-        colsum = matrix[:, icol].sum()
-        if colsum != 0.0:
-            matrix[:, icol] /= colsum
+        colsum = 0.0
+        for irow in range(matrix.shape[0]):
+            colsum += matrix[irow, icol]
+        if colsum == 0.0:
+            continue
+        for irow in range(matrix.shape[0]):
+            matrix[irow, icol] /= colsum
 
 
 def _renorm_diag_python(matrix: NDArray, out: NDArray, scale: float, ndiag: int) -> None:
@@ -104,7 +108,7 @@ def _renorm_offdiag_python(matrix: NDArray, out: NDArray, scale: float, ndiag: i
     # main diagonal
     for i in range(n):
         out[i, i] = matrix[i, i]
-    # other diagonals
+    # # other diagonals
     for idiag in range(1, ndiag):
         i = 0
         while i + idiag < n:
