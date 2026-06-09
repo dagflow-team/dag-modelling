@@ -37,6 +37,9 @@ class OneToOneNode(Node):
 
         self._input_output_data = []
 
+        self._fd.needs_post_allocate = True
+
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         check_node_has_inputs(self)

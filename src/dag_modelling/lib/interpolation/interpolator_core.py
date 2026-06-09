@@ -149,6 +149,8 @@ class InterpolatorCore(Node):
         self._indices_input = self._add_input("indices", positional=False)
         self._result_output = self._add_output("result")
 
+        self._fd.needs_post_allocate = True
+
         self._functions_dict.update(
             {
                 "python": self._function_python,

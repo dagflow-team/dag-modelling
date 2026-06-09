@@ -63,6 +63,8 @@ class Array(Node):
         else:
             raise InitializationError(f'Array: invalid mode "{mode}"', node=self)
 
+        self._fd.needs_post_allocate = True
+
         self._functions_dict.update(
             {
                 "store": self._fcn_store,

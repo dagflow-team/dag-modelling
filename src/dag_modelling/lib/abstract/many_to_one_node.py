@@ -67,6 +67,8 @@ class ManyToOneNode(Node):
         self._input_data = []
         self._output_data = None  # pyright: ignore [reportAttributeAccessIssue]
 
+        self._fd.needs_post_allocate = True
+
     @staticmethod
     def _input_names() -> tuple[str, ...]:
         return ("input",)

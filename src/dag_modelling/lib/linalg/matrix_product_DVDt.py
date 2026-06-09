@@ -42,6 +42,8 @@ class MatrixProductDVDt(Node):
         self._functions_dict.update({"diagonal": self._fcn_diagonal, "square": self._fcn_square})
         self._labels.setdefault("mark", "DVDᵀ")
 
+        self._fd.needs_post_allocate = True
+
     def _fcn_diagonal(self):
         # square matrix stored as diagonal
         left = self._left.data

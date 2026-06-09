@@ -120,6 +120,9 @@ class IntegratorSampler(Node):
         else:
             self._ndim = 1
         self._weights = self._add_output("weights", positional=False)
+
+        self._fd.needs_post_allocate = True
+
         self._functions_dict.update(
             {
                 "rect": self._fcn_rect,

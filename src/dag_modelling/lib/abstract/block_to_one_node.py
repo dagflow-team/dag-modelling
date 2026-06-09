@@ -68,6 +68,8 @@ class BlockToOneNode(Node):
         self._input_data = []
         self._output_data = []
 
+        self._fd.needs_post_allocate = True
+
     @staticmethod
     def _input_names() -> tuple[str, ...]:
         return ("input",)
