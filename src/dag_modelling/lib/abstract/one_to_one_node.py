@@ -14,6 +14,7 @@ from ...core.type_functions import (
     check_node_has_inputs,
     copy_from_inputs_to_outputs,
 )
+from typing import override
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
