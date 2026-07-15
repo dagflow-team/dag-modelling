@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from enum import Enum
 from os import listdir
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,6 +23,12 @@ if TYPE_CHECKING:
 file_readers = {}
 
 _log_float_format = ".3g"
+
+
+class HistEdgesStrategy(Enum):
+    left = 0
+    center = 1
+    right = 2
 
 
 class HistGetter:
@@ -51,6 +58,11 @@ class GraphGetter:
         fr = FileReader[file_name]
 
         return fr.get_graph(object_name)
+
+    def get(self, file_name: str | Path, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        fr = FileReader[file_name]
+
+        return fr.get_hist_as_graph(object_name, strategy)
 
 
 _GraphGetter = GraphGetter()
@@ -219,6 +231,19 @@ class FileReader(metaclass=FileReaderMeta):
         )
         return x, y
 
+    def _get_hist_as_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        raise RuntimeError("not implemented method")
+
+    def get_hist_as_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        x, y = self._get_hist_as_graph(object_name, strategy)
+        logger.log(
+            INFO2,
+            f"graph {object_name} ({len(y)}): x"
+            f" {x[0]:{_log_float_format}}→{x[-1]:{_log_float_format}},"
+            f" ymin={y.min():{_log_float_format}}, ymax={y.max():{_log_float_format}}",
+        )
+        return x, y
+
     def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
@@ -271,6 +296,19 @@ class FileReader(metaclass=FileReaderMeta):
 
 class FileReaderArray(FileReader):
     _extension: str = ""
+
+    def _get_hist_as_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        emin, emax, h = self._get_emin_emax_h(object_name)
+        if not (emin[1:] == emax[:-1]).all():
+            raise ValueError("Inconsistent histogram edges")
+        match strategy:
+            case HistEdgesStrategy.left:
+                return emin, h
+            case HistEdgesStrategy.center:
+                return (emin + emax) / 2.0, h
+            case HistEdgesStrategy.right:
+                return emax, h
+        raise RuntimeError(f"Unsupported strategy={strategy} of loading histogram edges")
 
     def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
         return self._get_xy(object_name)
@@ -423,6 +461,25 @@ class FileReaderROOTUpROOT(FileReader):
         obj = self._get_object(object_name)
         return _uproot_load_graph(obj)
 
+    def _get_hist_as_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        from uproot import behaviors
+        obj = self._get_object(object_name)
+
+        if isinstance(obj, behaviors.TH1.TH1):
+            y, edges = obj.to_numpy()
+            match strategy:
+                case HistEdgesStrategy.left:
+                    x = edges[:-1]
+                case HistEdgesStrategy.center:
+                    x = (edges[:-1] + edges[1:]) / 2.0
+                case HistEdgesStrategy.right:
+                    x = edges[1:]
+                case _:
+                    raise RuntimeError(f"Unsupported strategy={strategy} of loading histogram edges")
+            return x, y
+
+        raise RuntimeError("Can only read graph from TH1* instance via uproot")
+
     def _get_array(self, object_name: str | None) -> NDArray:
         obj = self._get_object(object_name)
         return _uproot_load_array(obj)
@@ -473,6 +530,16 @@ def _uproot_load_graph(object) -> tuple[NDArray, NDArray]:
         if y.dtype.byteorder == ">":
             y = y.astype(y.dtype.type)
         return x, y
+
+    raise RuntimeError("Can only read graph from TH1*/TGraph* instance via uproot")
+
+
+def _uproot_load_hist_as_graph(object, strategy) -> tuple[NDArray, NDArray]:
+    from uproot import behaviors
+
+    if isinstance(object, behaviors.TH1.TH1):
+        y, x = object.to_numpy()
+        return x[:-1], y
 
     raise RuntimeError("Can only read graph from TH1*/TGraph* instance via uproot")
 
@@ -531,6 +598,23 @@ with suppress(ImportError):
                 return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
             if isinstance(obj, ROOT.TGraph):
                 return _get_buffers_graph(obj)
+
+            raise ValueError(f"Do not know ho to convert {obj} to graph")
+
+        def _get_hist_as_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+            import ROOT
+
+            obj = self._get_object(object_name)
+            if isinstance(obj, ROOT.TH1) and obj.GetDimension() == 1:
+                match strategy:
+                    case HistEdgesStrategy.left:
+                        return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
+                    case HistEdgesStrategy.center:
+                        edges = _get_bin_edges(obj.GetXaxis())
+                        centers = (edges[:-1] + edges[1:]) / 2.0
+                        return centers, _get_buffer_hist1(obj, flows=False)
+                    case HistEdgesStrategy.right:
+                        return _get_bin_right_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
 
             raise ValueError(f"Do not know ho to convert {obj} to graph")
 
@@ -635,6 +719,16 @@ def _get_bin_left_edges(ax: ROOT.TAxis) -> NDArray:
         lims = frombuffer(xbins.GetArray(), double, n)
         return lims[:-1].copy()
     return linspace(ax.GetXmin(), ax.GetXmax(), ax.GetNbins() + 1)[:-1]
+
+
+def _get_bin_right_edges(ax: ROOT.TAxis) -> NDArray:
+    """Get the array with bin right edges."""
+    xbins = ax.GetXbins()
+    n = xbins.GetSize()
+    if n > 0:
+        lims = frombuffer(xbins.GetArray(), double, n)
+        return lims[1:].copy()
+    return linspace(ax.GetXmin(), ax.GetXmax(), ax.GetNbins() + 1)[1:]
 
 
 def _get_buffers_graph(g: ROOT.TGraph) -> tuple[NDArray, NDArray]:
