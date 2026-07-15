@@ -65,11 +65,6 @@ class GraphGetter:
 
         return fr.get_graph(object_name, strategy)
 
-    def get(self, file_name: str | Path, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
-        fr = FileReader[file_name]
-
-        return fr.get_hist_as_graph(object_name, strategy)
-
 
 _GraphGetter = GraphGetter()
 
