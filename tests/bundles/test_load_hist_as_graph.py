@@ -43,7 +43,7 @@ def test_load_hist(object_type, entries, dtype, strategy):
             replicate_outputs=(output_name,),
             name_function={output_name: object_name},
             dtype=dtype,
-            hist_edges=strategy,
+            hist_edges_strategy=strategy,
         )
 
     for (axis, loaded_output_name), output in storage(f"outputs.{output_ns}").walkitems():

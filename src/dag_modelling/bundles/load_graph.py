@@ -20,7 +20,7 @@ from ..tools.schema import (
     LoadFileWithExt,
     LoadYaml,
 )
-from .file_reader import FileReader, file_readers, iterate_filenames_and_objectnames, HistEdgesStrategy
+from .file_reader import FileReader, file_readers, iterate_filenames_and_objectnames
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -55,7 +55,7 @@ _schema_cfg = Schema(
         Optional("name_function", default=lambda: lambda st, tpl: st): Or(
             Callable, And({str: str}, Use(lambda dct: lambda st, tpl: dct.get(st, st)))
         ),
-        Optional("hist_edges", default="ignore"): Or("left", "center", "right", "ignore"),
+        Optional("hist_edges_strategy", default=None): Or("left", "center", "right"),
     }
 )
 
@@ -91,7 +91,7 @@ def _load_graph_data(
     key_order = cfg["key_order"]
     output_key_order = cfg["output_key_order"]
     dtype = cfg["dtype"]
-    hist_edges = cfg["hist_edges"]
+    hist_edges_strategy = cfg["hist_edges_strategy"]
 
     xname = name, cfg["x"]
     yname = name, cfg["y"]
@@ -105,10 +105,7 @@ def _load_graph_data(
         skey = strkey(key)
         logger.log(INFO3, f"Process {skey}")
 
-        if hist_edges == "ignore":
-            x, y = FileReader.graph[filename, name_function(skey, key)]
-        else:
-            x, y = FileReader.graph.get(filename, name_function(skey, key), HistEdgesStrategy[hist_edges])
+        x, y = FileReader.graph[filename, name_function(skey, key), hist_edges_strategy]
         x = asarray(x, dtype)
         y = asarray(y, dtype)
 
