@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from enum import Enum, EnumMeta
 from os import listdir
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from nested_mapping.tools.map import make_reorder_function
 from nested_mapping.typing import properkey
@@ -23,21 +22,6 @@ if TYPE_CHECKING:
 file_readers = {}
 
 _log_float_format = ".3g"
-
-
-class HistEdgesStrategyMeta(EnumMeta):
-    none = 0
-
-    def __getitem__(self, name: str | None):
-        if name is None:
-            return self.none
-        return super().__getitem__(name)
-
-
-class HistEdgesStrategy(Enum, metaclass=HistEdgesStrategyMeta):
-    left = 1
-    center = 2
-    right = 3
 
 
 class HistGetter:
@@ -59,11 +43,16 @@ _HistGetter = HistGetter()
 class GraphGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str | None, str | None]) -> tuple[NDArray, NDArray]:
-        file_name, object_name, strategy = names
+    def get(self, *names: tuple[str | Path, str | None] | str | Path, hist_edges_strategy: Literal["left", "center", "right"] | None = None) -> tuple[NDArray, NDArray]:
+        if isinstance(names, tuple):
+            file_name, object_name = names
+        else:
+            file_name, object_name = names, None
         fr = FileReader[file_name]
 
-        return fr.get_graph(object_name, strategy)
+        return fr.get_graph(object_name, hist_edges_strategy)
+
+    __getitem__ = get
 
 
 _GraphGetter = GraphGetter()
@@ -219,12 +208,11 @@ class FileReader(metaclass=FileReaderMeta):
         except KeyError as e:
             raise KeyError(f"Can not read {object_name} from {self._file_name!s}") from e
 
-    def _get_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_graph(self, object_name: str | None, edges_strategy: str | None) -> tuple[NDArray, NDArray]:
-        strategy = HistEdgesStrategy[edges_strategy]
-        x, y = self._get_graph(object_name, strategy)
+    def get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        x, y = self._get_graph(object_name, hist_edges_strategy)
         logger.log(
             INFO2,
             f"graph {object_name} ({len(y)}): x"
@@ -286,8 +274,8 @@ class FileReader(metaclass=FileReaderMeta):
 class FileReaderArray(FileReader):
     _extension: str = ""
 
-    def _get_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
-        if strategy is not HistEdgesStrategy.none:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        if hist_edges_strategy is not None:
             raise RuntimeError("Strategy is not supported for loading arrays")
         return self._get_xy(object_name)
 
@@ -435,9 +423,9 @@ class FileReaderROOTUpROOT(FileReader):
         y, x = obj.to_numpy()
         return x, y
 
-    def _get_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
-        return _uproot_load_graph(obj, strategy)
+        return _uproot_load_graph(obj, hist_edges_strategy)
 
     def _get_array(self, object_name: str | None) -> NDArray:
         obj = self._get_object(object_name)
@@ -467,19 +455,21 @@ def _uproot_load_array(object) -> NDArray:
     return array
 
 
-def _uproot_load_graph(object, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+def _uproot_load_graph(object, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
     # At the moment uproot does not support reading numpy data from TGraph*
     from uproot import behaviors
 
     if isinstance(object, behaviors.TH1.TH1):
         y, x = object.to_numpy()
-        match strategy:
-            case HistEdgesStrategy.left:
+        match hist_edges_strategy:
+            case "left":
                 return x[:-1], y
-            case HistEdgesStrategy.center:
-                return (x[1:] + x[:-1]) / 2.0, y
-            case HistEdgesStrategy.right:
+            case "center":
+                return (x[1:] + x[:-1]) * 0.5, y
+            case "right":
                 return x[1:], y
+            case _:
+                raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
     elif isinstance(
         object,
         (
@@ -488,7 +478,7 @@ def _uproot_load_graph(object, strategy: HistEdgesStrategy) -> tuple[NDArray, ND
             behaviors.TGraphAsymmErrors.TGraphAsymmErrors,
         ),
     ):
-        if strategy is not HistEdgesStrategy.none:
+        if hist_edges_strategy is not None:
             raise RuntimeError(f"Strategy for loading edges is not supproted in case of loading ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors")
         x = object.all_members["fX"]
         y = object.all_members["fY"]
@@ -497,16 +487,6 @@ def _uproot_load_graph(object, strategy: HistEdgesStrategy) -> tuple[NDArray, ND
         if y.dtype.byteorder == ">":
             y = y.astype(y.dtype.type)
         return x, y
-
-    raise RuntimeError("Can only read graph from TH1*/TGraph* instance via uproot")
-
-
-def _uproot_load_hist_as_graph(object, strategy) -> tuple[NDArray, NDArray]:
-    from uproot import behaviors
-
-    if isinstance(object, behaviors.TH1.TH1):
-        y, x = object.to_numpy()
-        return x[:-1], y
 
     raise RuntimeError("Can only read graph from TH1*/TGraph* instance via uproot")
 
@@ -557,23 +537,23 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to hist")
 
-        def _get_graph(self, object_name: str | None, strategy: HistEdgesStrategy) -> tuple[NDArray, NDArray]:
+        def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
             import ROOT
 
             obj = self._get_object(object_name)
             if isinstance(obj, ROOT.TH1) and obj.GetDimension() == 1:
-                match strategy:
-                    case HistEdgesStrategy.left:
+                match hist_edges_strategy:
+                    case "left":
                         return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
-                    case HistEdgesStrategy.center:
+                    case "center":
                         edges = _get_bin_edges(obj.GetXaxis())
-                        return (edges[1:] + edges[:-1]) / 2.0, _get_buffer_hist1(obj, flows=False)
-                    case HistEdgesStrategy.right:
+                        return (edges[1:] + edges[:-1]) * 0.5, _get_buffer_hist1(obj, flows=False)
+                    case "right":
                         return _get_bin_right_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
                     case _:
-                        raise RuntimeError(f"Unsupported strategy={strategy} for loading histogram edges")
+                        raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
             if isinstance(obj, ROOT.TGraph):
-                if strategy is not HistEdgesStrategy.none:
+                if hist_edges_strategy is not None:
                     raise RuntimeError(f"Strategy for loading edges is not supproted in case of loading ROOT.TGraph")
                 return _get_buffers_graph(obj)
 

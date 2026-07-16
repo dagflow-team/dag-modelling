@@ -105,7 +105,7 @@ def _load_graph_data(
         skey = strkey(key)
         logger.log(INFO3, f"Process {skey}")
 
-        x, y = FileReader.graph[filename, name_function(skey, key), hist_edges_strategy]
+        x, y = FileReader.graph.get(filename, name_function(skey, key), hist_edges_strategy=hist_edges_strategy)
         x = asarray(x, dtype)
         y = asarray(y, dtype)
 
