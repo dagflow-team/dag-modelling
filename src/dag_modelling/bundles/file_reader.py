@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import suppress
 from os import listdir
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from nested_mapping.tools.map import make_reorder_function
 from nested_mapping.typing import properkey
@@ -13,7 +13,7 @@ from ..tools.logger import INFO1, INFO2, INFO3, logger
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
-    from typing import Any
+    from typing import Any, Literal
 
     import ROOT
     from nested_mapping.typing import KeyLike, TupleKey
