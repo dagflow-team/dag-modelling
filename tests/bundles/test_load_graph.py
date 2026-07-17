@@ -34,8 +34,7 @@ def test_load_graph(object_type, n_derivative_points, x_axis_parameters, dtype):
     column_x, column_y = ("x", "y")
     atol = np.finfo(dtype).resolution
 
-    # NOTE
-    # tsv data should be dumped in specific way
+    # NOTE: tsv data should be dumped in specific way
     # prefix_{object_name}.tsv -- {object_name} refers to key in .root/.hdf5/.npz files
     suffix = f"_{object_name}.{object_type}" if object_type == "tsv" else f".{object_type}"
     with tempfile.NamedTemporaryFile(suffix=suffix) as f:
