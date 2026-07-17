@@ -43,11 +43,11 @@ _HistGetter = HistGetter()
 class GraphGetter:
     __slots__ = ()
 
-    def get(self, *names: tuple[str | Path, str | None] | str | Path, hist_edges_strategy: Literal["left", "center", "right"] | None = None) -> tuple[NDArray, NDArray]:
-        if isinstance(names, tuple):
-            file_name, object_name = names
+    def get(self, *names, hist_edges_strategy: Literal["left", "center", "right"] | None = None) -> tuple[NDArray, NDArray]:
+        if isinstance(names[0], tuple):
+            file_name, object_name = names[0]
         else:
-            file_name, object_name = names, None
+            file_name, object_name = names
         fr = FileReader[file_name]
 
         return fr.get_graph(object_name, hist_edges_strategy)
@@ -276,7 +276,7 @@ class FileReaderArray(FileReader):
 
     def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         if hist_edges_strategy is not None:
-            raise RuntimeError("Strategy is not supported for loading arrays")
+            raise RuntimeError("Strategy for loading edges is not supported for arrays")
         return self._get_xy(object_name)
 
     def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
@@ -479,7 +479,7 @@ def _uproot_load_graph(object, hist_edges_strategy: Literal["left", "center", "r
         ),
     ):
         if hist_edges_strategy is not None:
-            raise RuntimeError(f"Strategy for loading edges is not supproted in case of loading ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors")
+            raise RuntimeError(f"Strategy for loading edges is supported only for ROOT.TH*")
         x = object.all_members["fX"]
         y = object.all_members["fY"]
         if x.dtype.byteorder == ">":
@@ -546,15 +546,14 @@ with suppress(ImportError):
                     case "left":
                         return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
                     case "center":
-                        edges = _get_bin_edges(obj.GetXaxis())
-                        return (edges[1:] + edges[:-1]) * 0.5, _get_buffer_hist1(obj, flows=False)
+                        return _get_bin_centers(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
                     case "right":
                         return _get_bin_right_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
                     case _:
                         raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
             if isinstance(obj, ROOT.TGraph):
                 if hist_edges_strategy is not None:
-                    raise RuntimeError(f"Strategy for loading edges is not supproted in case of loading ROOT.TGraph")
+                    raise RuntimeError(f"Strategy for loading edges is supproted only ROOT.TH*")
                 return _get_buffers_graph(obj)
 
             raise ValueError(f"Do not know ho to convert {obj} to graph")
@@ -660,6 +659,12 @@ def _get_bin_left_edges(ax: ROOT.TAxis) -> NDArray:
         lims = frombuffer(xbins.GetArray(), double, n)
         return lims[:-1].copy()
     return linspace(ax.GetXmin(), ax.GetXmax(), ax.GetNbins() + 1)[:-1]
+
+
+def _get_bin_centers(ax: ROOT.TAxis) -> NDArray:
+    """Get the array with bin centers."""
+    edges = _get_bin_edges(ax)
+    return (edges[1:] + edges[:-1]) * 0.5
 
 
 def _get_bin_right_edges(ax: ROOT.TAxis) -> NDArray:
