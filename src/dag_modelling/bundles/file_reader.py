@@ -448,8 +448,10 @@ def _uproot_load_array(object) -> NDArray:
         ncols = object.all_members["fNcols"]
 
         array = object.all_members["fElements"].reshape(nrows, ncols)
+    # NOTE: Read 2D histogram as matrix, ignore edges
     elif isinstance(object, behaviors.TH2.TH2):
         array, _, _ = object.to_numpy()
+        array = array.T
     else:
         raise RuntimeError(f"Do not know how to work with {type(object)}")
 
