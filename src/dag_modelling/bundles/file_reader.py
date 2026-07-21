@@ -441,13 +441,17 @@ class FileReaderROOTUpROOT(FileReader):
 
 def _uproot_load_array(object) -> NDArray:
     # At the moment uproot does not support reading numpy data from TMatrixT
-    if not type(object).__name__.startswith("Model_TMatrixT"):
-        raise RuntimeError("Can only read arrays from TMatrixT instance via uproot")
+    from uproot import behaviors
 
-    nrows = object.all_members["fNrows"]
-    ncols = object.all_members["fNcols"]
+    if type(object).__name__.startswith("Model_TMatrixT"):
+        nrows = object.all_members["fNrows"]
+        ncols = object.all_members["fNcols"]
 
-    array = object.all_members["fElements"].reshape(nrows, ncols)
+        array = object.all_members["fElements"].reshape(nrows, ncols)
+    elif isinstance(object, behaviors.TH2.TH2):
+        array, _, _ = object.to_numpy()
+    else:
+        raise RuntimeError(f"Do not know how to work with {type(object)}")
 
     if array.dtype.byteorder == ">":
         array = array.astype(array.dtype.type)
