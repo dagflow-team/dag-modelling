@@ -439,7 +439,7 @@ class FileReaderROOTUpROOT(FileReader):
         return tuple(key.split(";", 1)[0] for key in self._file.GetListOfKeys())
 
 
-def _uproot_load_array(object) -> NDArray:
+def _uproot_load_array(object, hist_flow: bool = False) -> NDArray:
     # At the moment uproot does not support reading numpy data from TMatrixT
     from uproot import behaviors
 
@@ -450,11 +450,12 @@ def _uproot_load_array(object) -> NDArray:
         array = object.all_members["fElements"].reshape(nrows, ncols)
     # NOTE: Read 2D histogram as matrix, ignore edges
     elif isinstance(object, behaviors.TH2.TH2):
-        array, _, _ = object.to_numpy()
+        array, _, _ = object.to_numpy(flow=hist_flow)
         array = array.T
     # NOTE: Read 1D histogram as matrix, ignore edges
     elif isinstance(object, behaviors.TH1.TH1):
-        array, _ = object.to_numpy()
+        array, _, _ = object.to_numpy(flow=hist_flow)
+        array = array.T
     else:
         raise RuntimeError(f"Do not know how to work with {type(object)}")
 
