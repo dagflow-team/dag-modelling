@@ -454,7 +454,7 @@ def _uproot_load_array(object, hist_flow: bool = False) -> NDArray:
         array = array.T
     # NOTE: Read 1D histogram as matrix, ignore edges
     elif isinstance(object, behaviors.TH1.TH1):
-        array, _, _ = object.to_numpy(flow=hist_flow)
+        array, _ = object.to_numpy(flow=hist_flow)
         array = array.T
     else:
         raise RuntimeError(f"Do not know how to work with {type(object)}")
