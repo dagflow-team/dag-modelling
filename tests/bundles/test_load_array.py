@@ -1,6 +1,7 @@
 import tempfile
 
 import h5py
+import uproot
 import numpy as np
 import pytest
 
@@ -17,11 +18,14 @@ def _save_data(filename, object_name, data):
         with h5py.File(filename, "w") as f:
             f.create_dataset(object_name, data=data)
     elif extension == "root":
-        raise RuntimeError("It is not implemented")
+        # NOTE: data should be transposed to be written in form of histogram
+        # It checks only 2D histogram, TMatrix should be added in the future
+        edges = [np.arange(shape + 1) for shape in data.shape]
+        with uproot.recreate(filename) as f:
+            f[object_name] = (data.T, *edges[::-1])
 
 
-# TODO: Add .root
-@pytest.mark.parametrize("object_type", ["hdf5", "npz", "tsv"])
+@pytest.mark.parametrize("object_type", ["hdf5", "npz", "tsv", "root"])
 @pytest.mark.parametrize(
     "size,dtype", [((10, 10), "d"), ((12, 10), "f"), ((5,), "d"), ((1, 15), "f")]
 )
