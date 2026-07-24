@@ -112,8 +112,6 @@ class HistSmearErf(Node):
             self._smear_matrix._data,
             self._min_events,
         )
-        # print(self._smear_matrix._data)
-        # print(self._rel_sigma.data)
 
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
@@ -122,9 +120,10 @@ class HistSmearErf(Node):
         check_size_of_inputs(self, "Edges", exact=size + 1)
         # check_inputs_have_same_shape(self, ["Edges", "EdgesOut"])
 
-        rel_sigma_dd = self._rel_sigma.dd
+        edges_in_dd = self._edges.dd
         edges_out_dd = self._edges_out.dd
-        self._smear_matrix.dd.shape = (edges_out_dd.shape[0], rel_sigma_dd.shape[0])
+        rel_sigma_dd = self._rel_sigma.dd
+        self._smear_matrix.dd.shape = (edges_out_dd.shape[0] - 1, edges_in_dd.shape[0] - 1)
         self._smear_matrix.dd.dtype = rel_sigma_dd.dtype
         edges = self._edges._parent_output
         edges_out = self._edges_out._parent_output

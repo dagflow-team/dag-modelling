@@ -38,7 +38,7 @@ def test_HistSmearErf(
     ax = plt.subplot(111, xlabel="x", ylabel="y")
     ax.set_aspect("equal")
     ax.minorticks_on()
-    ax.vlines(edges_in, edges_out[0], edges_out[-1], linestyle="dashed", color="gray", alpha=0.5)
+    ax.vlines(edges_in, edges_out[0], edges_out[-2], linestyle="dashed", color="gray", alpha=0.5)
     ax.hlines(edges_out, edges_in[0], edges_in[-2], linestyle="dashed", color="gray", alpha=0.5)
 
     res_m = ma.array(res, mask=(res == 0))
