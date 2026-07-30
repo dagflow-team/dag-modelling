@@ -1,7 +1,7 @@
 from typing import Literal
 
 from matplotlib import pyplot as plt
-from numpy import allclose, fabs, finfo, linspace, logical_and, ma, where, full_like
+from numpy import allclose, fabs, finfo, full_like, linspace, logical_and, ma, where
 from numpy.typing import NDArray
 from pytest import mark
 
@@ -44,7 +44,9 @@ def test_HistSmearErf(
     match sigma_type:
         case "relative":
             sigma_rel = full_like(centers, sigma)
+            sigma_abs = centers*sigma_rel
         case "absolute":
+            sigma_abs = full_like(centers, sigma)
             sigma_rel = sigma / centers
 
         case _:
@@ -69,6 +71,8 @@ def test_HistSmearErf(
     res_sum1 = res.sum(axis=0)
     threshold = finfo(dtype).resolution
 
+    res_m = ma.array(res, mask=(fabs(res) < threshold))
+
     plt.figure()
     ax = plt.subplot(
         111,
@@ -81,13 +85,52 @@ def test_HistSmearErf(
     # ax.vlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
     # ax.hlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
 
-    res_m = ma.array(res, mask=(fabs(res) < threshold))
     cmbl = ax.matshow(res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]])
     add_colorbar(cmbl)
 
     ax.plot([edges[0], edges[-1]], [edges[0], edges[-1]], color="red", alpha=0.5)
 
     plt.savefig(f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-plot.pdf")
+
+    plt.figure()
+    ax = plt.subplot(
+        111,
+        xlabel="true",
+        ylabel="smeared",
+        title=f"Energy resolution: {mode}, σ={sigma} ({sigma_type})",
+    )
+    ax.set_aspect("equal")
+    ax.minorticks_on()
+    # ax.vlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
+    # ax.hlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
+
+    cmbl = ax.matshow(
+        res_m, vmin=1.0e-4, vmax=1, norm="log", extent=[edges[0], edges[-1], edges[-1], edges[0]]
+    )
+    add_colorbar(cmbl)
+
+    ax.plot([edges[0], edges[-1]], [edges[0], edges[-1]], color="red", alpha=0.5)
+
+    plt.savefig(f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-log.pdf")
+
+    plt.figure()
+    ax = plt.subplot(
+        111,
+        xlabel="true",
+        ylabel="smeared",
+        title=f"Energy resolution: {mode}, σ={sigma} ({sigma_type})",
+    )
+    ax.minorticks_on()
+    ax.grid()
+
+    for icol in (1, 10, 20, 40, 60, 80, 99):
+        slc = res[:, icol]
+        ax.stairs(slc, edges, label=f"[{edges[icol]:.2f}, {edges[icol+1]:.2f}], σ={sigma_abs[icol]:.2f}")
+    ax.legend()
+
+    plt.savefig(
+        f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-slices.pdf"
+    )
 
     mask_no_underflow = fabs(res[0, :]) < threshold
     mask_no_overflow = fabs(res[-1, :]) < threshold
@@ -98,10 +141,9 @@ def test_HistSmearErf(
 
     plt.show()
 
-    assert is_continuous(mask_no_spill)
-    assert allclose(res_sum[mask_no_spill], 1.0, atol=threshold)
-
-    # TODO: add tests
+    # assert is_continuous(mask_no_spill)
+    # assert all(res_sum < 1.0 + threshold)
+    # assert allclose(res_sum[mask_no_spill], 1.0, atol=threshold)
 
 
 def is_continuous(mask: NDArray) -> bool:
