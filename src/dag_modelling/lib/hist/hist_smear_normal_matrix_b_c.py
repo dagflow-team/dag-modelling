@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)
-def __resolution(e_true: double, e_rec: double, rel_sigma: double) -> double:
+def __resolution_width(e_true: double, e_rec: double, rel_sigma: double) -> double:
     _invtwopisqrt = 1.0 / sqrt(2.0 * pi)
     sigma = e_true * rel_sigma
     reldiff = (e_true - e_rec) / sigma
@@ -33,12 +33,12 @@ def __resolution(e_true: double, e_rec: double, rel_sigma: double) -> double:
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)
-def _resolution(
+def _resolution_matrix(
     rel_sigma: NDArray[double],
     edges: NDArray[double],
     edges_out: NDArray[double],
     result: NDArray[double],
-    min_events: float,
+    value_threshold: float,
 ) -> None:
     assert edges is edges_out or allclose(edges, edges_out, atol=0.0, rtol=0.0)
 
@@ -51,8 +51,8 @@ def _resolution(
         for jrec in range(nbins):
             erec = bincenter(jrec)
             d_erec = edges[jrec + 1] - edges[jrec]
-            r_events = d_erec * __resolution(etrue, erec, rel_sigma_i)
-            if r_events < min_events:
+            r_events = d_erec * __resolution_width(etrue, erec, rel_sigma_i)
+            if r_events < value_threshold:
                 if is_right_edge:
                     result[jrec:, itrue] = 0.0
                     break
@@ -74,15 +74,15 @@ class HistSmearNormalMatrixBC(Node):
         `0` or `SmearMatrix`: SmearMatrixing weights (NxN)
     """
 
-    __slots__ = ("_edges", "_edges_out", "_rel_sigma", "_smear_matrix", "_min_events")
+    __slots__ = ("_edges", "_edges_out", "_rel_sigma", "_smear_matrix", "_value_threshold")
 
     _edges: Input
     _edges_out: Input
     _rel_sigma: Input
     _smear_matrix: Output
-    _min_events: float
+    _value_threshold: float
 
-    def __init__(self, name, min_events: float = 1e-10, *args, **kwargs):
+    def __init__(self, name, value_threshold: float = 1e-10, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.labels.setdefaults(
             {
@@ -90,23 +90,23 @@ class HistSmearNormalMatrixBC(Node):
                 "axis": r"C",
             }
         )
-        self._min_events = min_events
+        self._value_threshold = value_threshold
         self._rel_sigma = self._add_input("RelSigma")  # input: 0
         self._edges = self._add_input("Edges", positional=False)
         self._edges_out = self._add_input("EdgesOut", positional=False)
         self._smear_matrix = self._add_output("SmearMatrix")  # output: 0
 
     @property
-    def min_events(self) -> float:
-        return self._min_events
+    def value_threshold(self) -> float:
+        return self._value_threshold
 
     def _function(self):
-        _resolution(
+        _resolution_matrix(
             self._rel_sigma.data,
             self._edges.data,
             self._edges_out.data,
             self._smear_matrix._data,
-            self._min_events,
+            self._value_threshold,
         )
 
     def _type_function(self) -> None:
@@ -116,8 +116,10 @@ class HistSmearNormalMatrixBC(Node):
         check_size_of_inputs(self, "Edges", exact=size + 1)
         check_inputs_have_same_shape(self, ["Edges", "EdgesOut"])
 
+        edges_in_dd = self._edges.dd
+        edges_out_dd = self._edges_out.dd
         rel_sigma_dd = self._rel_sigma.dd
-        self._smear_matrix.dd.shape = (rel_sigma_dd.shape[0], rel_sigma_dd.shape[0])
+        self._smear_matrix.dd.shape = (edges_out_dd.shape[0] - 1, edges_in_dd.shape[0] - 1)
         self._smear_matrix.dd.dtype = rel_sigma_dd.dtype
         edges = self._edges._parent_output
         edges_out = self._edges_out._parent_output
