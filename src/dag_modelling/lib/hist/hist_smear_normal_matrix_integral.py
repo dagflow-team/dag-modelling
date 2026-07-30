@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from math import erf, exp, sqrt
+from math import erf
 from typing import TYPE_CHECKING
 
 from numba import njit
-from numpy import allclose, pi
+from numpy import allclose, exp, pi, sqrt
 
 from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
@@ -30,6 +30,7 @@ def _resolution_matrix(
     edges: NDArray[double],
     edges_out: NDArray[double],
     result: NDArray[double],
+    value_threshold: float,
 ) -> None:
     assert edges is edges_out or allclose(edges, edges_out, atol=0.0, rtol=0.0)
     n_bins_in = len(edges) - 1
@@ -42,7 +43,10 @@ def _resolution_matrix(
         jtrue_next = jtrue + 1
         delta_jtrue = edges[jtrue_next] - edges[jtrue]
         sigma_jtrue = edges[jtrue] * rel_sigma[jtrue]
-        sigma_jtrue_next = edges[jtrue_next] * rel_sigma[jtrue_next]
+        if jtrue_next < n_bins_in:
+            sigma_jtrue_next = edges[jtrue_next] * rel_sigma[jtrue_next]
+        else:  # assume
+            sigma_jtrue_next = sigma_jtrue
         if sigma_jtrue == 0.0:
             for krec in range(n_bins_out):
                 result[krec, jtrue] = 0.0
@@ -70,9 +74,11 @@ def _resolution_matrix(
                 + exp(-reldelta_01 * reldelta_01)
                 - (exp(-reldelta_00 * reldelta_00) + exp(-reldelta_11 * reldelta_11))
             )
-            result[krec, jtrue] = (
+            res= (
                 0.5 * part_erf + _inv_sqrt_twopi * sigma_jtrue * part_exp
             ) / delta_jtrue
+            if res>value_threshold:
+                result[krec, jtrue] = res
 
 
 class HistSmearNormalMatrixIntegral(Node):
@@ -81,20 +87,21 @@ class HistSmearNormalMatrixIntegral(Node):
     inputs:
         `0` or `RelSigma`: Relative Sigma value for each bin (N elements)
         `Edges`: Input bin Edges (N elements)
-        `EdgesOut`: Output bin Edges (M elements)
+        `EdgesOut`: Output bin Edges (N elements), should be consistent with Edges.
 
     outputs:
-        `0` or `SmearMatrix`: SmearMatrixing weights (NxM)
+        `0` or `SmearMatrix`: SmearMatrixing weights (NxN)
     """
 
-    __slots__ = ("_edges", "_edges_out", "_rel_sigma", "_smear_matrix")
+    __slots__ = ("_edges", "_edges_out", "_rel_sigma", "_smear_matrix", "_value_threshold")
 
     _edges: Input
     _edges_out: Input
     _rel_sigma: Input
     _smear_matrix: Output
+    _value_threshold: float
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, value_threshold: float = 1e-10, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.labels.setdefaults(
             {
@@ -102,10 +109,15 @@ class HistSmearNormalMatrixIntegral(Node):
                 "axis": r"C",
             }
         )
+        self._value_threshold = value_threshold
         self._rel_sigma = self._add_input("RelSigma")  # input: 0
         self._edges = self._add_input("Edges", positional=False)
         self._edges_out = self._add_input("EdgesOut", positional=False)
         self._smear_matrix = self._add_output("SmearMatrix")  # output: 0
+
+    @property
+    def value_threshold(self) -> float:
+        return self._value_threshold
 
     def _function(self):
         _resolution_matrix(
@@ -113,6 +125,7 @@ class HistSmearNormalMatrixIntegral(Node):
             self._edges.data,
             self._edges_out.data,
             self._smear_matrix._data,
+            self._value_threshold,
         )
 
     def _type_function(self) -> None:
