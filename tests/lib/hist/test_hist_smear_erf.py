@@ -4,7 +4,7 @@ from pytest import mark
 
 from dag_modelling.core.graph import Graph
 from dag_modelling.lib.common import Array
-from dag_modelling.lib.hist.hist_smear_erf import HistSmearErf
+from dag_modelling.lib.hist.hist_smear_normal_matrix_integral import HistSmearNormalMatrixIntegral
 from dag_modelling.plot.plot import add_colorbar
 
 
@@ -16,7 +16,7 @@ def test_HistSmearErf(
     output_path: str,
 ):
     nbins_in, nbins_out = shape
-    edges_in =  linspace(0, nbins_in, nbins_in + 1, dtype=dtype)
+    edges_in = linspace(0, nbins_in, nbins_in + 1, dtype=dtype)
     edges_out = linspace(0, nbins_out, nbins_out + 1, dtype=dtype)
 
     relsigma = 0.1 / (edges_in[1:] + edges_in[:-1])
@@ -26,7 +26,7 @@ def test_HistSmearErf(
         EdgesOut = Array("EdgesOut", edges_out, mode="fill")
         RelSigma = Array("Relative resolution", relsigma, mode="fill")
 
-        mat = HistSmearErf("Smearing Erf")
+        mat = HistSmearNormalMatrixIntegral("Smearing Erf")
 
         EdgesIn >> mat.inputs["Edges"]
         EdgesOut >> mat.inputs["EdgesOut"]

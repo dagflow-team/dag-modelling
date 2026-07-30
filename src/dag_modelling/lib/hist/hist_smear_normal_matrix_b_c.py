@@ -86,10 +86,8 @@ class HistSmearNormalMatrixBC(Node):
         super().__init__(name, *args, **kwargs)
         self.labels.setdefaults(
             {
-                "text": r"Energy resolution $E_{res}$, MeV",
-                "plot_title": r"Energy resolution $E_{res}$, MeV",
-                "latex": r"$E_{res}$, MeV",
-                "axis": r"$E_{res}$, MeV",
+                "text": r"Energy resolution matrix (via bin centers)",
+                "axis": r"C",
             }
         )
         self._min_events = min_events
