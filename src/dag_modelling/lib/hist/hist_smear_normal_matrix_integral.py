@@ -74,11 +74,20 @@ def _resolution_matrix(
                 + exp(-reldelta_01 * reldelta_01)
                 - (exp(-reldelta_00 * reldelta_00) + exp(-reldelta_11 * reldelta_11))
             )
-            res= (
-                0.5 * part_erf + _inv_sqrt_twopi * sigma_jtrue * part_exp
-            ) / delta_jtrue
-            if res>value_threshold:
+            res = (0.5 * part_erf + _inv_sqrt_twopi * sigma_jtrue * part_exp) / delta_jtrue
+            if res > value_threshold:
                 result[krec, jtrue] = res
+
+    for jtrue in range(n_bins_in):
+        if result[0, jtrue] != 0.0 or result[-1, jtrue] != 0.0:
+            continue
+        colsum = 0.0
+        for irec in range(n_bins_out):
+            colsum += result[irec, jtrue]
+        if colsum <= 0.0:
+            continue
+        for irec in range(n_bins_out):
+            result[irec, jtrue] /= colsum
 
 
 class HistSmearNormalMatrixIntegral(Node):

@@ -1,7 +1,7 @@
 from typing import Literal
 
 from matplotlib import pyplot as plt
-from numpy import allclose, fabs, finfo, full_like, linspace, logical_and, ma, where
+from numpy import allclose, exp, fabs, finfo, full_like, linspace, logical_and, ma, pi, sqrt, where
 from numpy.typing import NDArray
 from pytest import mark
 
@@ -15,11 +15,17 @@ from dag_modelling.plot.plot import add_colorbar
     "dtype",
     (
         "d",
-        # "f"
+        "f"
     ),
 )
-@mark.parametrize("nbins", (100,))
-@mark.parametrize("mode", ("integral", "bincenter"))
+@mark.parametrize("nbins", (2000,))
+@mark.parametrize(
+    "mode",
+    (
+        "integral",
+        "bincenter"
+    ),
+)
 @mark.parametrize(
     "sigma_type,sigma",
     (
@@ -39,12 +45,13 @@ def test_HistSmearErf(
     output_path: str,
 ):
     edges = linspace(0, 10, nbins + 1, dtype=dtype)
+    binwidths = edges[1:] - edges[:-1]
 
     centers = 0.5 * (edges[1:] + edges[:-1])
     match sigma_type:
         case "relative":
             sigma_rel = full_like(centers, sigma)
-            sigma_abs = centers*sigma_rel
+            sigma_abs = centers * sigma_rel
         case "absolute":
             sigma_abs = full_like(centers, sigma)
             sigma_rel = sigma / centers
@@ -68,7 +75,6 @@ def test_HistSmearErf(
 
     res = mat.get_data()
     res_sum = res.sum(axis=0)
-    res_sum1 = res.sum(axis=0)
     threshold = finfo(dtype).resolution
 
     res_m = ma.array(res, mask=(fabs(res) < threshold))
@@ -82,8 +88,6 @@ def test_HistSmearErf(
     )
     ax.set_aspect("equal")
     ax.minorticks_on()
-    # ax.vlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
-    # ax.hlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
 
     cmbl = ax.matshow(res_m, vmin=0, vmax=1, extent=[edges[0], edges[-1], edges[-1], edges[0]])
     add_colorbar(cmbl)
@@ -101,8 +105,6 @@ def test_HistSmearErf(
     )
     ax.set_aspect("equal")
     ax.minorticks_on()
-    # ax.vlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
-    # ax.hlines(edges, edges[0], edges[-2], linestyle="solid", color="gray", alpha=0.4)
 
     cmbl = ax.matshow(
         res_m, vmin=1.0e-4, vmax=1, norm="log", extent=[edges[0], edges[-1], edges[-1], edges[0]]
@@ -122,10 +124,28 @@ def test_HistSmearErf(
     )
     ax.minorticks_on()
     ax.grid()
+    ax.set_yscale("log")
+    ax.set_ylim(bottom=1.0e-6)
 
-    for icol in (1, 10, 20, 40, 60, 80, 99):
+    xfine = linspace(edges[0], edges[-1], 10000)
+    for i, icol_perc in enumerate((1, 10, 20, 40, 60, 80, 99)):
+        icol = (nbins * icol_perc) // 100
         slc = res[:, icol]
-        ax.stairs(slc, edges, label=f"[{edges[icol]:.2f}, {edges[icol+1]:.2f}], σ={sigma_abs[icol]:.2f}")
+        ax.stairs(
+            slc,
+            edges,
+            label=f"[{edges[icol]:.2f}, {edges[icol+1]:.2f}], σ={sigma_abs[icol]:.2f}",
+            color=f"C{i}",
+        )
+
+        yfine = gaus(xfine, sigma=sigma_abs[icol], center=centers[icol], binwidth=binwidths[icol])
+        ax.plot(
+            xfine,
+            yfine,
+            alpha=0.5,
+            color=f"C{i}",
+        )
+
     ax.legend()
 
     plt.savefig(
@@ -137,15 +157,20 @@ def test_HistSmearErf(
     mask_no_spill = logical_and(mask_no_overflow, mask_no_underflow)
     print(f"masked sum {mode} {sigma_type} {sigma}", res_sum[mask_no_spill])
     print("sum rows", res_sum)
-    print("sum cols", res_sum1)
 
     plt.show()
 
-    # assert is_continuous(mask_no_spill)
-    # assert all(res_sum < 1.0 + threshold)
+    assert is_continuous(mask_no_spill)
+    # assert all(res_sum < 1.0)
     # assert allclose(res_sum[mask_no_spill], 1.0, atol=threshold)
 
 
 def is_continuous(mask: NDArray) -> bool:
     idx = where(mask)[0]
     return len(idx) == 0 or (idx[-1] - idx[0] + 1 == len(idx))
+
+
+def gaus(x: NDArray, sigma: float, center: float, binwidth: float) -> NDArray:
+    scale = binwidth / (sqrt(2 * pi) * sigma)
+    reldiff = (x - center) / sigma
+    return scale * exp(-0.5 * reldiff**2)
