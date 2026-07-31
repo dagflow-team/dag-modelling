@@ -89,6 +89,7 @@ def test_HistSmearErf(
     ax.plot([edges[0], edges[-1]], [edges[0], edges[-1]], color="red", alpha=0.5)
 
     plt.savefig(f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-plot.pdf")
+    plt.close()
 
     plt.figure()
     ax = plt.subplot(
@@ -108,6 +109,7 @@ def test_HistSmearErf(
     ax.plot([edges[0], edges[-1]], [edges[0], edges[-1]], color="red", alpha=0.5)
 
     plt.savefig(f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-log.pdf")
+    plt.close()
 
     plt.figure()
     ax = plt.subplot(
@@ -145,12 +147,13 @@ def test_HistSmearErf(
     plt.savefig(
         f"{output_path}/{test_name}-{mode}-{dtype}-{nbins}-{sigma_type}-{sigma!s}-slices.pdf"
     )
+    plt.close()
 
     mask_no_underflow = fabs(res[0, :]) < threshold
     mask_no_overflow = fabs(res[-1, :]) < threshold
     mask_no_spill = logical_and(mask_no_overflow, mask_no_underflow)
-    print(f"masked sum {mode} {sigma_type} {sigma}", res_sum[mask_no_spill])
-    print("sum rows", res_sum)
+    # print(f"masked sum {mode} {sigma_type} {sigma}", res_sum[mask_no_spill])
+    # print("sum rows", res_sum)
 
     # plt.show()
 
