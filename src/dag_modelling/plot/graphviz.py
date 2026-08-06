@@ -71,6 +71,9 @@ class GraphDot:
 
     _show: set[
         Literal[
+            "full",
+            "all",
+            "meta",
             "type",
             "mark",
             "label",
@@ -120,6 +123,15 @@ class GraphDot:
                 "status",
                 "data_part",
                 "data_summary",
+            }
+        elif show == "meta" or "meta" in show:
+            self._show = {
+                "type",
+                "mark",
+                "label",
+                "path",
+                "index",
+                "status",
             }
         else:
             self._show = set(show)
