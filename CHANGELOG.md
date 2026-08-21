@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.16.0] - 2026-08-XX
+
+- Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration of
+  Gaussian with flat function within each bin.
+- Support reading matrices from root files from TH2* histograms.
+- Various minor fixes and updates.
+
 ## [0.15.0] - 2026-02-17
 
 - feature: add `tools.graph_walker` — a generic tool to walk over the whole graph.
