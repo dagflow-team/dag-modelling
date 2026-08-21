@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)
-def __resolution_width(e_true: double, e_rec: double, rel_sigma: double) -> double:
+def _resolution_width(e_true: double, e_rec: double, rel_sigma: double) -> double:
     _invtwopisqrt = 1.0 / sqrt(2.0 * pi)
     sigma = e_true * rel_sigma
     reldiff = (e_true - e_rec) / sigma
@@ -51,7 +51,7 @@ def _resolution_matrix(
         for jrec in range(nbins):
             erec = bincenter(jrec)
             d_erec = edges[jrec + 1] - edges[jrec]
-            r_events = d_erec * __resolution_width(etrue, erec, rel_sigma_i)
+            r_events = d_erec * _resolution_width(etrue, erec, rel_sigma_i)
             if r_events < value_threshold:
                 if is_right_edge:
                     result[jrec:, itrue] = 0.0

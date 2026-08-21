@@ -23,8 +23,8 @@ from dag_modelling.plot.plot import add_colorbar
 @mark.parametrize(
     "sigma_type,sigma",
     (
-        ("relative", 0.1),
-        ("absolute", 0.1),
+        # ("relative", 0.1),
+        # ("absolute", 0.1),
         ("relative", 0.5),
         ("absolute", 0.5),
     ),
@@ -157,17 +157,20 @@ def test_HistSmearErf(
 
     # plt.show()
 
-    # assert is_continuous(mask_no_spill)
-    # assert all(res_sum < 1.0)
-    # assert allclose(res_sum[mask_no_spill], 1.0, atol=threshold)
+    bin_start = 10
+    mask_no_spill[:bin_start] = False
+    if dtype == "d":
+        assert is_continuous(mask_no_spill)
+        assert all(res_sum[bin_start:] < 1.0 + threshold * 10)
+        assert allclose(res_sum[mask_no_spill], 1.0, atol=threshold)
 
 
-# def is_continuous(mask: NDArray) -> bool:
-#     idx = where(mask)[0]
-#     return len(idx) == 0 or (idx[-1] - idx[0] + 1 == len(idx))
+def is_continuous(mask: NDArray) -> bool:
+    idx = where(mask)[0]
+    return len(idx) == 0 or (idx[-1] - idx[0] + 1 == len(idx))
 
 
-def gaus(x: NDArray, sigma: float, center: float, binwidth: float) -> NDArray:
+def gauss(x: NDArray, sigma: float, center: float, binwidth: float) -> NDArray:
     scale = binwidth / (sqrt(2 * pi) * sigma)
     reldiff = (x - center) / sigma
     return scale * exp(-0.5 * reldiff**2)

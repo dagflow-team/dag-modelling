@@ -35,6 +35,7 @@ def _resolution_matrix(
     assert edges is edges_out or allclose(edges, edges_out, atol=0.0, rtol=0.0)
     n_bins_in = len(edges) - 1
     n_bins_out = len(edges_out) - 1
+    last_bin_out = n_bins_out - 1
 
     _inv_sqrt_two = 1.0 / sqrt(2.0)
     _inv_sqrt_twopi = _inv_sqrt_two / sqrt(pi)
@@ -79,7 +80,7 @@ def _resolution_matrix(
                 result[krec, jtrue] = res
 
     for jtrue in range(n_bins_in):
-        if result[0, jtrue] != 0.0 or result[-1, jtrue] != 0.0:
+        if result[0, jtrue] != 0.0 or result[last_bin_out, jtrue] != 0.0:
             continue
         colsum = 0.0
         for irec in range(n_bins_out):
