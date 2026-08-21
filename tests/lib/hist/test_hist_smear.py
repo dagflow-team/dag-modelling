@@ -134,7 +134,7 @@ def test_HistSmearErf(
             color=f"C{i}",
         )
 
-        yfine = gaus(xfine, sigma=sigma_abs[icol], center=centers[icol], binwidth=binwidths[icol])
+        yfine = gauss(xfine, sigma=sigma_abs[icol], center=centers[icol], binwidth=binwidths[icol])
         ax.plot(
             xfine,
             yfine,
