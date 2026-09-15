@@ -1,6 +1,7 @@
 from sys import argv
 
 from pytest import mark
+from time import perf_counter
 
 from dag_modelling.core.graph import Graph
 from dag_modelling.tools.profiling import DelayNode, FrameworkProfiler, NodeProfiler
@@ -18,7 +19,7 @@ def test_one_delay_node():
     res = profiling.estimate_node(sl, n_runs=4)
     print("SL0 (must be ≈ 1):", res)
     profiling.estimate_target_nodes()
-    report = profiling.print_report()
+    profiling.print_report()
 
 
 def _gen_graph(sleep_time: float):
@@ -34,19 +35,19 @@ def _gen_graph(sleep_time: float):
 @mark.skipif("--include-long-time-tests" not in argv, reason="long-time tests switched off")
 def test_three_delay_nodes():
     for sleep_t in (0.1, 0.25, 0.5):
-        g, nodes = _gen_graph(sleep_time=sleep_t)
+        _, nodes = _gen_graph(sleep_time=sleep_t)
         print("\nsleep_time =", sleep_t)
 
-        profiling = NodeProfiler(nodes, n_runs=5)
+        profiling = NodeProfiler(nodes, n_runs=5, timer=perf_counter)
         profiling.estimate_target_nodes()
 
         report = profiling.make_report(group_by=None)
-        assert all(abs(report["time"] - sleep_t) < EPS)
-        profiling.print_report(group_by=None)
+        assert all(abs(report["t_node_average"] - sleep_t) < EPS)
+        profiling.print_report()
 
-        fprofiling = FrameworkProfiler(nodes)
+        fprofiling = FrameworkProfiler(nodes, timer=perf_counter)
         fprofiling.estimate_framework_time()
 
-        report = fprofiling.make_report(group_by=None)
-        assert all(report["time"] < EPS)
+        report = fprofiling.make_report()
+        assert all(report["t_step"] < EPS)
         fprofiling.print_report()

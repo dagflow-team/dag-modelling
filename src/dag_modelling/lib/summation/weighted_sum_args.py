@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import array, copyto
 
@@ -29,8 +29,9 @@ class WeightedSumArgs(ManyToOneNode):
         self._weight = array(weight)
         self._labels.setdefault("mark", "Σᵢwᵢa⃗ᵢ")
         assert len(self._weight.shape) == 1, "Array of weights should be 1d"
-        self._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
+        self._evaluator._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         super()._type_function()
@@ -42,9 +43,9 @@ class WeightedSumArgs(ManyToOneNode):
                 node=self,
             )
         elif shape == 1:
-            self.function = self._functions_dict["number"]
+            self._evaluator.function = self._evaluator._functions_dict["number"]
         elif shape == leninp:
-            self.function = self._functions_dict["iterable"]
+            self._evaluator.function = self._evaluator._functions_dict["iterable"]
         else:
             raise TypeFunctionError(
                 f"The number of weights (={shape}) must coincide "

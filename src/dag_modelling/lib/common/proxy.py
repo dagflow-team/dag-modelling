@@ -15,7 +15,7 @@ class Proxy(ManyToOneNode):
         self._labels.setdefault("mark", "proxy")
 
     def _function(self):
-        self._input_nodes_callbacks[self._idx]()
+        self._evaluator._input_nodes_callbacks[self._idx]()
         copyto(self._output_data, self._input_data[self._idx])
 
     def switch_input(self, idx: int) -> None:

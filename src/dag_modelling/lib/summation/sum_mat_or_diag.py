@@ -1,3 +1,5 @@
+from typing import override
+
 from numba import njit
 from numpy import add, copyto
 from numpy.typing import NDArray
@@ -40,10 +42,10 @@ class SumMatOrDiag(ManyToOneNode):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("input_strategy", AddNewInputAddAndKeepSingleOutput(output_fmt="result"))
         super().__init__(*args, **kwargs)
-        self._functions_dict.update({2: self._fcn2d, 1: self._fcn1d})
+        self._evaluator._functions_dict.update({2: self._fcn2d, 1: self._fcn1d})
 
     def _fcn2d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -61,7 +63,7 @@ class SumMatOrDiag(ManyToOneNode):
                     add(input_data, output_data, out=output_data)
 
     def _fcn1d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -69,6 +71,7 @@ class SumMatOrDiag(ManyToOneNode):
         for input_data in self._input_data_other:
             add(output_data, input_data, out=output_data)
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self)
@@ -86,4 +89,4 @@ class SumMatOrDiag(ManyToOneNode):
         else:
             assert False
 
-        self.function = self._functions_dict[self._ndim]
+        self._evaluator.function = self._evaluator._functions_dict[self._ndim]

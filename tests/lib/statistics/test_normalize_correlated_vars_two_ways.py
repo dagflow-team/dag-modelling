@@ -165,8 +165,8 @@ def test_NormalizeCorrelatedVarsTwoWays_00(dtype, output_path: str):
     #
     # Set value (with immediate flag)
     #
-    norm2d._immediate = True
-    norm1d._immediate = True
+    norm2d._evaluator._immediate = True
+    norm1d._evaluator._immediate = True
     value1d.set(inCentral)
     value2d.set(inCentral)
     norm_matrix = norm2d.outputs[1]._data
@@ -181,8 +181,8 @@ def test_NormalizeCorrelatedVarsTwoWays_00(dtype, output_path: str):
     #
     # Set value (with immediate flag)
     #
-    norm2d._immediate = True
-    norm1d._immediate = True
+    norm2d._evaluator._immediate = True
+    norm1d._evaluator._immediate = True
     normvalue1d.set(inOnes)
     normvalue2d.set(inOnes)
     norm_matrix = norm2d.outputs[1]._data
@@ -197,8 +197,8 @@ def test_NormalizeCorrelatedVarsTwoWays_00(dtype, output_path: str):
     #
     # Set central
     #
-    norm2d._immediate = False
-    norm1d._immediate = False
+    norm2d._evaluator._immediate = False
+    norm1d._evaluator._immediate = False
     central.set(-inOnes)
     back_matrix = norm2d.get_data(0)
     back_diag = norm1d.get_data(0)

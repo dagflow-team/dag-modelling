@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import empty, square, subtract
@@ -84,7 +84,7 @@ class Chi2(ManyToOneNode):
         self._theory_tuple = ()  # input: 1
         self._errors_tuple = ()  # input: 2
         self._triplets_tuple = ()
-        self._functions_dict.update({"1d": self._function_1d, "2d": self._function_2d})
+        self._evaluator._functions_dict.update({"1d": self._function_1d, "2d": self._function_2d})
 
     @staticmethod
     def _input_names() -> tuple[str, ...]:
@@ -95,7 +95,7 @@ class Chi2(ManyToOneNode):
         return self._matrix_is_lower
 
     def _function_1d(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         ret = self._output_data
@@ -105,7 +105,7 @@ class Chi2(ManyToOneNode):
             _chi2_1d_add(data, theory, errors, ret)
 
     def _function_2d(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         buffer = self._buffer
@@ -119,6 +119,7 @@ class Chi2(ManyToOneNode):
 
         self._output_data[0] = ret
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_inputs_number_is_divisible_by_N(self, 3)
@@ -142,12 +143,13 @@ class Chi2(ManyToOneNode):
                 node=self,
                 input=errors,
             )
-        self.function = self._functions_dict[f"{dim}d"]
+        self._evaluator.function =self._evaluator._functions_dict[f"{dim}d"]
 
         result = self.outputs[0]
         result.dd.shape = (1,)
         evaluate_dtype_of_outputs(self, AllPositionals, "result")  # eval dtype of result
 
+    @override
     def _post_allocate(self) -> None:
         super()._post_allocate()
         self._data_tuple = tuple(self._input_data[::3])  # input: 0
@@ -162,3 +164,4 @@ class Chi2(ManyToOneNode):
         if self._errors_tuple[0].ndim == 2:
             theory = self._theory_tuple[0]
             self._buffer = empty(shape=theory.shape, dtype=self._output_data.dtype)
+            self._internal_buffers["buffer"] = self._buffer

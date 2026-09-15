@@ -45,7 +45,7 @@ class CountCallsProfiler(Profiler):
         sinks: Sequence[Node] = (),
     ):
         super().__init__(target_nodes, sources, sinks)
-        self._primary_col = "calls"
+        self._primary_col = "n_calls"
         self._default_aggregations = ("count", "mean", "sum")
         self._aggregate_aliases = _AGGREGATE_ALIASES.copy()
         self._column_aliases = _COLUMN_ALIASES.copy()
@@ -56,7 +56,8 @@ class CountCallsProfiler(Profiler):
                 "node": (str(node) for node in self._target_nodes),
                 "type": (type(node).__name__ for node in self._target_nodes),
                 "name": (node.name for node in self._target_nodes),
-                "calls": (node.n_calls for node in self._target_nodes),
+                "path": (node.labels.path for node in self._target_nodes),
+                "n_calls": (node.n_calls for node in self._target_nodes),
             }
         )
         return self
@@ -74,7 +75,7 @@ class CountCallsProfiler(Profiler):
         if not hasattr(self, "_estimations_table"):
             self.estimate_calls()
         count = len(self._target_nodes)
-        calls = self._estimations_table["calls"].sum()
+        calls = self._estimations_table["n_calls"].sum()
         return calls / count
 
     def print_report(

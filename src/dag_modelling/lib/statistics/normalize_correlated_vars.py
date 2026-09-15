@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import add, divide, matmul, multiply, subtract
 from scipy.linalg import solve_triangular
@@ -9,11 +9,11 @@ from ...core.exception import InitializationError
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.node import Node
 from ...core.type_functions import (
-    check_node_has_inputs,
     check_dimension_of_inputs,
     check_inputs_are_matrices_or_diagonals,
-    check_inputs_equivalence,
     check_inputs_are_matrix_multipliable,
+    check_inputs_equivalence,
+    check_node_has_inputs,
     copy_from_inputs_to_outputs,
 )
 
@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
 
 class NormalizeCorrelatedVars(Node):
-    """Normalize correlated variables or correlate normal variables with linear expression
+    """Normalize correlated variables or correlate normal variables with linear
+    expression.
 
     If x is a vector of values, μ are the central values and L is a cholesky decomposition
     of the covariance matrix V=LLᵀ then
@@ -59,7 +60,7 @@ class NormalizeCorrelatedVars(Node):
         self._matrix = self._add_input("matrix", positional=False)
         self._central = self._add_input("central", positional=False)
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "forward_2d": self._fcn_forward_2d,
                 "backward_2d": self._fcn_backward_2d,
@@ -100,6 +101,7 @@ class NormalizeCorrelatedVars(Node):
             multiply(Ldiag, indata, out=outdata)
             add(outdata, central, out=outdata)
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self)
         ndim = check_inputs_are_matrices_or_diagonals(self, "matrix", check_square=True)
@@ -110,8 +112,8 @@ class NormalizeCorrelatedVars(Node):
 
         key = f"{self._mode}_{ndim}d"
         try:
-            self.function = self._functions_dict[key]
+            self._evaluator.function =self._evaluator._functions_dict[key]
         except KeyError as exc:
             raise InitializationError(
-                f'Invalid mode "{key}". Expect: {self._functions_dict.keys()}'
+                f'Invalid mode "{key}". Expect: {self._evaluator._functions_dict.keys()}'
             ) from exc

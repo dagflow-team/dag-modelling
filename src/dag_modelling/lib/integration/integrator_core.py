@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import empty, floating, integer, multiply
@@ -130,7 +130,7 @@ class IntegratorCore(OneToOneNode):
         self._orders_x_input = self._add_input("orders_x", positional=False)
         if ndim == 2:
             self._orders_y_input = self._add_input("orders_y", positional=False)
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 1: self._fcn_1d,
                 2: self._fcn_2d,
@@ -147,6 +147,7 @@ class IntegratorCore(OneToOneNode):
     def dropdim(self) -> bool:
         return self._dropdim
 
+    @override
     def taint(self, *, caller: Input | None = None, **kwargs):
         if caller is not None and (
             caller is self._orders_x_input or caller is self._orders_y_input
@@ -158,6 +159,7 @@ class IntegratorCore(OneToOneNode):
             )
         super().taint(caller=caller, **kwargs)
 
+    @override
     def _type_function(self) -> None:
         """The function to determine the dtype and shape.
 
@@ -188,19 +190,19 @@ class IntegratorCore(OneToOneNode):
             if self.dropdim and edgeslenY == 2:  # drop Y dimension
                 shape = (edgeslenX - 1,)
                 edges = [edgesX]
-                self.function = self._functions_dict[211]
+                self._evaluator.function = self._evaluator._functions_dict[211]
             elif self.dropdim and edgeslenX == 2:  # drop X dimension
                 shape = (edgeslenY - 1,)
                 edges = [edgesY]
-                self.function = self._functions_dict[210]
+                self._evaluator.function = self._evaluator._functions_dict[210]
             else:
                 shape = (edgeslenX - 1, edgeslenY - 1)
                 edges = [edgesX, edgesY]
-                self.function = self._functions_dict[2]
+                self._evaluator.function = self._evaluator._functions_dict[2]
         else:
             shape = (edgeslenX - 1,)
             edges = [edgesX]
-            self.function = self._functions_dict[1]
+            self._evaluator.function = self._evaluator._functions_dict[1]
 
         for output in self.outputs:
             output.dd.dtype = dtype
@@ -235,18 +237,21 @@ class IntegratorCore(OneToOneNode):
         edges = orders.dd.axes_edges[0]
         return edges.dd.shape[0], edges
 
+    @override
     def _post_allocate(self):
         """Allocates the `buffer` within `weights`"""
         super()._post_allocate()
         weights = self._weights_input.dd
         self.__buffer = empty(shape=weights.shape, dtype=weights.dtype)
+        self._internal_buffers["buffer"] = self.__buffer
+
         self._weights = self._weights_input._data
         self._orders_x = self._orders_x_input._data
         self._orders_y = self._orders_y_input._data if self._orders_y_input else None
 
     def _fcn_1d(self):
         """1d version of integration function."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input, output in self._input_output_data:
@@ -255,7 +260,7 @@ class IntegratorCore(OneToOneNode):
 
     def _fcn_2d(self):
         """2d version of integration function."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         # weights - (n, m)
@@ -267,7 +272,7 @@ class IntegratorCore(OneToOneNode):
 
     def _fcn_21d_x(self):
         """21d version of integration function where x-axis is dropped."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         # weights - (1, m)
@@ -278,7 +283,7 @@ class IntegratorCore(OneToOneNode):
 
     def _fcn_21d_y(self):
         """21d version of integration function where y-axis is dropped."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         # weights - (m, 1)

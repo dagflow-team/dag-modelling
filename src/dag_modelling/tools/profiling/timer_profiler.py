@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from textwrap import shorten
-from time import perf_counter_ns
+from time import process_time
 from typing import TYPE_CHECKING
 
 from numpy import empty, ndarray
@@ -46,6 +46,7 @@ _AGGREGATE_ALIASES: dict[str, str | Callable] = {
     "t_min": "min",
     "t_max": "max",
     "t_var": "var",
+    "n_nodes": "mean",
 }
 
 _DEFAULT_AGGREGATIONS = ("count", "single", "total", "fraction_percent")
@@ -66,6 +67,7 @@ class TimerProfiler(Profiler):
 
     __slots__ = ("_n_runs", "_timer")
     _n_runs: int
+    _timer: Callable
 
     def __init__(
         self,
@@ -73,11 +75,13 @@ class TimerProfiler(Profiler):
         sources: Sequence[Node] = (),
         sinks: Sequence[Node] = (),
         n_runs: int = 100,
+        timer=process_time,
     ):
         self._default_aggregations = _DEFAULT_AGGREGATIONS
         self._column_aliases = _COLUMN_ALIASES.copy()
         self._aggregate_aliases = _AGGREGATE_ALIASES.copy()
         self._n_runs = n_runs
+        self._timer = timer
         self.register_aggregate_func(
             func=self._t_percentage,
             aliases=["fraction_percent", "%_of_total", "percentage", "t_percentage"],
@@ -96,11 +100,14 @@ class TimerProfiler(Profiler):
 
     @classmethod
     def _timeit_all_runs(
-        cls, stmt: Callable, n_runs: int, setup: Callable | None = None
+        cls,
+        stmt: Callable,
+        n_runs: int,
+        setup: Callable | None = None,
+        timer: Callable = process_time,
     ) -> float:
-        """Estimate total time of the statement running multiple times. Use
-        `time.perf_counter_ns` internally to measure time in nanoseconds and
-        then convert it to seconds by dividing the total time by 1 billion.
+        """Estimate total time of the statement running multiple times. From
+        estimated time substract a time to perform a bare loop.
 
         Args:
             stmt (Callable): The function/method whose execution time is measured.
@@ -111,20 +118,31 @@ class TimerProfiler(Profiler):
         Returns:
             float: Execution time in seconds for `n_runs`.
         """
-        timer = perf_counter_ns
-        total_nanoseconds = 0
+        t_0 = timer()
         for _ in range(n_runs):
             if setup is not None:
                 setup()
-            t_0 = timer()
             stmt()
-            t_1 = timer()
-            total_nanoseconds += t_1 - t_0
-        return total_nanoseconds / 1e9
+        total_seconds1 = timer() - t_0
+
+        stmt_base = lambda: None
+        t_0 = timer()
+        for _ in range(n_runs):
+            if setup is not None:
+                setup()
+            stmt_base()
+        total_seconds1_base = timer() - t_0
+        total_seconds1 -= total_seconds1_base
+
+        return total_seconds1
 
     @classmethod
     def _timeit_each_run(
-        cls, stmt: Callable, n_runs: int, setup: Callable | None = None
+        cls,
+        stmt: Callable,
+        n_runs: int,
+        setup: Callable | None = None,
+        timer: Callable = process_time,
     ) -> ndarray:
         """Estimate execution time of the statement for each run. Similar to
         `self.estimate_runs`, but returns a `numpy.ndarray` where each value is
@@ -139,16 +157,15 @@ class TimerProfiler(Profiler):
         Returns:
             ndarray: Execution time in seconds of `stmt` for each run with the shape `(n_runs, )`.
         """
-        timer = perf_counter_ns
-        nanoseconds = empty(n_runs)
+        seconds = empty(n_runs)
         for i in range(n_runs):
             if setup is not None:
                 setup()
             t_0 = timer()
             stmt()
             t_1 = timer()
-            nanoseconds[i] = t_1 - t_0
-        return nanoseconds / 1e9
+            seconds[i] = t_1 - t_0
+        return seconds
 
     def _t_percentage(self, _s: Series) -> Series:
         """User-defined aggregate function to calculate the percentage of group

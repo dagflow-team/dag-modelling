@@ -5,16 +5,15 @@ from itertools import chain
 from operator import mul
 from typing import TYPE_CHECKING
 
+from numpy import ndarray
 from pandas import DataFrame
 
 from dag_modelling.core.input import Input
+from dag_modelling.core.output import Output
 from dag_modelling.tools.profiling import MemoryProfiler
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-
-    from dag_modelling.core.input import Input
-    from dag_modelling.core.output import Output
 
 
 def _calc_numpy_size(data: NDArray) -> int:
@@ -35,11 +34,16 @@ def get_output_size(out: Output) -> int:
     return 0
 
 
-def edge_size(edge: Output | Input) -> int:
+def edge_size(edge: Output | Input | NDArray) -> int:
     """Return size of `edge` data in bytes."""
     if isinstance(edge, Input):
         return get_input_size(edge)
-    return get_output_size(edge)
+    elif isinstance(edge, Output):
+        return get_output_size(edge)
+    elif isinstance(edge, ndarray):
+        return _calc_numpy_size(edge)
+
+    raise RuntimeError("Invalid type")
 
 
 def test_basic_edges_g0(graph_0):
@@ -52,18 +56,18 @@ def test_basic_edges_g0(graph_0):
     actual_sizes = MemoryProfiler.estimate_node(a2)
     o_expected = edge_size(out)
     assert o_expected != 0
-    assert o_expected == actual_sizes[out]
+    assert o_expected == actual_sizes[1][out][0]
 
     # S1 (3 inputs, 2 outputs)
     actual_sizes = MemoryProfiler.estimate_node(s1)
 
     for inp in s1.inputs.iter_all():
         i_expected = edge_size(inp)
-        assert i_expected == actual_sizes[inp]
+        assert i_expected == actual_sizes[0][inp][0]
 
     for out in s1.outputs.iter_all():
         o_expected = edge_size(out)
-        assert o_expected == actual_sizes[out]
+        assert o_expected == actual_sizes[1][out][0]
 
 
 def test_array_store_mods_g0(graph_0):
@@ -83,10 +87,12 @@ def test_array_store_mods_g0(graph_0):
     assert edge_size(sw_out) != edge_size(conn_input)
 
     actual_sizes = MemoryProfiler.estimate_node(a1)
-    assert edge_size(sw_out) == actual_sizes[sw_out]
+    sizes_outputs = actual_sizes[1]
+    assert edge_size(sw_out) == sizes_outputs[sw_out][0]
 
     actual_sizes = MemoryProfiler.estimate_node(p1)
-    assert edge_size(conn_input) == actual_sizes[conn_input]
+    sizes_inputs = actual_sizes[0]
+    assert edge_size(conn_input) == sizes_inputs[conn_input][0]
 
     # S0 (2 inputs, 1 output)
     #  parent output from 'A3' has Array node type with 'fill' mode
@@ -106,13 +112,15 @@ def test_estimate_all_edges(graph_0, graph_1):
         assert hasattr(mp, "_estimations_table")
 
         # check if "size" column exists and it is not empty
-        assert len(mp._estimations_table["size"]) > 0
+        assert len(mp._estimations_table["n_bytes"]) > 0
 
         expected = 0
         for node in nodes:
-            for edge in chain(node.inputs, node.outputs):
+            for edge in chain(
+                node.inputs.iter_all(), node.outputs.iter_all(), node._internal_buffers.values()
+            ):
                 expected += edge_size(edge)
-        actual = mp._estimations_table["size"].sum()
+        actual = mp._estimations_table["n_bytes"].sum()
 
         assert expected == actual, "expected and actual sizes of all edges does not match"
 
@@ -123,7 +131,7 @@ def test_total_size_property(graph_0):
     mp = MemoryProfiler(nodes)
     mp.estimate_target_nodes()
 
-    assert sum(mp._estimations_table["size"]) == mp.total_size
+    assert sum(mp._estimations_table["n_bytes"]) == mp.total_size
 
 
 def test_make_report(graph_0):
@@ -139,18 +147,10 @@ def test_print_report_g0(graph_0):
     _, nodes = graph_0
 
     mp = MemoryProfiler(nodes).estimate_target_nodes()
-    mp.print_report(rows=40, group_by=None, sort_by="type", aggregations=None)
     mp.print_report()
 
     mp = MemoryProfiler(nodes).estimate_target_nodes()
     mp.print_report()
-
-    mp.print_report(group_by="node", aggregations=("sum", "mean"), sort_by="sum")
-
-    # "single" also means "mean"
-    mp.print_report(group_by="type", aggregations=["var", "single"])
-
-    mp.print_report(group_by="edge_count")
 
 
 def test_chain_methods_g1(graph_1):

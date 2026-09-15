@@ -21,8 +21,9 @@ def get_estimated_calls(profiler, node):
     Note: This method of retrieving the number of calls should never be used in
     real code, as some nodes could have the same name.
     """
+    # FIXME: avoid `_estimations_table` being directly accessed
     indexing = profiler._estimations_table["name"] == node.name
-    estimated_calls = profiler._estimations_table.loc[indexing, "calls"]
+    estimated_calls = profiler._estimations_table.loc[indexing, "n_calls"]
     return estimated_calls.iloc[0]
 
 

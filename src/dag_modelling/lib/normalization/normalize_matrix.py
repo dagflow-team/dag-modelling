@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -39,7 +39,7 @@ class NormalizeMatrix(OneToOneNode):
         else:
             raise RuntimeError(f"Invalid NormalizeMatrix mode {mode}")
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "columns": self._fcn_norm_columns,
                 "rows": self._fcn_norm_rows,
@@ -54,12 +54,13 @@ class NormalizeMatrix(OneToOneNode):
         for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
             _norm_columns(indata, outdata)
 
+    @override
     def _type_function(self) -> None:
         super()._type_function()
         check_dimension_of_inputs(self, AllPositionals, ndim=2)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
 
-        self.function = self._functions_dict[self._mode]
+        self._evaluator.function = self._evaluator._functions_dict[self._mode]
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)

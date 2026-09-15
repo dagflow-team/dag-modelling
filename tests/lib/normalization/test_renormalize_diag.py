@@ -1,17 +1,21 @@
+from time import process_time
+
 from numpy import allclose, arange, diag, finfo, zeros_like
 from pytest import mark
 
 from dag_modelling.core.graph import Graph
-from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.lib.common import Array
 from dag_modelling.lib.normalization import RenormalizeDiag
+from dag_modelling.plot.graphviz import savegraph
 
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("mode", ("diag", "offdiag"))
 @mark.parametrize("ndiag", (1, 2, 3, 4))
 @mark.parametrize("scale", (2.0, 0.33))
-def test_RenormalizeDiag(test_name, debug_graph, ndiag, dtype, mode, scale, output_path: str, debug=True):
+def test_RenormalizeDiag(
+    test_name, debug_graph, ndiag, dtype, mode, scale, output_path: str, debug=False
+):
     size = 4
     matrix = arange(size**2, dtype=dtype).reshape(size, size)
     with Graph(close_on_exit=True, debug=debug_graph) as graph:

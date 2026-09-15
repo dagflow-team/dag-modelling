@@ -1,10 +1,12 @@
+from typing import override
+
 from numpy import arange, copyto
 from pytest import raises
 
 from dag_modelling.core.exception import CriticalError, ReconnectionError, UnclosedGraphError
 from dag_modelling.core.graph import Graph
-from dag_modelling.lib.common import Array
 from dag_modelling.lib.abstract import ManyToOneNode
+from dag_modelling.lib.common import Array
 from dag_modelling.lib.summation import WeightedSum, WeightedSumArgs
 
 
@@ -16,13 +18,12 @@ class ThreeInputsSum(ManyToOneNode):
             out += _input.data
         return out
 
+    @override
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         super()._type_function()
         if (y := len(self.inputs)) != 3:
-            raise CriticalError(
-                f"The node must have only 3 inputs, but given {y}: {self.inputs}!"
-            )
+            raise CriticalError(f"The node must have only 3 inputs, but given {y}: {self.inputs}!")
         self.logger.debug(
             f"Node '{self.name}': dtype={self.outputs['result'].dd.dtype}, "
             f"shape={self.outputs['result'].dd.shape}"

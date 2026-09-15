@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import exp, sqrt
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import allclose, pi
@@ -109,6 +109,7 @@ class HistSmearNormalMatrixBC(Node):
             self._value_threshold,
         )
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_dimension_of_inputs(self, AllPositionals, 1)

@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from .node import Node
 
 
@@ -31,9 +33,13 @@ class GraphBase:
         self._nodes_set.add(node)
 
     def touch(self):
-        """Touch all the nodes"""
+        """Touch all the nodes."""
         for node in self._nodes:
             node.touch()
+
+    def apply_to_each_node(self, fcn: Callable[[Node]]) -> None:
+        for node in self._nodes:
+            fcn(node)
 
     def print(self):
         print(f"Graph consists of {len(self._nodes)} nodes:")
@@ -41,5 +47,5 @@ class GraphBase:
             node.print()
 
     def __iter__(self):
-        """Iterate nodes"""
+        """Iterate nodes."""
         return iter(self._nodes)

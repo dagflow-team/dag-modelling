@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import integer
@@ -50,6 +50,7 @@ class PartialSums(OneToOneNode):
         super().__init__(*args, **kwargs)
         self._array = self._add_input("array", positional=False)
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self, "array")
         check_node_has_inputs(self, AllPositionals)

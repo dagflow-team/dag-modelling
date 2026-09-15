@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import override
 
 from numba import njit
 
@@ -36,6 +37,7 @@ class BinCenter(OneToOneNode):
         for _input, _output in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
             _bincenter(_input, _output)
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self, check_named=True)

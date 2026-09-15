@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import matmul
 
@@ -13,11 +13,12 @@ if TYPE_CHECKING:
 
 
 class MatrixProductDDt(Node):
-    """
-    Compute matrix product `C=D@Dᵀ`.
-    """
+    """Compute matrix product `C=D@Dᵀ`."""
 
-    __slots__ = ("_matrix", "_out",)
+    __slots__ = (
+        "_matrix",
+        "_out",
+    )
 
     _matrix: Input
     _out: Output
@@ -32,6 +33,7 @@ class MatrixProductDDt(Node):
         matrix = self._matrix.data
         matmul(matrix, matrix.T, out=self._out._data)
 
+    @override
     def _type_function(self) -> None:
         check_dimension_of_inputs(self, "matrix", ndim=2)
         evaluate_dtype_of_outputs(self, slice(None), "result")
