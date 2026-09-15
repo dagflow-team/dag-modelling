@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from numpy.typing import NDArray
+from typing import TYPE_CHECKING, override
 
 from nested_mapping.typing import properkey
+from numpy.typing import NDArray
 
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.node import Node
@@ -24,9 +23,7 @@ if TYPE_CHECKING:
 
 
 class OneToOneNode(Node):
-    """
-    The abstract node with an output for every positional input
-    """
+    """The abstract node with an output for every positional input."""
 
     __slots__ = ("_input_output_data",)
 
@@ -38,11 +35,11 @@ class OneToOneNode(Node):
 
         self._input_output_data = []
 
-        self._fd.needs_post_allocate = True
+        self._evaluator.needs_post_allocate = True
 
     @override
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self)
         copy_from_inputs_to_outputs(self, slice(None), slice(None), edges=True, meshes=True)
         assign_axes_from_inputs_to_outputs(
@@ -55,6 +52,7 @@ class OneToOneNode(Node):
             merge_input_axes=False,
         )
 
+    @override
     def _post_allocate(self):
         super()._post_allocate()
         for input, output in zip(self.inputs, self.outputs):

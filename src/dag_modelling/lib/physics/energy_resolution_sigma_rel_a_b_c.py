@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import sqrt
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -86,6 +86,7 @@ class EnergyResolutionSigmaRelABC(Node):
             self._rel_sigma._data,
         )
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_shape_of_inputs(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))

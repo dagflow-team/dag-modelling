@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -52,7 +52,7 @@ class RenormalizeDiag(OneToOneNode):
         self._ndiag = ndiag
 
         self._scale = self._add_input("scale", positional=False)
-        self._functions_dict.update({"diag": self._fcn_diag, "offdiag": self._fcn_offdiag})
+        self._evaluator._functions_dict.update({"diag": self._fcn_diag, "offdiag": self._fcn_offdiag})
 
     def _fcn_diag(self) -> None:
         scale = self._scale.data[0]
@@ -64,13 +64,14 @@ class RenormalizeDiag(OneToOneNode):
         for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
             _renorm_offdiag_numba(indata, outdata, scale, self._ndiag)
 
+    @override
     def _type_function(self) -> None:
         super()._type_function()
         check_shape_of_inputs(self, "scale", (1,))
         check_inputs_are_square_matrices(self, 0)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
         evaluate_dtype_of_outputs(self, (AllPositionals, "scale"), "result")
-        self.function = self._functions_dict[self._mode]
+        self._evaluator.function = self._evaluator._functions_dict[self._mode]
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)

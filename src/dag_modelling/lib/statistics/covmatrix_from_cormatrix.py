@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import multiply
 
 from ...core.node import Node
 from ...core.type_functions import (
     check_dimension_of_inputs,
-    check_inputs_are_square_matrices,
     check_inputs_are_matrix_multipliable,
+    check_inputs_are_square_matrices,
     copy_from_inputs_to_outputs,
 )
 
@@ -47,6 +47,7 @@ class CovmatrixFromCormatrix(Node):
         multiply(C, sigma[None, :], out=V)
         multiply(V, sigma[:, None], out=V)
 
+    @override
     def _type_function(self) -> None:
         check_inputs_are_square_matrices(self, "cormatrix")
         check_dimension_of_inputs(self, "sigma", 1)

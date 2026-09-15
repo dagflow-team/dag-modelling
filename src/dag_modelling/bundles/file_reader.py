@@ -191,7 +191,7 @@ class FileReader(metaclass=FileReaderMeta):
     def keys(self) -> tuple[str, ...]:
         raise RuntimeError("not implemented method")
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         raise RuntimeError("not implemented method")
 
     def _get_object(self, object_name: str | None, **kwargs) -> Any:
@@ -202,7 +202,7 @@ class FileReader(metaclass=FileReaderMeta):
 
         try:
             self._read_objects[object_name] = (
-                object := self._get_object_impl(object_name, **kwargs)
+                object := self._get_object_implementation(object_name, **kwargs)
             )
             return object
         except KeyError as e:
@@ -316,7 +316,7 @@ class FileReaderNPZ(FileReaderArray):
         super()._close()
         del self._file
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -338,7 +338,7 @@ class FileReaderHDF5(FileReaderArray):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -369,7 +369,7 @@ class FileReaderTSV(FileReaderArray):
 
         return uncompressed + tuple(f"{fname}.bz2" for fname in uncompressed)
 
-    def _get_object_impl(
+    def _get_object_implementation(
         self, object_name: str | None | None, return_record: bool = True, **kwargs
     ) -> Any:
         filenames = self._get_filenames(object_name)
@@ -413,7 +413,7 @@ class FileReaderROOTUpROOT(FileReader):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -526,7 +526,7 @@ with suppress(ImportError):
             if self._reader_uproot is not None:
                 self._reader_uproot._close()
 
-        def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+        def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
             assert not kwargs
             assert object_name is not None
             ret = self._file.Get(object_name)

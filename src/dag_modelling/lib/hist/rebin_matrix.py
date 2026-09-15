@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from numba import njit
 from numpy import allclose, finfo, isclose
@@ -78,7 +78,7 @@ class RebinMatrix(Node):
         self._edges_old = self._add_input("edges_old")  # input: 0
         self._edges_new = self._add_input("edges_new", positional=False)  # input: 1
         self._result = self._add_output("matrix")  # output: 0
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "python": self._function_python,
                 "numba": self._function_numba,
@@ -136,6 +136,7 @@ class RebinMatrix(Node):
             f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}, diff {edge_old-edge_new:.2g}"
         )
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_dimension_of_inputs(self, ("edges_old", "edges_new"), 1)
@@ -145,7 +146,7 @@ class RebinMatrix(Node):
             self._edges_old.dd.size - 1,
         )
         self._result.dd.dtype = "d"
-        self.function = self._functions_dict[self.mode]
+        self._evaluator.function = self._evaluator._functions_dict[self.mode]
         assign_edges_from_inputs_to_outputs((self._edges_new, self._edges_old), self._result)
 
         self._edges_old_clones = tuple(self.inputs[1:])

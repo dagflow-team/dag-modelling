@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import log
@@ -72,7 +72,7 @@ class LogPoissonRatio(ManyToOneNode):
         return "data", "theory"
 
     def _function(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         res = 0.0
@@ -81,11 +81,13 @@ class LogPoissonRatio(ManyToOneNode):
 
         self._output_data[0] = res
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         super()._type_function()
         self.outputs[0].dd.shape = (1,)
 
+    @override
     def _post_allocate(self) -> None:
         super()._post_allocate()
         self._data_tuple = tuple(self._input_data[::2])  # input: 0

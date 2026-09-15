@@ -30,11 +30,11 @@ def test_graph_big_01(output_path: str):
         plot(f"[done evaluating {node.name}]")
 
     def _function(self):
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     class DummyFrozen(Dummy):
         def _function(self):
-            self.fd.frozen = True
+            self._evaluator.frozen = True
 
     with g:
         A1 = Dummy("A1")
@@ -181,3 +181,4 @@ def test_graph_big_01(output_path: str):
     final.data
     label = "Done opening/closing D."
     plot()
+

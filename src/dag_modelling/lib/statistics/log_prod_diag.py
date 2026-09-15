@@ -1,3 +1,5 @@
+from typing import override
+
 from numpy import diag, empty, log
 from numpy.typing import NDArray
 
@@ -34,14 +36,14 @@ class LogProdDiag(OneToOneNode):
         super().__init__(*args, **kwargs)
         self._labels.setdefault("mark", r"2log\|L\|")
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {"square": self._fcn_square, "diagonal": self._fcn_diagonal}
         )
 
     def _fcn_square(self):
         """Compute logarithm of determinant of matrix using Cholesky
         decomposition."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for indata, outdata in self._input_output_data:
@@ -50,28 +52,29 @@ class LogProdDiag(OneToOneNode):
 
     def _fcn_diagonal(self):
         """Compute "LogProdDiag" using of a diagonal of a square matrix."""
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for indata, outdata in self._input_output_data:
             log(indata, out=self._buffer)
             outdata[0] = 2 * self._buffer.sum()
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self, AllPositionals)
-        ndim = check_inputs_are_matrices_or_diagonals(
-            self, AllPositionals, check_square=True
-        )
+        ndim = check_inputs_are_matrices_or_diagonals(self, AllPositionals, check_square=True)
         copy_dtype_from_inputs_to_outputs(self, AllPositionals, AllPositionals)
         for out in self.outputs:
             out.dd.shape = (1,)
 
         if ndim == 2:
-            self.function = self._functions_dict["square"]
+            self._evaluator.function =self._evaluator._functions_dict["square"]
         else:
-            self.function = self._functions_dict["diagonal"]
+            self._evaluator.function =self._evaluator._functions_dict["diagonal"]
 
+    @override
     def _post_allocate(self) -> None:
         super()._post_allocate()
         inpdd = self.inputs[0].dd
         self._buffer = empty(shape=(inpdd.shape[0],), dtype=inpdd.dtype)
+        self._internal_buffers["buffer"] = self._buffer

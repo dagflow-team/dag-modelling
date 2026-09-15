@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from numba import njit
 from numpy import add, matmul, sqrt
@@ -148,7 +148,7 @@ class MonteCarlo(BlockToOneNode):
     def __init__(self, name: str, *args, generator: Generator | None = None, **kwargs):
         self._generator = self._create_generator() if generator is None else generator
         super().__init__(name, *args, **kwargs)
-        self._functions_dict.update({"asimov": self._function_asimov})
+        self._evaluator._functions_dict.update({"asimov": self._function_asimov})
 
     @property
     def mode(self) -> str:
@@ -168,7 +168,7 @@ class MonteCarlo(BlockToOneNode):
         self.unfreeze()
         self.taint()
         self._function_asimov()
-        self.fd.tainted = False
+        self._evaluator.tainted = False
         # freeze() is called within Asimov function
 
     @staticmethod
@@ -230,7 +230,7 @@ class MonteCarloShape(MonteCarlo):
                 #        "axis": "MonteCarlo sample",
             }
         )
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "normal-unit": self._function_normal_unit,
             }
@@ -241,27 +241,28 @@ class MonteCarloShape(MonteCarlo):
         return ()
 
     def _function_asimov(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for outdata in self._output_data:
             outdata[:] = 0.0
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def _function_normal_unit(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for outdata in self._output_data:
             _random_fill_normal(outdata, self._generator)
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
-        self.function = self._functions_dict[self.mode]
+        self._evaluator.function =self._evaluator._functions_dict[self.mode]
 
 
 class MonteCarloLoc(MonteCarlo):
@@ -302,7 +303,7 @@ class MonteCarloLoc(MonteCarlo):
                 #        "axis": "MonteCarlo sample",
             }
         )
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "asimov": self._function_asimov,
                 "normal-stats": self._function_normal_stats,
@@ -315,35 +316,36 @@ class MonteCarloLoc(MonteCarlo):
         return ("data",)
 
     def _function_asimov(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for indata, outdata in zip(self._input_data, self._output_data):
             outdata[:] = indata[:]
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def _function_normal_stats(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for indata, outdata in zip(self._input_data, self._output_data):
             _random_normal_stats(indata, outdata, self._generator)
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def _function_poisson(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for indata, outdata in zip(self._input_data, self._output_data):
             _poisson(indata, outdata, self._generator)
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         n = self.inputs.len_pos()
@@ -351,7 +353,7 @@ class MonteCarloLoc(MonteCarlo):
         for i in range(n):
             copy_from_inputs_to_outputs(self, i, i)
 
-        self.function = self._functions_dict[self.mode]
+        self._evaluator.function =self._evaluator._functions_dict[self.mode]
 
 
 class MonteCarloLocScale(MonteCarlo):
@@ -392,7 +394,7 @@ class MonteCarloLocScale(MonteCarlo):
                 #        "axis": "MonteCarlo sample",
             }
         )
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "normal": self._function_normal,
                 "covariance": self._function_covariance_L,
@@ -404,17 +406,17 @@ class MonteCarloLocScale(MonteCarlo):
         return "data", "errors"
 
     def _function_asimov(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for (indata, _), outdata in zip(self._blocks_input_data, self._output_data):
             outdata[:] = indata
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def _function_covariance_L(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for (indata, covariance_L), outdata in zip(self._blocks_input_data, self._output_data):
@@ -426,10 +428,10 @@ class MonteCarloLocScale(MonteCarlo):
             )
 
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def _function_normal(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for (indata, std), outdata in zip(self._blocks_input_data, self._output_data):
@@ -440,8 +442,9 @@ class MonteCarloLocScale(MonteCarlo):
                 self._generator,
             )
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_inputs_number_is_divisible_by_N(self, 2)
@@ -455,4 +458,4 @@ class MonteCarloLocScale(MonteCarlo):
             check_inputs_are_matrix_multipliable(self, i, i + 1)
             copy_from_inputs_to_outputs(self, 2 * i, i)
 
-        self.function = self._functions_dict[self.mode]
+        self._evaluator.function =self._evaluator._functions_dict[self.mode]

@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.16.0] - 2026-08-XX
+## [0.16.0] - 2026-09-XX
 
-- Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration of
+- feat: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration of
   Gaussian with flat function within each bin.
-- Support reading matrices from root files from TH2* histograms.
-- Various minor fixes and updates.
+- feat: Support reading matrices from root files from TH2* histograms.
+- feat: implement hot methods of core classes (Node, Output, Input, etc) with Cython. 
+- fix: update algorithm for iteration over graphs.
+- chore: various minor fixes and updates.
 
 ## [0.15.0] - 2026-02-17
 
@@ -21,7 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.14.4] - 2026-02-06
 
-- feature: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate plotting matrices.
+- feature: for automated plotting provide `swap_hist_2d_xy` and `invert_yaxis` options to facilitate
+  plotting matrices.
 - chore: node labels cleaning.
 
 ## [0.14.3] - 2025-10-17

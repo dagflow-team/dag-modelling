@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import zeros
 
@@ -21,17 +21,14 @@ class ViewConcat(Node):
     _offsets: list[int]
 
     def __init__(self, name, outname="concat", **kwargs) -> None:
-        super().__init__(
-            name, **kwargs, input_strategy=InputStrategyViewConcat(node=self)
-        )
-        self._output = self._add_output(
-            outname, allocatable=False, forbid_reallocation=True
-        )
+        super().__init__(name, **kwargs, input_strategy=InputStrategyViewConcat(node=self))
+        self._output = self._add_output(outname, allocatable=False, forbid_reallocation=True)
         self._offsets = []
 
     def _function(self):
         self.inputs.touch()
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         size = 0

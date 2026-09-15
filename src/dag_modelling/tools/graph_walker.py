@@ -61,7 +61,7 @@ class GraphWalker:
     def __post_init__(self, node_handler):
         self._node_handler = node_handler or NodeHandlerDGM()
 
-        growth_disabled = not self.enable_process_backward and not self.enable_process_forward
+        growth_disabled = not self.enable_process_backward or not self.enable_process_forward
         if growth_disabled and self.enable_process_full_graph:
             raise RuntimeError(
                 "GraphWalker got conflicting arguments: "
@@ -77,6 +77,12 @@ class GraphWalker:
     def nodes(self) -> dict[Node, int]:
         return self._nodes
 
+    @staticmethod
+    def from_node(node: Node, **kwargs) -> GraphWalker:
+        walker = GraphWalker(**kwargs)
+        walker.process_from_node(node)
+        return walker
+
     def process_from_nodes(self, nodes: Sequence[Node], **kwargs):
         for node in nodes:
             self.process_from_node(node, **kwargs)
@@ -89,7 +95,7 @@ class GraphWalker:
         process_full_graph: bool | None = None,
         process_initial_node: bool = True,
     ):
-        """Main function
+        """Main function.
 
         1. Add the node to the queue.
         2. Go strictly backward from the node. Add nodes to the queue.
@@ -203,16 +209,21 @@ class GraphWalker:
 
     def _build_queue_nodes_backward_from(self, node: Node, *, depth: int):
         """Go strictly backward from the node.
-        Add nodes to queue.
-        Stop if depth is too low.
+
+        Add nodes to queue. Stop if depth is too low. If max_depth/min_depth fields are specified
+        (not None), then the depth is limited by them (inclusive). If not, than the stopper is the
+        graph boundary
+
+        Depth is defined as depth=0 for starting node, depth=1 for its nearest descendants, depth=-1
+        for its nearest ancestors. Note: in complex graphs, the depth assigned to the node depends
+        on the walk route.
         """
         depth -= 1
         if self.depth_outside_limits(depth):
             return
         for input in self._node_handler.iter_inputs(node):
-            try:
-                parent_node = input.parent_node
-            except AttributeError:
+            parent_node = self._node_handler.get_input_parent(input)
+            if parent_node is None:
                 self.open_inputs.append(input)
                 continue
 
@@ -226,28 +237,32 @@ class GraphWalker:
 
     def _build_queue_nodes_forward_from(self, node: Node, *, depth: int):
         """Go strictly forward from the node.
-        Add nodes to queue.
-        Stop if depth is too high.
+
+        Add nodes to queue. Stop if depth is too high. If max_depth/min_depth fields are specified
+        (not None), then the depth is limited by them (inclusive). If not, than the stopper is the
+        graph boundary
+
+        Depth is defined as depth=0 for starting node, depth=1 for its nearest descendants, depth=-1
+        for its nearest ancestors. Note: in complex graphs, the depth assigned to the node depends
+        on the walk route.
         """
         depth += 1
         if self.depth_outside_limits(depth):
             return
         for output in self._node_handler.iter_outputs(node):
-            if output.child_inputs:
-                for child_input in output.child_inputs:
-                    child_node = child_input.node
-                    logger.log(
-                        INFO2, f"f d: {depth: 3d} {self._node_handler.get_string(child_node)}"
-                    )
-                    if not self._add_node_to_queue(child_node, depth=depth):
-                        logger.log(DEBUG, "  skip")
-                        continue
-                    self._build_queue_nodes_forward_from(child_node, depth=depth)
-            else:
-                self.open_outputs.append(output)
+            for child_node in self._node_handler.iter_output_child_nodes(output):
+                logger.log(
+                    INFO2, f"f d: {depth: 3d} {self._node_handler.get_string(child_node)}"
+                )
+                if not self._add_node_to_queue(child_node, depth=depth):
+                    logger.log(DEBUG, "  skip")
+                    continue
+                self._build_queue_nodes_forward_from(child_node, depth=depth)
+            self.open_outputs.append(output)
 
     def _process_queue_meshes_edges(self):
-        """Add nodes of meshes and edges to the queue, if they are not already present."""
+        """Add nodes of meshes and edges to the queue, if they are not already
+        present."""
         for node, depth in self._queue_meshes_edges.items():
             depth -= 1
             if self.depth_outside_limits(depth):
@@ -261,6 +276,14 @@ class GraphWalker:
 
 class NodeHandlerBase(Generic[NodeT, OutputT, InputT]):
     __slots__ = ()
+
+    @abstractmethod
+    def get_input_parent(self, input: InputT) -> NodeT | None:
+        pass
+
+    @abstractmethod
+    def iter_output_child_nodes(self, output: OutputT) -> Generator[NodeT, None, None]:
+        pass
 
     @abstractmethod
     def iter_inputs(self, node: NodeT) -> Generator[InputT, None, None]:
@@ -280,6 +303,19 @@ class NodeHandlerBase(Generic[NodeT, OutputT, InputT]):
 
 
 class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
+
+    @override
+    def get_input_parent(self, input: Input) -> Node | None:
+        try:
+            return input.parent_node
+        except AttributeError:
+            return None
+
+    @override
+    def iter_output_child_nodes(self, output: Output) -> Generator[Node, None, None]:
+        if output.child_inputs:
+            for child_input in output.child_inputs:
+                yield child_input.node
 
     @override
     def iter_inputs(self, node: Node) -> Generator[Input, None, None]:
@@ -306,10 +342,30 @@ class NodeHandlerDGM(NodeHandlerBase[Node, Output, Input]):
         return f"node:  {node!r}"
 
 
-def get_subgraph_nodes(
+def get_subgraph_nodes_from(node: Node, **kwargs) -> list[Node]:
+    """Collect graph's nodes starting from "node".
+
+    Parameters
+    ----------
+    node : Node
+        Node to start checking graph from.
+    kwargs : dict
+        Keyword arguments to be passed to GraphWalker.
+
+    Returns
+    -------
+    list[Node]
+        List of nodes.
+    """
+    walker = GraphWalker.from_node(node, **kwargs)
+    return list(walker.nodes)
+
+
+def get_subgraph_nodes_between(
     sources: Sequence[Node], sinks: Sequence[Node], *, enable_process_meshes_edges: bool = False
 ) -> list[Node]:
-    """Collect a nodes of a subgraph between sets of source nodes and sink nodes.
+    """Collect a nodes of a subgraph between sets of source nodes and sink
+    nodes.
 
     Nodes are obtained by finding intersection between all the nodes backward from sinks and nodes
     forward from sources.
@@ -322,7 +378,7 @@ def get_subgraph_nodes(
         Sequence of source nodes.
     sinks : Sequence[Node]
         Sequence of sink nodes.
-    enable_process_meshes_edges : bool
+    enable_process_meshes_edges : bool, default=False
         If enabled, collect also mesh/edge nodes.
 
     Returns

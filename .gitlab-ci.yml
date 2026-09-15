@@ -3,17 +3,17 @@ stages:
   - publish
 
 tests:
-  image: 'python:3.12.11-bullseye'
+  image: 'python:3.12.14-bookworm'
   stage: tests
 
   script:
     - apt-get update
-    - apt-get -y install libgraphviz-dev graphviz
+    - apt-get -y install libgraphviz-dev graphviz --no-install-recommends
     - python3 -m venv venv
     - source venv/bin/activate
-    - pip install --upgrade wheel setuptools pip
+    - pip install --upgrade pip wheel setuptools setuptools-scm packaging
     - pip install cython
-    - pip install -e ".[test]"
+    - pip install --no-build-isolation -e ".[test,cython]"
     - coverage run --source=. -m pytest --include-long-time-tests
     - coverage report
     - coverage xml
@@ -31,7 +31,7 @@ tests:
     - merge_requests
 
 pypi:
-  image: 'python:3.12.11-bullseye'
+  image: 'python:3.12.14-bookworme'
   stage: publish
   script:
     - pip install twine build

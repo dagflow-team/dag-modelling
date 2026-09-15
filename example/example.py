@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from typing import override
+
 from numpy import arange, copyto, result_type
 
 from dag_modelling.core.graph import Graph
@@ -16,7 +18,7 @@ debug = False
 
 # Check predefined Array, Sum and Product
 with Graph(debug=debug, close_on_exit=True) as graph:
-    (in1, in2, in3, in4) = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
+    in1, in2, in3, in4 = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
     s = Sum("sum")
     m = Product("product")
 
@@ -30,7 +32,7 @@ print(f"Write figure: {filename}")
 
 # Check random generated Array, Sum and Product
 with Graph(debug=debug, close_on_exit=True) as graph:
-    (in1, in2, in3, in4) = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
+    in1, in2, in3, in4 = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
     s = Sum("sum")
     m = Product("product")
 
@@ -44,7 +46,7 @@ print(f"Write figure: {filename}")
 
 # Check predefined Array, two Sum's and Product
 with Graph(debug=debug, close_on_exit=True) as graph:
-    (in1, in2, in3, in4) = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
+    in1, in2, in3, in4 = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
     s = Sum("sum")
     s2 = Sum("sum")
     m = Product("product")
@@ -60,7 +62,7 @@ print(f"Write figure: {filename}")
 
 # Check predefined Array, Sum, WeightedSum and Product
 with Graph(debug=debug, close_on_exit=True) as graph:
-    (in1, in2, in3, in4) = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
+    in1, in2, in3, in4 = (Array(name, array) for name in ("n1", "n2", "n3", "n4"))
     weight = Array("weight", (2, 3))
     # The same result with other weight
     # weight = makeArray(5)("weight")
@@ -99,6 +101,7 @@ class ThreeInputsOneOutput(Node):
     def result(self):
         return [out.data for out in self.outputs]
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         for i, output in enumerate(self.outputs):
@@ -112,9 +115,9 @@ class ThreeInputsOneOutput(Node):
 
 
 with Graph(debug=debug, close_on_exit=True) as graph:
-    (in1, in2, in3) = (Array(name, array) for name in ("n1", "n2", "n3"))
-    (in4, in5, in6) = (Array(name, (1, 0, 0)) for name in ("n4", "n5", "n6"))
-    (in7, in8, in9) = (Array(name, (3, 3, 3)) for name in ("n7", "n8", "n9"))
+    in1, in2, in3 = (Array(name, array) for name in ("n1", "n2", "n3"))
+    in4, in5, in6 = (Array(name, (1, 0, 0)) for name in ("n4", "n5", "n6"))
+    in7, in8, in9 = (Array(name, (3, 3, 3)) for name in ("n7", "n8", "n9"))
     s = ThreeInputsOneOutput("3to1")
     (in1, in2, in3) >> s
     (in4, in5, in6) >> s

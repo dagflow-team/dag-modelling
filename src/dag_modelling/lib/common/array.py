@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import array as nparray
 from numpy import full
@@ -63,16 +63,16 @@ class Array(Node):
         else:
             raise InitializationError(f'Array: invalid mode "{mode}"', node=self)
 
-        self._fd.needs_post_allocate = True
+        self._evaluator.needs_post_allocate = True
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "store": self._fcn_store,
                 "store_weak": self._fcn_store,
                 "fill": self._fcn_fill,
             }
         )
-        self.function = self._functions_dict[self._mode]
+        self._evaluator.function =self._evaluator._functions_dict[self._mode]
 
         if edges:
             self.set_edges(edges)
@@ -158,10 +158,12 @@ class Array(Node):
             if not localstorage:
                 storage.delete_with_parents(path)
 
+    @override
     def _type_function(self) -> None:
         check_dtype_of_edges(self, slice(None), "array")  # checks List[Output]
         check_edges_consistency_with_array(self, "array")  # checks dim and N+1 size
 
+    @override
     def _post_allocate(self) -> None:
         if self._mode == "fill":
             return

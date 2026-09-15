@@ -14,7 +14,7 @@ class Sum(ManyToOneNode):
         self._labels.setdefault("mark", "Σᵢ")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -34,7 +34,7 @@ class Difference(ManyToOneNode):
         self._labels.setdefault("mark", "a₀-Σᵢ")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -54,7 +54,7 @@ class Product(ManyToOneNode):
         self._labels.setdefault("mark", "Πᵢ")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -81,7 +81,7 @@ class ProductShifted(ManyToOneNode):
             self._labels.setdefault("mark", f"{self._shift}+Πᵢ")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -109,7 +109,7 @@ class ProductShiftedScaled(ManyToOneNode):
             self._labels.setdefault("mark", f"a·({self._shift}+Πᵢ)")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -135,7 +135,7 @@ class Division(ManyToOneNode):
         self._labels.setdefault("mark", "÷")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -154,7 +154,7 @@ class Square(OneToOneNode):
         self._labels.setdefault("mark", "x²")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -171,7 +171,7 @@ class Sqrt(OneToOneNode):
         self._labels.setdefault("mark", "√x")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -188,7 +188,7 @@ class Abs(OneToOneNode):
         self._labels.setdefault("mark", r"\|x\|")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:

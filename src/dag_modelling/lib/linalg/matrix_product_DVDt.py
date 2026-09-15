@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import empty, matmul, multiply
 
 from ...core.node import Node
 from ...core.type_functions import (
-    check_node_has_inputs,
     check_dimension_of_inputs,
     check_inputs_are_matrices_or_diagonals,
     check_inputs_are_matrix_multipliable,
+    check_node_has_inputs,
     evaluate_dtype_of_outputs,
 )
 
@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 
 
 class MatrixProductDVDt(Node):
-    """
-    Compute matrix product `C=D@V@Dᵀ`,
-    where `D` is a matrix and `V` is a square matrix.
+    """Compute matrix product `C=D@V@Dᵀ`, where `D` is a matrix and `V` is a
+    square matrix.
+
     `V` maybe 1d array representing the diagonal of the diagonal matrix.
     """
 
@@ -39,10 +39,10 @@ class MatrixProductDVDt(Node):
         self._left = self._add_input("left")
         self._square = self._add_input("square")
         self._out = self._add_output("result")
-        self._functions_dict.update({"diagonal": self._fcn_diagonal, "square": self._fcn_square})
+        self._evaluator._functions_dict.update({"diagonal": self._fcn_diagonal, "square": self._fcn_square})
         self._labels.setdefault("mark", "DVDᵀ")
 
-        self._fd.needs_post_allocate = True
+        self._evaluator.needs_post_allocate = True
 
     def _fcn_diagonal(self):
         # square matrix stored as diagonal
@@ -55,6 +55,7 @@ class MatrixProductDVDt(Node):
         matmul(left, self._square.data, out=self._buffer)
         matmul(self._buffer, left.T, out=self._out._data)
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self, ("left", "square"))
         check_dimension_of_inputs(self, "left", ndim=2)
@@ -62,7 +63,9 @@ class MatrixProductDVDt(Node):
         check_inputs_are_matrix_multipliable(self, "left", "square")
         evaluate_dtype_of_outputs(self, slice(None), "result")
         self._out.dd.shape = (self._left.dd.shape[0], self._left.dd.shape[0])
-        self.function = self._functions_dict["diagonal" if ndim == 1 else "square"]
+        self._evaluator.function = self._evaluator._functions_dict["diagonal" if ndim == 1 else "square"]
 
+    @override
     def _post_allocate(self) -> None:
         self._buffer = empty(shape=self._left.dd.shape, dtype=self._left.dd.dtype)
+        self._internal_buffers["buffer"] = self._buffer

@@ -37,6 +37,56 @@ pip install -e .
 ```
 This way, the system will track all the changes made to the source files. This means that developers won't need to reinstall the package or set environment variables, even when a branch is changed.
 
+## Cython acceleration (optional)
+
+### Building
+
+The compiled acceleration is **opt-in**. Cython is not in
+`[build-system].requires`; it lives in the `cython` extra. A plain install is
+pure Python:
+
+```bash
+pip install .                    # pure Python, no .so
+```
+
+To build the `.pyx → .so` extensions, make Cython available and disable build
+isolation so `setup.py` can see it:
+
+```bash
+pip install cython
+pip install --no-build-isolation ".[cython]"
+```
+
+`--no-build-isolation` is required: the `cython` extra is installed into the
+target environment, but the build runs in an isolated environment that would
+not otherwise contain Cython.
+
+When iterating on the `.pyx` sources, rebuild in place (Cython already in the venv):
+
+```bash
+python setup.py build_ext --inplace
+```
+
+If Cython is not available at build time, `setup.py` prints a notice, produces
+no extensions, and the pure Python `.py` files are used instead.
+
+### Three files per compiled class
+
+| File | Role |
+|---|---|
+| `x.pxd` | C-level field/signature declarations, for `cimport` |
+| `x.pyx` | `cdef class`, hot path only (`cpdef`/`cdef`) |
+| `x.py`  | pure-Python fallback, same interface |
+| `x_methods.py` | shared cold-path mixin `_XMethods` (`__slots__ = ()`) |
+
+At import time Python prefers the compiled `x.<abi>.so` over `x.py`, so
+`from dag_modelling.core.node import Node` works either way. To force the
+pure-Python path (e.g. for debugging or A/B benchmarking):
+
+```bash
+rm src/dag_modelling/core/*.so
+```
+
 ## Example
 
 For example, let's consider a sum of three input nodes and then a product of the result with another array.

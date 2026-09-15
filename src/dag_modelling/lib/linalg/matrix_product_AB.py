@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import matmul, multiply
 
 from ...core.exception import TypeFunctionError
 from ...core.node import Node
 from ...core.type_functions import (
-    check_node_has_inputs,
     check_inputs_are_matrices_or_diagonals,
     check_inputs_are_matrix_multipliable,
+    check_node_has_inputs,
     evaluate_dtype_of_outputs,
 )
 
@@ -19,9 +19,7 @@ if TYPE_CHECKING:
 
 
 class MatrixProductAB(Node):
-    """
-    Compute matrix product `C=A@B`,
-    """
+    """Compute matrix product `C=A@B`,"""
 
     __slots__ = ("_left", "_right", "_out")
 
@@ -36,7 +34,7 @@ class MatrixProductAB(Node):
         self._out = self._add_output("result")
         self._labels.setdefault("mark", "A@B")
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "diagonal_diagonal": self._fcn_diagonal_diagonal,
                 "diagonal_block": self._fcn_diagonal_block,
@@ -57,6 +55,7 @@ class MatrixProductAB(Node):
     def _fcn_diagonal_diagonal(self):
         multiply(self._left.data, self._right.data, out=self._out._data)
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self, ("left", "right"))
         ndim_left = check_inputs_are_matrices_or_diagonals(self, "left")
@@ -65,13 +64,13 @@ class MatrixProductAB(Node):
         ndim = ndim_left, ndim_right
         ndim_out = 2
         if ndim == (2, 2):
-            self.function = self._fcn_block_block
+            self._evaluator.function = self._fcn_block_block
         elif ndim == (2, 1):
-            self.function = self._fcn_block_diagonal
+            self._evaluator.function = self._fcn_block_diagonal
         elif ndim == (1, 2):
-            self.function = self._fcn_diagonal_block
+            self._evaluator.function = self._fcn_diagonal_block
         elif ndim == (1, 1):
-            self.function = self._fcn_diagonal_diagonal
+            self._evaluator.function = self._fcn_diagonal_diagonal
             ndim_out = 1
         else:
             raise TypeFunctionError(f"One of the inputs' dimension >2: {ndim}", node=self)

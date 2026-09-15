@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from numba import njit
 from numpy import result_type
@@ -115,6 +115,7 @@ class SegmentIndex(Node):
     def tolerance(self):
         return self._tolerance
 
+    @override
     def _type_function(self) -> None:
         """The function to determine the dtype and shape of the ouput."""
         check_dimension_of_inputs(self, ("coarse",), 1)

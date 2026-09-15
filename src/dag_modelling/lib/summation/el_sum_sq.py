@@ -1,3 +1,5 @@
+from typing import override
+
 from numba import njit
 from numpy.typing import NDArray
 
@@ -25,7 +27,7 @@ class ElSumSq(ManyToOneNode):
         self._labels.setdefault("mark", "Σa²")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         output_data = self._output_data
@@ -34,6 +36,7 @@ class ElSumSq(ManyToOneNode):
         for input_data in self._input_data:
             _sumsq(input_data, output_data)
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         super()._type_function()

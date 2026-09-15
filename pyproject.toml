@@ -36,8 +36,10 @@ dependencies = [
   "uproot",
 ]
 
+optional-dependencies.cython = [ "Cython>=3.0" ]
 optional-dependencies.extra = [ "pygraphviz" ]
 optional-dependencies.test = [ "coverage", "pygraphviz", "pytest", "pytest-cov" ]
+optional-dependencies.test-cython = [ "dayabay-data-official", "dgm-dayabay-dev" ]
 urls."Bug Tracker" = "https://github.com/dagflow-team/dag-modelling/issues"
 urls."DAGModelling Team" = "https://github.com/dagflow-team"
 urls.documentation = "https://github.com/dagflow-team/dag-modelling/wiki"
@@ -50,6 +52,7 @@ exclude = [
   "tests*",
   "docs*",
   "example*",
+  "extras*",
 ]
 
 [tool.setuptools_scm]

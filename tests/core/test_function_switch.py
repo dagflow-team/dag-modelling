@@ -1,16 +1,18 @@
+from typing import override
+
 from numpy import arange, array, copyto, result_type
 
 from dag_modelling.core.graph import Graph
 from dag_modelling.core.input_strategy import AddNewInputAddAndKeepSingleOutput
-from dag_modelling.lib.common import Array
 from dag_modelling.core.node import Node
+from dag_modelling.lib.common import Array
 
 
 class SumIntOrProductFloatOrDoNothing(Node):
     def __init__(self, name, **kwargs):
         kwargs.setdefault("input_strategy", AddNewInputAddAndKeepSingleOutput(output_fmt="result"))
         super().__init__(name, **kwargs)
-        self._functions_dict.update({"int": self._fcn_int, "float": self._fcn_float})
+        self._evaluator._functions_dict.update({"int": self._fcn_int, "float": self._fcn_float})
 
     def _function(self):
         pass
@@ -31,16 +33,17 @@ class SumIntOrProductFloatOrDoNothing(Node):
                 out *= _input.data
         return out
 
+    @override
     def _type_function(self) -> bool:
         if self.inputs[0].dd.dtype == "i":
-            self.function = self._functions_dict.get("int")
+            self._evaluator.function = self._evaluator._functions_dict.get("int")
         elif self.inputs[0].dd.dtype == "d":
-            self.function = self._functions_dict.get("float")
+            self._evaluator.function = self._evaluator._functions_dict.get("float")
         self.outputs["result"].dd.shape = self.inputs[0].dd.shape
         self.outputs["result"].dd.dtype = result_type(*tuple(inp.dd.dtype for inp in self.inputs))
         self.logger.debug(
             f"Node '{self.name}': dtype={self.outputs['result'].dd.dtype}, "
-            f"shape={self.outputs['result'].dd.shape}, function={self.function.__name__}"
+            f"shape={self.outputs['result'].dd.shape}, function={self._evaluator.function.__name__}"
         )
         return True
 

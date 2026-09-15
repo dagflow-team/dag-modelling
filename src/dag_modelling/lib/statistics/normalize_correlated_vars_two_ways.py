@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import add, divide, matmul, multiply, subtract, zeros
 from scipy.linalg import solve_triangular
 
 from ...core.node import Node
 from ...core.type_functions import (
-    check_node_has_inputs,
     check_dimension_of_inputs,
     check_inputs_are_matrices_or_diagonals,
-    check_inputs_equivalence,
     check_inputs_are_matrix_multipliable,
+    check_inputs_equivalence,
+    check_node_has_inputs,
     copy_from_inputs_to_outputs,
 )
 
@@ -23,7 +23,8 @@ if TYPE_CHECKING:
 
 
 class NormalizeCorrelatedVarsTwoWays(Node):
-    """Normalize correlated variables or correlate normal variables with linear expression
+    """Normalize correlated variables or correlate normal variables with linear
+    expression.
 
     If x is a vector of values, μ are the central values and L is a cholesky decomposition
     of the covariance matrix V=LLᵀ then
@@ -70,7 +71,7 @@ class NormalizeCorrelatedVarsTwoWays(Node):
                 "normvalue",
             ),
         )
-        self._fd.needs_post_allocate = True
+        self._evaluator.needs_post_allocate = True
         self._labels.setdefault("mark", "c↔u")
 
         self._matrix_input = self._add_input("matrix", positional=False)
@@ -89,7 +90,7 @@ class NormalizeCorrelatedVarsTwoWays(Node):
             output_kws={"forbid_reallocation": True, "allocatable": False},
         )
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "forward_2d": self._fcn_forward_2d,
                 "forward_1d": self._fcn_forward_1d,
@@ -99,7 +100,7 @@ class NormalizeCorrelatedVarsTwoWays(Node):
         )
 
     def _fcn_forward_2d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         subtract(self._value, self._central, out=self._normvalue)
@@ -112,26 +113,27 @@ class NormalizeCorrelatedVarsTwoWays(Node):
         )
 
     def _fcn_backward_2d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         matmul(self._matrix, self._normvalue, out=self._value)
         add(self._value, self._central, out=self._value)
 
     def _fcn_forward_1d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         subtract(self._value, self._central, out=self._normvalue)
         divide(self._normvalue, self._matrix, out=self._normvalue)
 
     def _fcn_backward_1d(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         multiply(self._matrix, self._normvalue, out=self._value)
         add(self._value, self._central, out=self._value)
 
+    @override
     def taint(
         self,
         *,
@@ -149,11 +151,12 @@ class NormalizeCorrelatedVarsTwoWays(Node):
             - value should not be tainted on sigma/central modificantion
         """
         if caller is self._normvalue_input:
-            self.function = self._functions_dict[f"backward_{self._ndim}"]
+            self._evaluator.function =self._evaluator._functions_dict[f"backward_{self._ndim}"]
         else:
-            self.function = self._functions_dict[f"forward_{self._ndim}"]
+            self._evaluator.function =self._evaluator._functions_dict[f"forward_{self._ndim}"]
         super().taint(force_taint=force_taint, force_computation=force_computation, caller=caller)
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self)
         ndim = check_inputs_are_matrices_or_diagonals(self, "matrix", check_square=True)
@@ -169,7 +172,7 @@ class NormalizeCorrelatedVarsTwoWays(Node):
         )
 
         self._ndim = f"{ndim}d"
-        self.function = self._functions_dict[f"forward_{self._ndim}"]
+        self._evaluator.function =self._evaluator._functions_dict[f"forward_{self._ndim}"]
 
         self._value = zeros(shape=self._value_input.dd.shape, dtype=self._value_input.dd.dtype)
         self._normvalue = zeros(
@@ -183,6 +186,7 @@ class NormalizeCorrelatedVarsTwoWays(Node):
             self._normvalue, owns_buffer=False, forbid_reallocation=True
         )
 
+    @override
     def _post_allocate(self):
         super()._post_allocate()
 
