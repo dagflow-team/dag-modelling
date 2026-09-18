@@ -27,9 +27,8 @@ try:
         },
     )
 except ImportError:
-    # Cython is an opt-in build dependency (the "cython" extra), not part of
-    # [build-system].requires, so a plain install lands here and stays pure Python.
-    print("dag-modelling: Cython not available, building pure Python (no .so).")
+    # Build isolation hides Cython, even with `pip install ".[cython]"`.
+    print("dag-modelling: no Cython, building pure Python. To compile, use --no-build-isolation.")
     ext_modules = []
 
 setup(ext_modules=ext_modules)

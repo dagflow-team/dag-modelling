@@ -41,34 +41,24 @@ This way, the system will track all the changes made to the source files. This m
 
 ### Building
 
-The compiled acceleration is **opt-in**. Cython is not in
-`[build-system].requires`; it lives in the `cython` extra. A plain install is
-pure Python:
-
-```bash
-pip install .                    # pure Python, no .so
-```
-
-To build the `.pyx → .so` extensions, make Cython available and disable build
-isolation so `setup.py` can see it:
+Compilation is **opt-in**: `pip install dag-modelling` (and `pip install .`)
+gives pure Python. To build the `.so` extensions, install Cython first and
+disable build isolation, otherwise the build does not see it:
 
 ```bash
 pip install cython
-pip install --no-build-isolation ".[cython]"
+pip install --no-build-isolation ".[cython]"                              # from a checkout
+pip install --no-build-isolation --no-binary dag-modelling dag-modelling  # from PyPI
 ```
 
-`--no-build-isolation` is required: the `cython` extra is installed into the
-target environment, but the build runs in an isolated environment that would
-not otherwise contain Cython.
+The `cython` extra alone does **not** compile anything. From PyPI,
+`--no-binary` is needed too, since the published wheel is pure Python.
 
-When iterating on the `.pyx` sources, rebuild in place (Cython already in the venv):
+When editing `.pyx` sources, rebuild in place:
 
 ```bash
 python setup.py build_ext --inplace
 ```
-
-If Cython is not available at build time, `setup.py` prints a notice, produces
-no extensions, and the pure Python `.py` files are used instead.
 
 ### Three files per compiled class
 
@@ -80,12 +70,21 @@ no extensions, and the pure Python `.py` files are used instead.
 | `x_methods.py` | shared cold-path mixin `_XMethods` (`__slots__ = ()`) |
 
 At import time Python prefers the compiled `x.<abi>.so` over `x.py`, so
-`from dag_modelling.core.node import Node` works either way. To force the
-pure-Python path (e.g. for debugging or A/B benchmarking):
+`from dag_modelling.core.node import Node` works either way.
+
+### Switching to pure Python
+
+Set `DGM_DISABLE_CYTHON=1` to use the `.py` core even when `.so` files
+are built, e.g. to run tests in both modes:
 
 ```bash
-rm src/dag_modelling/core/*.so
+pytest                         # compiled core (if built)
+DGM_DISABLE_CYTHON=1 pytest    # pure-Python core
 ```
+
+The variable is read on the first `import dag_modelling`, so a running process
+cannot switch. To check which core is loaded, look at
+`dag_modelling.core.node_eval.__file__` (`.so` or `.py`).
 
 ## Example
 

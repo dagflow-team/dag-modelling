@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.16.0] - 2026-09-XX
+## [0.16.0] - 2026-09-15
 
-- feat: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration of
-  Gaussian with flat function within each bin.
+- feat: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration 
+  of Gaussian with flat function within each bin.
 - feat: Support reading matrices from root files from TH2* histograms.
 - feat: implement hot methods of core classes (Node, Output, Input, etc) with Cython. 
+- feat: add `DGM_DISABLE_CYTHON=1` environment variable to force the pure-Python core even
+  when the Cython extensions are built.
 - fix: update algorithm for iteration over graphs.
 - chore: various minor fixes and updates.
 
