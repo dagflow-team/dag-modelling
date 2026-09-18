@@ -5,6 +5,9 @@ stages:
 tests:
   image: 'python:3.12.14-bookworm'
   stage: tests
+  parallel:
+    matrix:
+      - DGM_CORE: [cython, python]
 
   script:
     - apt-get update
@@ -12,8 +15,14 @@ tests:
     - python3 -m venv venv
     - source venv/bin/activate
     - pip install --upgrade pip wheel setuptools setuptools-scm packaging
-    - pip install cython
-    - pip install --no-build-isolation -e ".[test,cython]"
+    - |
+      if [ "$DGM_CORE" = cython ]; then
+        pip install cython
+        pip install --no-build-isolation -e ".[test,cython]"
+      else
+        pip install -e ".[test]"
+      fi
+    - python tests/ci/core_check.py
     - coverage run --source=. -m pytest --include-long-time-tests
     - coverage report
     - coverage xml
@@ -31,7 +40,7 @@ tests:
     - merge_requests
 
 pypi:
-  image: 'python:3.12.14-bookworme'
+  image: 'python:3.12.14-bookworm'
   stage: publish
   script:
     - pip install twine build
