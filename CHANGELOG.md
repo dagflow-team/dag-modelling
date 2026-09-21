@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.16.0] - 2026-09-15
 
-- feat: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration 
+- feature: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration 
   of Gaussian with flat function within each bin.
-- feat: Support reading matrices from root files from TH2* histograms.
-- feat: implement hot methods of core classes (Node, Output, Input, etc) with Cython. 
-- feat: add `DGM_DISABLE_CYTHON=1` environment variable to force the pure-Python core even
+- feature: Support reading matrices from root files from TH2* histograms.
+- feature: implement hot methods of core classes (Node, Output, Input, etc) with Cython. 
+- feature: add `DGM_DISABLE_CYTHON=1` environment variable to force the pure-Python core even
   when the Cython extensions are built.
+- feature: add `extras/benchmarks` scripts to check performance of Python vs. Cython cores.
+- feature: update profiling tools.
 - fix: update algorithm for iteration over graphs.
 - chore: various minor fixes and updates.
 
