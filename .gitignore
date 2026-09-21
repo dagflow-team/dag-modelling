@@ -60,3 +60,8 @@ tags
 *.o
 coverage.json
 src/dag_modelling/__version__.py
+
+# Cython build artifacts
+*.so
+*.c
+*.html

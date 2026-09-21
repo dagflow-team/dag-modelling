@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from nested_mapping.typing import properkey
 
@@ -20,9 +20,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    from numpy.typing import NDArray
-
     from nested_mapping.typing import KeyLike, TupleKey
+    from numpy.typing import NDArray
 
 
 class ManyToOneNode(Node):
@@ -67,6 +66,8 @@ class ManyToOneNode(Node):
         self._input_data = []
         self._output_data = None  # pyright: ignore [reportAttributeAccessIssue]
 
+        self._evaluator.needs_post_allocate = True
+
     @staticmethod
     def _input_names() -> tuple[str, ...]:
         return ("input",)
@@ -75,6 +76,7 @@ class ManyToOneNode(Node):
     def _input_block_size(cls) -> int:
         return len(cls._input_names())
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_inputs_number_is_divisible_by_N(self, self._input_block_size())
@@ -91,6 +93,7 @@ class ManyToOneNode(Node):
         )  # copy shape to result
         evaluate_dtype_of_outputs(self, AllPositionals, "result")  # eval dtype of result
 
+    @override
     def _post_allocate(self):
         super()._post_allocate()
 

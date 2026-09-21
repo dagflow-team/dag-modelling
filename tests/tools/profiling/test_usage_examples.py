@@ -1,12 +1,13 @@
 # NOTE: consider to run pytest with "-s" flag to see outputs from this tests
 
+from dag_modelling.plot.graphviz import savegraph
 from dag_modelling.tools.profiling import (
     CountCallsProfiler,
     FrameworkProfiler,
     MemoryProfiler,
     NodeProfiler,
-    gather_related_nodes,
 )
+from dag_modelling.tools.graph_walker import get_subgraph_nodes_between
 
 
 def test_minimal_example(graph_0, output_path: str):
@@ -14,7 +15,7 @@ def test_minimal_example(graph_0, output_path: str):
 
     node_profiler = NodeProfiler(nodes)
     report = node_profiler.estimate_target_nodes().print_report()
-    report.to_csv(f"{output_path}/test_node_report.csv")
+    report.to_csv(f"{output_path}/test_node_report.tsv", sep="\t")
 
     framework_profiler = FrameworkProfiler(nodes)
     report = framework_profiler.estimate_framework_time().print_report()
@@ -22,7 +23,7 @@ def test_minimal_example(graph_0, output_path: str):
 
     calls_profiler = CountCallsProfiler(nodes)
     calls_profiler.estimate_calls()
-    report = calls_profiler.make_report(aggregations=["single", "std"])
+    report = calls_profiler.make_report()
 
     memory_profiler = MemoryProfiler(nodes)
     report = memory_profiler.estimate_target_nodes().print_report()
@@ -41,12 +42,13 @@ def test_full_guide(graph_0, output_path: str):
     # You can specify `sources` and `sinks` to automatically find target nodes,
     #  i.e. nodes that lie on all paths between `sources` and `sinks`.
     # this works for all profiler classes
-    _ = NodeProfiler(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
+    sink_node = nodes[-1]
+    _ = NodeProfiler(sources=(nodes[0], nodes[1]), sinks=(sink_node,))
 
     # If you are going to use the same subgraph for all profiling types
     #  or plan to modify the found set of related nodes,
-    #  you can call `gather_related_nodes` directrly
-    node_subgraph = gather_related_nodes(sources=(nodes[0], nodes[1]), sinks=(nodes[-1],))
+    #  you can call `get_subgraph_nodes_between` directrly
+    node_subgraph = get_subgraph_nodes_between(sources=(nodes[0], nodes[1]), sinks=(sink_node,))
     #       * do something with `node_subgraph` here *
     _ = NodeProfiler(list(node_subgraph))
 
@@ -56,21 +58,12 @@ def test_full_guide(graph_0, output_path: str):
     # Now we can make reports.
     # Remember, making reports will not work if there are no estimation results
 
-    # 'single' is basically alias for the 'mean' execution time of a single node
-    report = node_profiler.make_report(aggregations=["single", "std"])
-
-    # of course you can use 'mean' instead of 'single'
-    report = node_profiler.make_report(aggregations=["mean"])
-
     # also, you can chain these methods
     report = node_profiler.estimate_target_nodes().make_report()
 
     # You probably want to print results into terminal, consider using `print_report`
     # It returns the same report as `make_report` but also prints it
     report = node_profiler.print_report()
-
-    # For example you want to see estimations for each node, without grouping:
-    report = node_profiler.print_report(group_by=None, sort_by="name")
 
     # Note that default sorting is performed by 'time'
     #  or by first column of aggregation function
@@ -86,7 +79,7 @@ def test_full_guide(graph_0, output_path: str):
 
     ## FrameworkProfiler - estimate the overhead of the framework
     # In most cases, you want to measure the overhead for the _entire_ graph.
-    framework_profiler = FrameworkProfiler(nodes, n_runs=10_000)
+    framework_profiler = FrameworkProfiler(sources=nodes, n_runs=10_000, sinks=(sink_node,))
 
     framework_profiler.estimate_framework_time()
 
@@ -105,9 +98,11 @@ def test_full_guide(graph_0, output_path: str):
     # 2. Make report
     # 3. Print report
     # 4. Save to some format
-    calls_profiler.estimate_calls().print_report().to_csv(f"{output_path}/test_report.csv")
+    calls_profiler.estimate_calls().print_report().to_csv(
+        f"{output_path}/test_report.tsv", sep="\t"
+    )
 
-    calls_profiler.print_report(group_by=None, sort_by="calls", rows=10)
+    calls_profiler.print_report(group_by=None, sort_by="n_calls", rows=10)
 
     ## MemoryProfiler - estimate bytes of memory for Inputs/Outputs of given nodes
     memory_profiler = MemoryProfiler(nodes)
@@ -116,4 +111,8 @@ def test_full_guide(graph_0, output_path: str):
     memory_profiler.estimate_target_nodes(touch=False)
 
     memory_profiler.print_report()
-    memory_profiler.print_report(group_by=None, sort_by="size")
+
+    gname = f"{output_path}/graph.pdf"
+    savegraph(graph, gname)
+    print("Write:", gname)
+

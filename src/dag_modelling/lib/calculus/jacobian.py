@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import empty, outer, zeros
@@ -50,6 +50,7 @@ class Jacobian(OneToOneNode):
             )
         self._parameters_list.append(par)
 
+    @override
     def _type_function(self) -> None:
         n = len(self._parameters_list)
         for inp, out in zip(self.inputs, self.outputs):
@@ -75,7 +76,7 @@ class Jacobian(OneToOneNode):
                 parameter.value = x0
                 inp.touch()
         # We need to set the flag frozen manually
-        self.fd.frozen = True
+        self._evaluator.frozen = True
 
     def compute(self) -> None:
         self.unfreeze()

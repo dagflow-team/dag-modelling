@@ -6,7 +6,7 @@ from os import makedirs
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from numpy import nan, ndarray
+from numpy import nan, ndarray, log10
 from ordered_set import OrderedSet
 
 from nested_mapping import NestedMapping
@@ -125,7 +125,8 @@ class NodeStorage(NestedMapping):
             gd = GraphDot.from_nodes([node], min_depth=min_depth, max_depth=max_depth, **kwargs)
             gd.savegraph(fullname, quiet=True)
 
-            logger.log(INFO1, f"Write: {fullname} [{i + 1}/{nitems}]")
+            ilen = int(log10(nitems))+1
+            logger.log(INFO1, f"Write [{i + 1:{ilen}d}/{nitems}]: {fullname}")
 
     def __setitem__(self, key: KeyLike, item: Any) -> None:
         from ..parameters import Parameter, Parameters

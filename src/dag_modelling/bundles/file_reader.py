@@ -13,7 +13,7 @@ from ..tools.logger import INFO1, INFO2, INFO3, logger
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
-    from typing import Any
+    from typing import Any, Literal
 
     import ROOT
     from nested_mapping.typing import KeyLike, TupleKey
@@ -43,14 +43,16 @@ _HistGetter = HistGetter()
 class GraphGetter:
     __slots__ = ()
 
-    def __getitem__(self, names: tuple[str | Path, str] | str | Path) -> tuple[NDArray, NDArray]:
-        if isinstance(names, tuple):
-            file_name, object_name = names
+    def get(self, *names, hist_edges_strategy: Literal["left", "center", "right"] | None = None) -> tuple[NDArray, NDArray]:
+        if isinstance(names[0], tuple):
+            file_name, object_name = names[0]
         else:
-            file_name, object_name = names, None
+            file_name, object_name = names
         fr = FileReader[file_name]
 
-        return fr.get_graph(object_name)
+        return fr.get_graph(object_name, hist_edges_strategy)
+
+    __getitem__ = get
 
 
 _GraphGetter = GraphGetter()
@@ -189,7 +191,7 @@ class FileReader(metaclass=FileReaderMeta):
     def keys(self) -> tuple[str, ...]:
         raise RuntimeError("not implemented method")
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         raise RuntimeError("not implemented method")
 
     def _get_object(self, object_name: str | None, **kwargs) -> Any:
@@ -200,17 +202,17 @@ class FileReader(metaclass=FileReaderMeta):
 
         try:
             self._read_objects[object_name] = (
-                object := self._get_object_impl(object_name, **kwargs)
+                object := self._get_object_implementation(object_name, **kwargs)
             )
             return object
         except KeyError as e:
             raise KeyError(f"Can not read {object_name} from {self._file_name!s}") from e
 
-    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
-        x, y = self._get_graph(object_name)
+    def get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        x, y = self._get_graph(object_name, hist_edges_strategy)
         logger.log(
             INFO2,
             f"graph {object_name} ({len(y)}): x"
@@ -272,7 +274,9 @@ class FileReader(metaclass=FileReaderMeta):
 class FileReaderArray(FileReader):
     _extension: str = ""
 
-    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        if hist_edges_strategy is not None:
+            raise RuntimeError("Strategy for loading edges is not supported for arrays")
         return self._get_xy(object_name)
 
     def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
@@ -312,7 +316,7 @@ class FileReaderNPZ(FileReaderArray):
         super()._close()
         del self._file
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -334,7 +338,7 @@ class FileReaderHDF5(FileReaderArray):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -365,7 +369,7 @@ class FileReaderTSV(FileReaderArray):
 
         return uncompressed + tuple(f"{fname}.bz2" for fname in uncompressed)
 
-    def _get_object_impl(
+    def _get_object_implementation(
         self, object_name: str | None | None, return_record: bool = True, **kwargs
     ) -> Any:
         filenames = self._get_filenames(object_name)
@@ -409,7 +413,7 @@ class FileReaderROOTUpROOT(FileReader):
         super()._close()
         self._file.close()
 
-    def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+    def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
         assert not kwargs
         assert object_name is not None
         return self._file[object_name]
@@ -419,9 +423,9 @@ class FileReaderROOTUpROOT(FileReader):
         y, x = obj.to_numpy()
         return x, y
 
-    def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
-        return _uproot_load_graph(obj)
+        return _uproot_load_graph(obj, hist_edges_strategy)
 
     def _get_array(self, object_name: str | None) -> NDArray:
         obj = self._get_object(object_name)
@@ -437,13 +441,19 @@ class FileReaderROOTUpROOT(FileReader):
 
 def _uproot_load_array(object) -> NDArray:
     # At the moment uproot does not support reading numpy data from TMatrixT
-    if not type(object).__name__.startswith("Model_TMatrixT"):
-        raise RuntimeError("Can only read arrays from TMatrixT instance via uproot")
+    from uproot import behaviors
 
-    nrows = object.all_members["fNrows"]
-    ncols = object.all_members["fNcols"]
+    if type(object).__name__.startswith("Model_TMatrixT"):
+        nrows = object.all_members["fNrows"]
+        ncols = object.all_members["fNcols"]
 
-    array = object.all_members["fElements"].reshape(nrows, ncols)
+        array = object.all_members["fElements"].reshape(nrows, ncols)
+    # NOTE: Read 1D/2D histogram as matrix, ignore edges, ignore underflow/overflow
+    elif isinstance(object, (behaviors.TH1.TH1, behaviors.TH2.TH2)):
+        array, *_ = object.to_numpy(flow=False)
+        array = array.T
+    else:
+        raise RuntimeError(f"Do not know how to work with {type(object)}")
 
     if array.dtype.byteorder == ">":
         array = array.astype(array.dtype.type)
@@ -451,13 +461,21 @@ def _uproot_load_array(object) -> NDArray:
     return array
 
 
-def _uproot_load_graph(object) -> tuple[NDArray, NDArray]:
+def _uproot_load_graph(object, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
     # At the moment uproot does not support reading numpy data from TGraph*
     from uproot import behaviors
 
     if isinstance(object, behaviors.TH1.TH1):
         y, x = object.to_numpy()
-        return x[:-1], y
+        match hist_edges_strategy:
+            case "left":
+                return x[:-1], y
+            case "center":
+                return (x[1:] + x[:-1]) * 0.5, y
+            case "right":
+                return x[1:], y
+            case _:
+                raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
     elif isinstance(
         object,
         (
@@ -466,6 +484,8 @@ def _uproot_load_graph(object) -> tuple[NDArray, NDArray]:
             behaviors.TGraphAsymmErrors.TGraphAsymmErrors,
         ),
     ):
+        if hist_edges_strategy is not None:
+            raise RuntimeError(f"Strategy for loading edges is supported only for ROOT.TH*")
         x = object.all_members["fX"]
         y = object.all_members["fY"]
         if x.dtype.byteorder == ">":
@@ -506,7 +526,7 @@ with suppress(ImportError):
             if self._reader_uproot is not None:
                 self._reader_uproot._close()
 
-        def _get_object_impl(self, object_name: str | None, **kwargs) -> Any:
+        def _get_object_implementation(self, object_name: str | None, **kwargs) -> Any:
             assert not kwargs
             assert object_name is not None
             ret = self._file.Get(object_name)
@@ -523,13 +543,23 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to hist")
 
-        def _get_graph(self, object_name: str | None) -> tuple[NDArray, NDArray]:
+        def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
             import ROOT
 
             obj = self._get_object(object_name)
             if isinstance(obj, ROOT.TH1) and obj.GetDimension() == 1:
-                return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
+                match hist_edges_strategy:
+                    case "left":
+                        return _get_bin_left_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
+                    case "center":
+                        return _get_bin_centers(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
+                    case "right":
+                        return _get_bin_right_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
+                    case _:
+                        raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
             if isinstance(obj, ROOT.TGraph):
+                if hist_edges_strategy is not None:
+                    raise RuntimeError(f"Strategy for loading edges is supproted only ROOT.TH*")
                 return _get_buffers_graph(obj)
 
             raise ValueError(f"Do not know ho to convert {obj} to graph")
@@ -635,6 +665,22 @@ def _get_bin_left_edges(ax: ROOT.TAxis) -> NDArray:
         lims = frombuffer(xbins.GetArray(), double, n)
         return lims[:-1].copy()
     return linspace(ax.GetXmin(), ax.GetXmax(), ax.GetNbins() + 1)[:-1]
+
+
+def _get_bin_centers(ax: ROOT.TAxis) -> NDArray:
+    """Get the array with bin centers."""
+    edges = _get_bin_edges(ax)
+    return (edges[1:] + edges[:-1]) * 0.5
+
+
+def _get_bin_right_edges(ax: ROOT.TAxis) -> NDArray:
+    """Get the array with bin right edges."""
+    xbins = ax.GetXbins()
+    n = xbins.GetSize()
+    if n > 0:
+        lims = frombuffer(xbins.GetArray(), double, n)
+        return lims[1:].copy()
+    return linspace(ax.GetXmin(), ax.GetXmax(), ax.GetNbins() + 1)[1:]
 
 
 def _get_buffers_graph(g: ROOT.TGraph) -> tuple[NDArray, NDArray]:

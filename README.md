@@ -37,6 +37,55 @@ pip install -e .
 ```
 This way, the system will track all the changes made to the source files. This means that developers won't need to reinstall the package or set environment variables, even when a branch is changed.
 
+## Cython acceleration (optional)
+
+### Building
+
+Compilation is **opt-in**: `pip install dag-modelling` (and `pip install .`)
+gives pure Python. To build the `.so` extensions, install Cython first and
+disable build isolation, otherwise the build does not see it:
+
+```bash
+pip install cython
+pip install --no-build-isolation ".[cython]"                              # from a checkout
+pip install --no-build-isolation --no-binary dag-modelling dag-modelling  # from PyPI
+```
+
+The `cython` extra alone does **not** compile anything. From PyPI,
+`--no-binary` is needed too, since the published wheel is pure Python.
+
+When editing `.pyx` sources, rebuild in place:
+
+```bash
+python setup.py build_ext --inplace
+```
+
+### Three files per compiled class
+
+| File | Role |
+|---|---|
+| `x.pxd` | C-level field/signature declarations, for `cimport` |
+| `x.pyx` | `cdef class`, hot path only (`cpdef`/`cdef`) |
+| `x.py`  | pure-Python fallback, same interface |
+| `x_methods.py` | shared cold-path mixin `_XMethods` (`__slots__ = ()`) |
+
+At import time Python prefers the compiled `x.<abi>.so` over `x.py`, so
+`from dag_modelling.core.node import Node` works either way.
+
+### Switching to pure Python
+
+Set `DGM_DISABLE_CYTHON=1` to use the `.py` core even when `.so` files
+are built, e.g. to run tests in both modes:
+
+```bash
+pytest                         # compiled core (if built)
+DGM_DISABLE_CYTHON=1 pytest    # pure-Python core
+```
+
+The variable is read on the first `import dag_modelling`, so a running process
+cannot switch. To check which core is loaded, look at
+`dag_modelling.core.node_eval.__file__` (`.so` or `.py`).
+
 ## Example
 
 For example, let's consider a sum of three input nodes and then a product of the result with another array.

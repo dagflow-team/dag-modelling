@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 from numpy import allclose
@@ -55,7 +55,7 @@ class AxisDistortionMatrixLinear(Node):
         self._edges_modified = self._add_input("EdgesModified", positional=False)
         self._result = self._add_output("matrix")  # output: 0
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "python": self._function_python,
                 "numba": self._function_numba,
@@ -78,6 +78,7 @@ class AxisDistortionMatrixLinear(Node):
             self._result._data,
         )
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         names_edges = ("EdgesOriginal", "EdgesTarget", "EdgesModified")
@@ -92,7 +93,7 @@ class AxisDistortionMatrixLinear(Node):
         edges_original = self._edges_original.parent_output
         edges_target = self._edges_target.parent_output
         self._result.dd.axes_edges = (edges_target, edges_original)
-        self.function = self._functions_dict["numba"]
+        self._evaluator.function = self._evaluator._functions_dict["numba"]
 
 
 def _axisdistortion_linear_python(

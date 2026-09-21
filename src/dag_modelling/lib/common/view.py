@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from ...core.node import Node
 from ...core.type_functions import copy_from_inputs_to_outputs
@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 
 class View(Node):
-    """Creates a node with a single data output which is a view on the input"""
+    """Creates a node with a single data output which is a view on the
+    input."""
 
     __slots__ = (
         "_input",
@@ -33,7 +34,7 @@ class View(Node):
         **kwargs,
     ) -> None:
         super().__init__(name, **kwargs)
-        self._fd.needs_post_allocate = True
+        self._evaluator.needs_post_allocate = True
         child_output = self._add_output(outname, allocatable=False, forbid_reallocation=True)
         self._input = self._add_input("input", child_output=child_output)
         self._start = start
@@ -47,14 +48,16 @@ class View(Node):
     def _function(self):
         self._input.data
 
+    @override
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         copy_from_inputs_to_outputs(self, 0, 0)
 
         if self._length is not None:
             dd = self.outputs[0].dd
-            dd.shape=(self._length,)+dd.shape[1:]
+            dd.shape = (self._length,) + dd.shape[1:]
 
+    @override
     def _post_allocate(self) -> None:
         _input = self.inputs[0]
         output = self.outputs[0]

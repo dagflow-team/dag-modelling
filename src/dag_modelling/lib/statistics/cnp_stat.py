@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import sqrt
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -79,17 +79,17 @@ class CNPStat(BlockToOneNode):
             }
         )
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {"uncertainty": self._cnp_uncertainty, "variance": self._cnp_variance}
         )
-        self.function = self._functions_dict[mode]
+        self._evaluator.function =self._evaluator._functions_dict[mode]
 
     @staticmethod
     def _input_names() -> tuple[str, ...]:
         return "data", "theory"
 
     def _cnp_uncertainty(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         i = 0
@@ -97,7 +97,7 @@ class CNPStat(BlockToOneNode):
             _cnp_uncertainty(self._input_data[2 * i], self._input_data[2 * i + 1], output_data)
 
     def _cnp_variance(self) -> None:
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         i = 0
@@ -105,6 +105,7 @@ class CNPStat(BlockToOneNode):
             _cnp_variance(self._input_data[2 * i], self._input_data[2 * i + 1], output_data)
             i += 2
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_inputs_number_is_divisible_by_N(self, 2)

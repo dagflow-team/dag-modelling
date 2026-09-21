@@ -1,4 +1,10 @@
-from ...core.type_functions import AllPositionals, check_node_has_inputs, copy_dtype_from_inputs_to_outputs
+from typing import override
+
+from ...core.type_functions import (
+    AllPositionals,
+    check_node_has_inputs,
+    copy_dtype_from_inputs_to_outputs,
+)
 from ..abstract import OneToOneNode
 
 
@@ -21,6 +27,7 @@ class ArraySum(OneToOneNode):
         super().__init__(*args, **kwargs)
         self._labels.setdefault("mark", "Σᵢ")
 
+    @override
     def _type_function(self) -> None:
         check_node_has_inputs(self, AllPositionals)
         copy_dtype_from_inputs_to_outputs(self, AllPositionals, AllPositionals)

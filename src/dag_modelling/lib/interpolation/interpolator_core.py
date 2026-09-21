@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from numba import njit
 from numpy import double, exp, integer, log
@@ -149,7 +149,9 @@ class InterpolatorCore(Node):
         self._indices_input = self._add_input("indices", positional=False)
         self._result_output = self._add_output("result")
 
-        self._functions_dict.update(
+        self._evaluator.needs_post_allocate = True
+
+        self._evaluator._functions_dict.update(
             {
                 "python": self._function_python,
                 "numba": self._function_numba,
@@ -177,6 +179,7 @@ class InterpolatorCore(Node):
     def fillvalue(self) -> float:
         return self._fillvalue
 
+    @override
     def _type_function(self) -> None:
         """The function to determine the dtype and shape.
 
@@ -217,6 +220,7 @@ class InterpolatorCore(Node):
                 merge_input_axes=True,
             )
 
+    @override
     def _post_allocate(self):
         super()._post_allocate()
         self._y = self._y_input._data.ravel()
@@ -228,7 +232,7 @@ class InterpolatorCore(Node):
     def _function_numba(self):
         """Runs interpolation method chosen within `method` arg."""
         # TODO: inherit from OneToOneNode, loop inputs
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         _interpolation_numba(
@@ -246,7 +250,7 @@ class InterpolatorCore(Node):
     def _function_python(self):
         """Runs interpolation method chosen within `method` arg."""
         # TODO: inherit from OneToOneNode, loop inputs
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         _interpolation_python(

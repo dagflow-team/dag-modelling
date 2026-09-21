@@ -24,22 +24,22 @@ def test_init(graph_0):
 
     sources, sinks = [a1, a2], [s2]
     target_nodes = [a1, a2, p1, s2]
-    profiling = NodeProfiler(target_nodes, sources=sources, sinks=sinks)
+    profiling = NodeProfiler(sources=sources, sinks=sinks)
 
 
 def test_filter_nodes(graph_0):
     _, nodes = graph_0
 
     node_types = (Product, Sum)
-    profiling = NodeProfiler(nodes, filter_types=node_types)
+    profiling = NodeProfiler(nodes, keep_types=node_types)
     assert all(isinstance(n, node_types) for n in profiling._target_nodes)
 
     node_types_str = ("Product", "Sum")
-    profiling = NodeProfiler(nodes, filter_types=node_types_str)
+    profiling = NodeProfiler(nodes, keep_types=node_types_str)
     assert all(n.__class__.__name__ in node_types_str for n in profiling._target_nodes)
 
     node_types_mixed = ("Array", Sum)
-    profiling = NodeProfiler(nodes, filter_types=node_types_mixed)
+    profiling = NodeProfiler(nodes, keep_types=node_types_mixed)
     assert all(isinstance(n, (Array, Sum)) for n in profiling._target_nodes)
 
 
@@ -85,17 +85,9 @@ def test_make_report_g0(graph_0):
     profiling.estimate_target_nodes().make_report()
 
     profiling.make_report(group_by=None)
-    profiling.make_report(group_by="node")
-    profiling.make_report(group_by="name")
-    profiling.make_report(group_by="type")
-
-    with raises(ValueError) as excinfo:
-        profiling.make_report(group_by="something wrong")
-    assert "Invalid `group_by` name" in str(excinfo.value)
 
     with raises(AttributeError) as excinfo:
         NodeProfiler(target_nodes).make_report()
-    assert "No estimations found" in str(excinfo.value)
 
 
 def test_make_report_g1(graph_1):
@@ -104,26 +96,7 @@ def test_make_report_g1(graph_1):
     profiling = NodeProfiler(target_nodes, n_runs=n_runs)
     profiling.estimate_target_nodes()
 
-    profiling.make_report(aggregations=["min", "std", "count"])
-    profiling.make_report(aggregations=["t_min", "t_std", "t_count"])
-    profiling.make_report(aggregations=["t_mean", "t_percentage", "t_count"])
-    profiling.make_report(aggregations=["t_mean", "fraction_percent", "t_count"])
-    profiling.make_report(aggregations=["median", "%_of_total"])
-    profiling.make_report(aggregations=["count", "min", "std"])
-
-    report = profiling.make_report(aggregations=["count", "min", "percentage"])
-    assert "t_total" not in report.columns
-    report = profiling.make_report(aggregations=["sum", "percentage"])
-    assert "t_total" in report.columns
-
-    with raises(ValueError) as excinfo:
-        profiling.make_report(aggregations=["bad_function"])
-    assert "Invalid aggregate function" in str(excinfo.value)
-
-    profiling.make_report(aggregations=["count", "single", "min"], sort_by="min")
-    profiling.make_report(aggregations=["single", "count", "min"], sort_by="t_single")
-    profiling.make_report(aggregations=["single", "count", "min"], sort_by="count")
-    profiling.make_report(aggregations=["min", "count", "single"], sort_by=None)
+    profiling.make_report()
 
 
 def test_print_report_g1_1(graph_1):
@@ -132,11 +105,9 @@ def test_print_report_g1_1(graph_1):
     profiling = NodeProfiler(target_nodes, n_runs=n_runs)
     profiling.estimate_target_nodes()
 
-    profiling.print_report(aggregations=["min", "single", "count"], rows=500)
-    profiling.print_report(aggregations=["min"], rows=1)
+    profiling.print_report()
     profiling.print_report(group_by=None, rows=2)
     profiling.print_report(group_by=None, rows=20)
-    profiling.print_report(aggregations=["single", "count", "sum", "percentage"], sort_by="single")
 
 
 def test_print_report_g1_2(graph_1):
@@ -147,7 +118,7 @@ def test_print_report_g1_2(graph_1):
         n_runs = 10**i
         profiling = NodeProfiler(target_nodes, n_runs=n_runs)
         profiling.estimate_target_nodes()
-        profiling.print_report(aggregations=["single", "count", "sum", "fraction_percent"])
+        profiling.print_report()
 
 
 def test_print_report_g1_3(graph_1):
@@ -156,6 +127,5 @@ def test_print_report_g1_3(graph_1):
     profiling = NodeProfiler(target_nodes, n_runs=n_runs)
     profiling.estimate_target_nodes()
 
-    profiling.print_report(aggregations=["single", "percentage", "count"])
-    profiling.print_report(aggregations=["count", "t_percentage"])
-    profiling.make_report(aggregations=["t_percentage", "count"])
+    profiling.print_report()
+    profiling.make_report()

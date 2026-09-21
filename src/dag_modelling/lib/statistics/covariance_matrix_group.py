@@ -10,7 +10,8 @@ from nested_mapping.typing import KeyLike, TupleKey, properkey
 
 from ...core.exception import ConnectionError
 from ...core.meta_node import MetaNode
-from ...core.node import Node, Output
+from ...core.node import Node
+from ...core.output import Output
 from ...core.storage import NodeStorage
 from ...parameters import GaussianParameter, NormalizedGaussianParameter
 from ..arithmetic import Sum

@@ -5,21 +5,23 @@ from math import fabs
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from schema import And, Optional, Or, Schema, SchemaError, Use
-
 from nested_mapping import NestedMapping
-from nested_mapping.typing import properkey
+from nested_mapping.typing import TupleKey, properkey
+from schema import And, Optional, Or, Schema, SchemaError, Use
 
 from ..core.exception import InitializationError
 from ..core.labels import format_dict, inherit_labels, mapping_append_lists
+from ..core.storage import NodeStorage
 from ..lib.common import Array
 from ..lib.summation import ElSumSq
 from ..parameters import Parameters
-from ..core.storage import NodeStorage
 from ..tools.schema import IsStrSeqOrStr, LoadFileWithExt, LoadYaml, MakeLoaderPy, NestedSchema
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, Sequence
+    from typing import Callable
+
+    from numpy.typing import NDArray
 
 
 class ParsCfgHasProperFormat:
@@ -113,8 +115,14 @@ IsParsCfgDict = Schema(
         Optional("sigma_visible", default=False): bool,
         Optional("ignore_keys", default=()): Or(
             ({str},),
-            And(Or((str,),),[(str,)],[{str}]),
-            Use(lambda keys: tuple(map(set, keys)))
+            And(
+                Or(
+                    (str,),
+                ),
+                [(str,)],
+                [{str}],
+            ),
+            Use(lambda keys: tuple(map(set, keys))),
         ),
     },
     # error = 'Invalid parameters configuration: {}'
@@ -271,19 +279,35 @@ def load_parameters(
     acfg: Mapping | None = None,
     *,
     nuisance_location: str | Sequence[str] | None = "statistic.nuisance.parts",
+    skip_fcn: Callable[[TupleKey], bool] = lambda _: False,
+    correlations_skip_fcn: Callable[[str], bool] | None = None,
     **kwargs,
 ) -> NestedMapping:
     acfg = dict(acfg or {}, **kwargs)
+    # Stub: dgm-dayabay-dev passes skip_fcn/correlations_skip_fcn
+    # unconditionally; their handler lives on branch profilinga-paper
+    # (commits ff317dc, c8a5373) but is not yet merged here. Drop the keys
+    # so ValidateParsCfg does not reject them as unknown.
+    # TODO: remove once profilinga-paper is merged.
+    acfg.pop("skip_fcn", None)
+    acfg.pop("correlations_skip_fcn", None)
     cfg = ValidateParsCfg(acfg)
     cfg = NestedMapping(cfg)
 
-    return _load_parameters(cfg, nuisance_location=nuisance_location)
+    return _load_parameters(
+        cfg,
+        nuisance_location=nuisance_location,
+        skip_fcn=skip_fcn,
+        correlations_skip_fcn=correlations_skip_fcn,
+    )
 
 
 def _load_parameters(
     cfg: NestedMapping,
     *,
     nuisance_location: str | Sequence[str] | None = "statistic.nuisance.parts",
+    skip_fcn: Callable[[TupleKey], bool] = lambda _: False,
+    correlations_skip_fcn: Callable[[str], bool] | None = None,
 ) -> NestedMapping:
     pathstr = cfg["path"]
     path = tuple(pathstr.split(".")) if pathstr else ()
@@ -322,6 +346,7 @@ def _load_parameters(
 
     varcfgs = NestedMapping({})
     normpars = {}
+    skipped_entries_exit = False
     for key_general, varcfg in iterate_varcfgs(cfg):
         varcfg.setdefault(state, True)
 
@@ -329,6 +354,10 @@ def _load_parameters(
 
         for subkey in subkeys:
             key = reorder_key(key_general + subkey)
+            if skip_fcn(key):
+                skipped_entries_exit = True
+                continue
+
             key_str = ".".join(key)
             subkey_str = ".".join(subkey)
 
@@ -357,65 +386,73 @@ def _load_parameters(
 
     processed_cfgs = set()
     pars = NestedMapping({})
-    for key, corrcfg in cfg.get_dict("correlations").walkdicts():
-        label = get_label(key, cfg.get_dict("labels"))
-        label_mat0 = get_label(key, cfg.get_dict("labels"), group_only=True)
+    if correlations_cfg := cfg.get_dict("correlations"):
+        if skipped_entries_exit and correlations_skip_fcn is None:
+            raise RuntimeError(
+                "load_parameters: should provide 'correlations_skip_fcn' in the case entries are filtered with 'skip_fcn'"
+            )
+        for key, corrcfg in correlations_cfg.walkdicts():
+            label = get_label(key, cfg.get_dict("labels"))
+            label_mat0 = get_label(key, cfg.get_dict("labels"), group_only=True)
 
-        matrixtype = corrcfg["matrix_type"]
-        matrix = corrcfg["matrix"]
-        mark_matrix = "C" if matrixtype == "correlation" else "V"
-        label_mat = inherit_labels(
-            label_mat0,
-            fmtlong=f"{matrixtype.capitalize()} matrix: {{}}",
-            fmtshort=mark_matrix + "({})",
-        )
-        label_mat["mark"] = mark_matrix
-        label_mat = format_dict(
-            label_mat,
-            key="",
-            index=(),
-            space_key="",
-            key_space="",
-            process_keys=label_keys,
-        )
-        matrix_array = Array(matrixtype, matrix, label=label_mat)
-
-        for subkey in subkeys:
-            fullkey = key + subkey
-            subkey_str = ".".join(subkey)
-            try:
-                varcfg = varcfgs(fullkey)
-            except KeyError as e:
-                raise InitializationError(f"Failed to obtain parameters for {fullkey}") from e
-
-            kwargs = {matrixtype: matrix_array}
-            kwargs["value"] = (vvalue := [])
-            kwargs["central"] = (vcentral := [])
-            kwargs["sigma"] = (vsigma := [])
-            kwargs["names"] = (names := [])
-            paths = []
-            for name, vcfg in varcfg.walkdicts(ignorekeys=("label",)):
-                vvalue.append(vcfg["value"])
-                vcentral.append(vcfg["central"])
-                vsigma.append(vcfg["sigma"])
-                names.append(name)
-                processed_cfgs.add(fullkey + name)
-            _add_paths_from_labels(paths, varcfg)
-
-            labelsub = format_dict(
-                dict(label, name=".".join(fullkey)),
-                subkey=subkey_str,
-                index=subkey,
-                key=subkey_str,
-                space_key=f" {subkey_str}",
-                key_space=f"{subkey_str} ",
+            matrixtype = corrcfg["matrix_type"]
+            names = corrcfg["names"]
+            matrix = corrcfg["matrix"]
+            matrix = filter_matrix(matrix, names, correlations_skip_fcn)
+            mark_matrix = "C" if matrixtype == "correlation" else "V"
+            label_mat = inherit_labels(
+                label_mat0,
+                fmtlong=f"{matrixtype.capitalize()} matrix: {{}}",
+                fmtshort=mark_matrix + "({})",
+            )
+            label_mat["mark"] = mark_matrix
+            label_mat = format_dict(
+                label_mat,
+                key="",
+                index=(),
+                space_key="",
+                key_space="",
                 process_keys=label_keys,
             )
-            mapping_append_lists(labelsub, "index_values", subkey)
-            mapping_append_lists(labelsub, "paths", paths)
-            pars[fullkey] = Parameters.from_numbers(label=labelsub, **kwargs)
+            matrix_array = Array(matrixtype, matrix, label=label_mat)
+
+            for subkey in subkeys:
+                fullkey = key + subkey
+                subkey_str = ".".join(subkey)
+                try:
+                    varcfg = varcfgs(fullkey)
+                except KeyError as e:
+                    raise InitializationError(f"Failed to obtain parameters for {fullkey}") from e
+
+                kwargs = {matrixtype: matrix_array}
+                kwargs["value"] = (vvalue := [])
+                kwargs["central"] = (vcentral := [])
+                kwargs["sigma"] = (vsigma := [])
+                kwargs["names"] = (names := [])
+                paths = []
+                for name, vcfg in varcfg.walkdicts(ignorekeys=("label",)):
+                    vvalue.append(vcfg["value"])
+                    vcentral.append(vcfg["central"])
+                    vsigma.append(vcfg["sigma"])
+                    names.append(name)
+                    processed_cfgs.add(fullkey + name)
+                _add_paths_from_labels(paths, varcfg)
+
+                labelsub = format_dict(
+                    dict(label, name=".".join(fullkey)),
+                    subkey=subkey_str,
+                    index=subkey,
+                    key=subkey_str,
+                    space_key=f" {subkey_str}",
+                    key_space=f"{subkey_str} ",
+                    process_keys=label_keys,
+                )
+                mapping_append_lists(labelsub, "index_values", subkey)
+                mapping_append_lists(labelsub, "paths", paths)
+                pars[fullkey] = Parameters.from_numbers(label=labelsub, **kwargs)
 
     ignore_keys = cfg["ignore_keys"]
+
     def skip_key(key):
         if key in processed_cfgs:
             return True
@@ -423,6 +460,7 @@ def _load_parameters(
             if ignored_key.issubset(key):
                 return True
         return False
+
     for key, varcfg in varcfgs.walkdicts(ignorekeys=("label",)):
         if skip_key(key):
             continue
@@ -464,7 +502,7 @@ def _load_parameters(
             for subname, subpar in par.iteritems_norm():
                 ret[ntarget + subname] = subpar
 
-    if state!="fixed":
+    if state != "fixed":
         joint_nuisance = cfg["joint_nuisance"]
         nuisance_location = properkey(nuisance_location, sep=".")
         if joint_nuisance:
@@ -487,3 +525,24 @@ def _load_parameters(
     NodeStorage.update_current(ret, strict=True)
 
     return ret
+
+
+def filter_matrix(
+    matrix: NDArray | Sequence[Sequence[float | int]],
+    names: Sequence[str],
+    skip_fcn: Callable[[str], bool] | None,
+) -> NDArray:
+    from numpy import ascontiguousarray
+
+    matrix = ascontiguousarray(matrix)
+    if skip_fcn is None:
+        return matrix
+
+    skip_mask = list(map(skip_fcn, names))
+    if not any(skip_mask):
+        return matrix
+
+    from numpy import delete, where
+
+    skip_index = where(skip_mask)[0]
+    return delete(delete(matrix, skip_index, axis=0), skip_index, axis=1)

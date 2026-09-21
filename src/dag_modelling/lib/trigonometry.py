@@ -13,7 +13,7 @@ class Cos(OneToOneNode):
         self._labels.setdefault("mark", "cos")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -30,7 +30,7 @@ class Sin(OneToOneNode):
         self._labels.setdefault("mark", "sin")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -47,7 +47,7 @@ class ArcCos(OneToOneNode):
         self._labels.setdefault("mark", "acos")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -64,7 +64,7 @@ class ArcSin(OneToOneNode):
         self._labels.setdefault("mark", "asin")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -81,7 +81,7 @@ class Tan(OneToOneNode):
         self._labels.setdefault("mark", "tan")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:
@@ -98,7 +98,7 @@ class ArcTan(OneToOneNode):
         self._labels.setdefault("mark", "atan")
 
     def _function(self):
-        for callback in self._input_nodes_callbacks:
+        for callback in self._evaluator._input_nodes_callbacks:
             callback()
 
         for input_data, output_data in self._input_output_data:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -30,6 +30,7 @@ class LinearFunction(OneToOneNode):
         self._a = self._add_input("a", positional=False)
         self._b = self._add_input("b", positional=False)
 
+    @override
     def _type_function(self) -> None:
         super()._type_function()
         check_size_of_inputs(self, ("a", "b"), exact=1)

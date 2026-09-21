@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import matmul, multiply
 
@@ -46,7 +46,7 @@ class VectorMatrixProduct(Node):
         else:
             raise RuntimeError(f"Invalid VectorMatrixProduct mode {mode}")
 
-        self._functions_dict.update(
+        self._evaluator._functions_dict.update(
             {
                 "row_diagonal": self._fcn_row_diagonal,
                 "row_block": self._fcn_row_block,
@@ -83,6 +83,7 @@ class VectorMatrixProduct(Node):
         ):
             multiply(diag, col, out=outdata)
 
+    @override
     def _type_function(self) -> None:
         check_dimension_of_inputs(self, AllPositionals, ndim=1)
         ndim_mat = check_inputs_are_matrices_or_diagonals(self, "matrix")
@@ -93,14 +94,14 @@ class VectorMatrixProduct(Node):
             for i, out in enumerate(self.outputs):
                 (resshape,) = check_inputs_are_matrix_multipliable(self, "matrix", i)
                 out.dd.shape = (resshape[0],)
-            self.function = (
+            self._evaluator.function = (
                 ndim_mat == 2 and self._fcn_block_column or self._fcn_diagonal_column
             )
         else:
             for i, out in enumerate(self.outputs):
                 (resshape,) = check_inputs_are_matrix_multipliable(self, i, "matrix")
                 out.dd.shape = (resshape[-1],)
-            self.function = (
+            self._evaluator.function = (
                 ndim_mat == 2 and self._fcn_row_block or self._fcn_row_diagonal
             )
 

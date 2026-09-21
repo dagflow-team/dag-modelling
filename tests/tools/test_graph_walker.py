@@ -7,7 +7,11 @@ from dag_modelling.core.node import Node
 from dag_modelling.lib.arithmetic import Product, Sum
 from dag_modelling.lib.common import Array
 from dag_modelling.plot.graphviz import savegraph
-from dag_modelling.tools.graph_walker import GraphWalker, get_subgraph_nodes
+from dag_modelling.tools.graph_walker import (
+    GraphWalker,
+    get_subgraph_nodes_from,
+    get_subgraph_nodes_between,
+)
 
 
 @pytest.fixture
@@ -81,7 +85,7 @@ def test_graph_walker(first_node, min_depth, max_depth, n_nodes, enable_process_
         if max_depth is not None and depth > max_depth:
             raise RuntimeError("Too high node")
 
-    assert n_nodes == 0, "Unnexpected number of visited nodes"
+    assert n_nodes == 0, "Unexpected number of visited nodes"
 
 
 @mark.parametrize(
@@ -105,7 +109,54 @@ def test_subgraphs(source_names, sink_names, subgraph_expect, nodes, output_path
 
     sources = list(map(nodes.__getitem__, source_names))
     sinks = list(map(nodes.__getitem__, sink_names))
-    subgraph = get_subgraph_nodes(sources, sinks)
+    subgraph = get_subgraph_nodes_between(sources, sinks)
 
     subgraph_names = set(node.name for node in subgraph)
     assert subgraph_names == subgraph_expect
+
+
+@mark.parametrize(
+    "source_name,n_backward,n_forward",
+    [
+        ("n1", 1, 4),
+        ("n2", 1, 4),
+        ("n3", 1, 4),
+        ("n4", 1, 4),
+        ("n5", 1, 3),
+        ("n6", 1, 3),
+        ("sum0", 4, 3),
+        ("sum1", 2, 2),
+        ("sum2", 10, 1),
+        ("product", 6, 2),
+        ("product2", 3, 1),
+    ],
+)
+def test_graphs(source_name, n_backward, n_forward, nodes):
+    nodes_all = get_subgraph_nodes_from(nodes[source_name], enable_process_full_graph=True)
+    nodes_all_u = set(nodes_all)
+    assert len(nodes_all) == len(nodes_all_u)
+    assert len(nodes_all) == 11
+
+    nodes_backward = get_subgraph_nodes_from(
+        nodes[source_name],
+        enable_process_backward=True,
+        enable_process_forward=False,
+        enable_process_full_graph=False,
+    )
+    assert len(nodes_backward) == n_backward
+
+    nodes_forward = get_subgraph_nodes_from(
+        nodes[source_name],
+        enable_process_backward=False,
+        enable_process_forward=True,
+        enable_process_full_graph=False,
+    )
+    assert len(nodes_forward) == n_forward
+
+    nodes_2w = get_subgraph_nodes_from(
+        nodes[source_name],
+        enable_process_backward=True,
+        enable_process_forward=True,
+        enable_process_full_graph=False,
+    )
+    assert len(nodes_2w) == (n_forward + n_backward - 1)

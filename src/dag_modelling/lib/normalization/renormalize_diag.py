@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numba import njit
 
@@ -52,7 +52,7 @@ class RenormalizeDiag(OneToOneNode):
         self._ndiag = ndiag
 
         self._scale = self._add_input("scale", positional=False)
-        self._functions_dict.update({"diag": self._fcn_diag, "offdiag": self._fcn_offdiag})
+        self._evaluator._functions_dict.update({"diag": self._fcn_diag, "offdiag": self._fcn_offdiag})
 
     def _fcn_diag(self) -> None:
         scale = self._scale.data[0]
@@ -64,21 +64,26 @@ class RenormalizeDiag(OneToOneNode):
         for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
             _renorm_offdiag_numba(indata, outdata, scale, self._ndiag)
 
+    @override
     def _type_function(self) -> None:
         super()._type_function()
         check_shape_of_inputs(self, "scale", (1,))
         check_inputs_are_square_matrices(self, 0)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
         evaluate_dtype_of_outputs(self, (AllPositionals, "scale"), "result")
-        self.function = self._functions_dict[self._mode]
+        self._evaluator.function = self._evaluator._functions_dict[self._mode]
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)
 def _norming(matrix: NDArray) -> None:
     for icol in range(matrix.shape[-1]):
-        colsum = matrix[:, icol].sum()
-        if colsum != 0.0:
-            matrix[:, icol] /= colsum
+        colsum = 0.0
+        for irow in range(matrix.shape[0]):
+            colsum += matrix[irow, icol]
+        if colsum == 0.0:
+            continue
+        for irow in range(matrix.shape[0]):
+            matrix[irow, icol] /= colsum
 
 
 def _renorm_diag_python(matrix: NDArray, out: NDArray, scale: float, ndiag: int) -> None:
@@ -104,7 +109,7 @@ def _renorm_offdiag_python(matrix: NDArray, out: NDArray, scale: float, ndiag: i
     # main diagonal
     for i in range(n):
         out[i, i] = matrix[i, i]
-    # other diagonals
+    # # other diagonals
     for idiag in range(1, ndiag):
         i = 0
         while i + idiag < n:

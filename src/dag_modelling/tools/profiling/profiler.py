@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
+from time import process_time
 from typing import TYPE_CHECKING
 
 from pandas import DataFrame, Index
 from tabulate import tabulate
 
-from .utils import gather_related_nodes, reveal_source_sink
+from ..graph_walker import get_subgraph_nodes_between
+from .utils import reveal_source_sink
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -30,6 +32,7 @@ class Profiler(metaclass=ABCMeta):
         "_primary_col",
         "_aggregate_aliases",
         "_column_aliases",
+        "_execution_time_s",
     )
     _target_nodes: Sequence[Node]
     _sources: Sequence[Node]
@@ -40,6 +43,7 @@ class Profiler(metaclass=ABCMeta):
     _primary_col: str
     _column_aliases: dict[str | Callable, str]
     _aggregate_aliases: dict[str, str | Callable]
+    _execution_time_s: float
 
     def __init__(
         self,
@@ -49,10 +53,13 @@ class Profiler(metaclass=ABCMeta):
     ):
         self._sources = sources
         self._sinks = sinks
+
+        generated_nodes = False
         if target_nodes:
             self._target_nodes = target_nodes
-        elif sources and sinks:
+        elif sources or sinks:
             self._target_nodes = self._gather_related_nodes()
+            generated_nodes = True
         else:
             raise ValueError(
                 "You shoud provide profiler with `target_nodes` "
@@ -60,15 +67,36 @@ class Profiler(metaclass=ABCMeta):
                 "to automatically find the target nodes"
             )
 
+        generate_sinks = not bool(self._sinks)
+        generate_sources = not bool(self._sources)
+        if generate_sinks or generate_sources:
+            self._reveal_source_sink(sources=generate_sources, sinks=generate_sinks)
+
+        print(f"Profiler: {len(self._target_nodes)} target nodes"
+              f"{generated_nodes and ' [auto]' or ''}, "
+              f"{len(self._sources)} source nodes"
+              f"{generate_sources and ' [auto]' or ''}, "
+              f"{len(self._sinks)} sink nodes"
+              f"{generate_sinks and ' [auto]' or ''}"
+              )
+
+        self._execution_time_s = 0.0
+
     def _gather_related_nodes(self) -> list[Node]:
         """Find all nodes that lie on all possible paths between
         `self._sources` and `self._sinks`"""
-        related_nodes = gather_related_nodes(self._sources, self._sinks)
-        return list(related_nodes)
+        related_nodes = get_subgraph_nodes_between(self._sources, self._sinks)
+        if not related_nodes:
+            raise ValueError("sources and sinks have no subgraph in between.")
+        return related_nodes
 
-    def _reveal_source_sink(self) -> None:
+    def _reveal_source_sink(self, *, sources: bool=True, sinks: bool=True) -> None:
         """Find sources and sinks for self._target_nodes."""
-        self._sources, self._sinks = reveal_source_sink(self._target_nodes)
+        source_nodes, sink_nodes = reveal_source_sink(self._target_nodes)
+        if sources:
+            self._sources = source_nodes
+        if sinks:
+            self._sinks = sink_nodes
 
     def register_aggregate_func(
         self, func: Callable, aliases: Sequence[str], column_name: str
@@ -159,6 +187,16 @@ class Profiler(metaclass=ABCMeta):
                     "You should use one of these: "
                     f"{self.__possible_aggregations()}"
                 )
+
+    def _start_process_time(self):
+        self._execution_time_s = process_time()
+
+    def _stop_process_time(self):
+        self._execution_time_s = process_time() - self._execution_time_s
+
+    @property
+    def execution_time_s(self) -> float:
+        return self._execution_time_s
 
     @abstractmethod
     def make_report(

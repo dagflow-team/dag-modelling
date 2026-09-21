@@ -71,6 +71,9 @@ class GraphDot:
 
     _show: set[
         Literal[
+            "full",
+            "all",
+            "meta",
             "type",
             "mark",
             "label",
@@ -97,7 +100,7 @@ class GraphDot:
         enable_mid_node: bool = True,
         enable_common_attrs: bool = True,
         hide_nodes_marked_hidden: bool = True,
-        transform_kwargs: dict[str, Any] = {}
+        transform_kwargs: dict[str, Any] = {},
     ):
         if show == "full" or "full" in show:
             self._show = {
@@ -120,6 +123,15 @@ class GraphDot:
                 "status",
                 "data_part",
                 "data_summary",
+            }
+        elif show == "meta" or "meta" in show:
+            self._show = {
+                "type",
+                "mark",
+                "label",
+                "path",
+                "index",
+                "status",
             }
         else:
             self._show = set(show)

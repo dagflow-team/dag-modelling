@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, override
 
 from numpy import empty, errstate, integer, linspace, matmul, meshgrid, newaxis
 from numpy.polynomial.legendre import leggauss
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 ModeType = Literal["rect", "trap", "gl", "gl2d"]
 
 
-# TODO: without njit?
 def _gl_sampler(orders: NDArray, sample: NDArray, weights: NDArray, edges: NDArray):
     """Uses `numpy.polynomial.legendre.leggauss` to sample points with weights
     on the range [-1,1] and transforms to any range [a, b]"""
@@ -39,13 +38,15 @@ def _gl_sampler(orders: NDArray, sample: NDArray, weights: NDArray, edges: NDArr
         (
             sample[offset : offset + n],
             weights[offset : offset + n],
-        ) = leggauss(n)
-        # transforms to the original range [a, b]
-        sample[offset : offset + n] = 0.5 * (
-            sample[offset : offset + n] * (edges[i + 1] - edges[i]) + (edges[i + 1] + edges[i])
-        )
-        weights[offset : offset + n] *= 0.5 * (edges[i + 1] - edges[i])
-        # NOTE: the operations above may allocate additional memory in runtime!
+        ) = leggauss(
+            n
+        )  # not supported by numba
+        half_dx = 0.5 * (edges[i + 1] - edges[i])
+        sample_view = sample[offset : offset + n]
+        sample_view += 1.0
+        sample_view *= half_dx
+        sample_view += edges[i]
+        weights[offset : offset + n] *= half_dx
         offset += n
 
 
@@ -120,7 +121,10 @@ class IntegratorSampler(Node):
         else:
             self._ndim = 1
         self._weights = self._add_output("weights", positional=False)
-        self._functions_dict.update(
+
+        self._evaluator.needs_post_allocate = True
+
+        self._evaluator._functions_dict.update(
             {
                 "rect": self._fcn_rect,
                 "trap": self._fcn_trap,
@@ -145,6 +149,7 @@ class IntegratorSampler(Node):
     def align(self) -> str | None:
         return self._align
 
+    @override
     def taint(self, *, caller: Input | None = None, **kwargs):
         if caller is not None and (caller is self._orders_x or caller is self._orders_y):
             raise CriticalError(
@@ -154,6 +159,7 @@ class IntegratorSampler(Node):
             )
         super().taint(caller=caller, **kwargs)
 
+    @override
     def _type_function(self) -> None:
         """The function to determine the dtype and shape.
 
@@ -170,7 +176,7 @@ class IntegratorSampler(Node):
         for output in (*self.outputs, self._weights):
             output.dd.dtype = self.dtype
             output.dd.shape = shape
-        self.function = self._functions_dict[self.mode]
+        self._evaluator.function = self._evaluator._functions_dict[self.mode]
 
     def __check_orders(self, name: str) -> int:
         """The method checks dimension (==1) of the input `name`, type
@@ -190,6 +196,7 @@ class IntegratorSampler(Node):
 
         return npoints
 
+    @override
     def _post_allocate(self) -> None:
         """Allocates the `buffer`"""
         orders_x = self._orders_x
@@ -202,9 +209,11 @@ class IntegratorSampler(Node):
             lenY = sum(self._orders_y.data)
             shapeY = (2, lenY)
             self.__bufferY = empty(shape=shapeY, dtype=self.dtype)
+            self._internal_buffers["buffer_y"] = self.__bufferY
             lenX = sum(orders_x.data)
             shapeX = (2, lenX)
         self.__bufferX = empty(shape=shapeX, dtype=self.dtype)
+        self._internal_buffers["buffer_x"] = self.__bufferX
 
     def _fcn_rect(self):
         """The rectangular sampling."""

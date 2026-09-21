@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from numpy import copyto
 
 from ...core.exception import TypeFunctionError
-from ...core.type_functions import check_node_has_inputs, copy_shape_from_inputs_to_outputs, evaluate_dtype_of_outputs
+from ...core.type_functions import (
+    check_node_has_inputs,
+    copy_shape_from_inputs_to_outputs,
+    evaluate_dtype_of_outputs,
+)
 from ..abstract import ManyToOneNode
 
 if TYPE_CHECKING:
@@ -13,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class WeightedSum(ManyToOneNode):
-    """Weighted sum of all the inputs together"""
+    """Weighted sum of all the inputs together."""
 
     __slots__ = ("_weight",)
     _weight: Input
@@ -22,10 +26,11 @@ class WeightedSum(ManyToOneNode):
         super().__init__(*args, **kwargs, allowed_kw_inputs=("weight",))
         self._labels.setdefault("mark", "Σᵢwᵢa⃗ᵢ")
         self._weight = self._add_input("weight", positional=False)
-        self._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
+        self._evaluator._functions_dict.update({"number": self._fcn_number, "iterable": self._fcn_iterable})
 
+    @override
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         super()._type_function()
         check_node_has_inputs(self, "weight")
         weight = self._weight
@@ -38,9 +43,9 @@ class WeightedSum(ManyToOneNode):
                 input=weight,
             )
         elif shape == 1:
-            self.function = self._functions_dict["number"]
+            self._evaluator.function = self._evaluator._functions_dict["number"]
         elif shape == leninp:
-            self.function = self._functions_dict["iterable"]
+            self._evaluator.function = self._evaluator._functions_dict["iterable"]
         else:
             raise TypeFunctionError(
                 f"The number of weights (={shape}) must coincide "

@@ -17,7 +17,7 @@ except ImportError:
             yield batch
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from nested_mapping.typing import properkey
 
@@ -36,9 +36,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    from numpy.typing import NDArray
-
     from nested_mapping.typing import KeyLike, TupleKey
+    from numpy.typing import NDArray
 
 
 class BlockToOneNode(Node):
@@ -68,6 +67,8 @@ class BlockToOneNode(Node):
         self._input_data = []
         self._output_data = []
 
+        self._evaluator.needs_post_allocate = True
+
     @staticmethod
     def _input_names() -> tuple[str, ...]:
         return ("input",)
@@ -76,6 +77,7 @@ class BlockToOneNode(Node):
     def _inputs_block_size(cls) -> int:
         return len(cls._input_names())
 
+    @override
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         check_node_has_inputs(self)  # at least one input
@@ -92,6 +94,7 @@ class BlockToOneNode(Node):
         )  # copy shape to results
         evaluate_dtype_of_outputs(self, AllPositionals, AllPositionals)  # eval dtype of results
 
+    @override
     def _post_allocate(self):
         super()._post_allocate()
 

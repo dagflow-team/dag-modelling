@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, override
 
 from numpy import sum as npsum
 from pandas import DataFrame, Series
@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from ...core.node import Node
 from .timer_profiler import TimerProfiler
 
-_ALLOWED_GROUPBY = (("parameters", "endpoints", "eval mode"),)
+_ALLOWED_GROUPBY = (("parameters", "n_parameters", "endpoints", "eval mode"),)
 
 
 class FitSimulationProfiler(TimerProfiler):
@@ -54,11 +54,11 @@ class FitSimulationProfiler(TimerProfiler):
             if n_derivative_points < 2:
                 raise ValueError("Number of derivative points cannot be less than 2")
             self._n_derivative_points = n_derivative_points
-            self._default_aggregations = ("step", "call", "total", "n_steps", "n_calls")
+            self._default_aggregations = ("t_step", "call", "n_steps", "n_calls")
         elif mode == "simultaneous":
             self._fit_step = self._together_step
             self._n_derivative_points = 0
-            self._default_aggregations = ("call", "total", "n_calls")
+            self._default_aggregations = ("call", "n_calls")
         else:
             raise ValueError(f"Unknown mode: {mode}")
         self._mode = mode
@@ -69,7 +69,7 @@ class FitSimulationProfiler(TimerProfiler):
         for col_name in ("mean", "t_mean", "single"):
             self._column_aliases[col_name] = "t_step"
         for alias in ("single", "t_single"):
-            self._aggregate_aliases[alias.replace("single", "step")] = "mean"
+            self._aggregate_aliases[alias.replace("single", "t_step")] = "mean"
 
         # rename 'count' to 'n_steps'
         for col_name in ("count", "t_count"):
@@ -128,17 +128,28 @@ class FitSimulationProfiler(TimerProfiler):
             node.touch()
 
     def estimate_fit(self) -> FitSimulationProfiler:
+        self._start_process_time()
         self._touch_model_nodes()
-        results = self._timeit_each_run(self._fit_step, n_runs=self.n_runs)
+        result = self._timeit_all_runs(self._fit_step, n_runs=self.n_runs)
         source_short_names, sink_short_names = self._shorten_sources_sinks()
-        self._estimations_table = DataFrame(
-            {
-                "parameters": source_short_names,
-                "endpoints": sink_short_names,
-                "eval mode": self._mode,
-                "time": results,
-            }
-        )
+
+        n_parameters = len(self._sources)
+        data = {
+            "parameters": [source_short_names],
+            "n_parameters": n_parameters,
+            "endpoints": sink_short_names,
+            "eval mode": self._mode,
+            "t_step": result / self.n_runs,
+            "t_total": result,
+            "n_steps": self.n_runs,
+        }
+        if self._mode == "parameter-wise":
+            data["n_calls"] = (
+                n_calls := (self._n_derivative_points * n_parameters + 1) * self.n_runs
+            )
+            data["t_call"] = data["t_total"] / n_calls
+        self._estimations_table = DataFrame(data).infer_objects()
+        self._stop_process_time()
         return self
 
     def _n_calls(self, _s: Series) -> Series:
@@ -160,24 +171,28 @@ class FitSimulationProfiler(TimerProfiler):
             raise ZeroDivisionError("An empty group is received for t_call computation!")
         return Series({"t_call": npsum(_s) / ((self._n_derivative_points + 1) * len(_s.index))})
 
+    @override
     def make_report(
         self,
         *,
-        group_by: str | Sequence[str] | None = ("parameters", "endpoints", "eval mode"),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        return super().make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None) # FIXME
+        return self._estimations_table.copy()
 
+    @override
     def print_report(
         self,
         *,
         rows: int | None = 100,
-        group_by: str | Sequence[str] | None = ("parameters", "endpoints", "eval mode"),
+        group_by: str | Sequence[str] | None = None,
         aggregations: Sequence[str] | None = None,
         sort_by: str | None = None,
     ) -> DataFrame:
-        report = self.make_report(group_by=group_by, aggregations=aggregations, sort_by=sort_by)
+        assert (group_by, aggregations, sort_by) == (None, None, None) # FIXME
+        report = self.make_report()
         print(
             f"\nFit simulation Profiling {hex(id(self))}, "
             f"fit steps (n_runs): {self._n_runs},\n"
