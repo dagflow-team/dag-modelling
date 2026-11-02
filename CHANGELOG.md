@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.16.1] - 2026-11-02
+
+- feat: add `allow_unmatched_outputs` and `unmatched_outputs_should_contain` keys to
+  `ManyToOneNode.replicate` to ensure better protection for Output>>Input connections.
+
 ## [0.16.0] - 2026-09-21
 
 - feature: Add `HistSmearNormalMatrixIntegral` to compute energy smearing matrix assuming integration 
