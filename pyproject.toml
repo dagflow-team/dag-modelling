@@ -23,7 +23,7 @@ dependencies = [
   "h5py",
   "latexdatax",
   "matplotlib",
-  "nested-mapping>=0.11",
+  "nested-mapping>=0.12.1",
   "numba",
   "numpy",
   "ordered-set",
