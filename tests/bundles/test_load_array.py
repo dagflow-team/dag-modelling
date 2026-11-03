@@ -58,3 +58,23 @@ def test_load_array(object_type, size, dtype):
     assert np.allclose(
         loaded_array.data, generated_data, atol=atol, rtol=0
     ), "Generated array is not equal to loaded"
+
+
+def test_load_array_layout(tmp_path):
+    matrix = np.tril(np.ones((4, 4)))
+    filename = str(tmp_path / "matrix.npz")
+    np.savez(filename, tri=matrix)
+    kwargs = dict(filenames=filename, replicate_outputs=(("tri",),))
+
+    for name, layout_kwargs in (
+        ("config", {"layout": "sparse-csr"}),
+        ("kwargs", {"array_kwargs": {"layout": "sparse-csr"}}),
+    ):
+        storage = load_array(name=name, **kwargs, **layout_kwargs)
+        output = storage[f"outputs.{name}.tri"]
+        assert output.dd.layout == "sparse-csr" and np.array_equal(output.data.toarray(), matrix)
+
+    with pytest.raises(RuntimeError, match="both in the config and in array_kwargs"):
+        load_array(
+            name="both", **kwargs, layout="sparse-csr", array_kwargs={"layout": "sparse-csr"}
+        )

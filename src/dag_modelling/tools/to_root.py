@@ -77,7 +77,7 @@ def get_buffer_hist2(hist: TH2) -> NDArray:
 def to_TH1(output: Output, *, substitutions: dict[str, str] = {}) -> TH1D:
     from ROOT import TH1D
 
-    data = _buffer_clean(output.data)
+    data = _buffer_clean(output.data_dense)
     labels = output.labels
 
     try:
@@ -98,7 +98,7 @@ def to_TH1(output: Output, *, substitutions: dict[str, str] = {}) -> TH1D:
 def to_TH2(output: Output, *, substitutions: dict[str, str] = {}) -> TH2D:
     from ROOT import TH2D
 
-    data = _buffer_clean(output.data)
+    data = _buffer_clean(output.data_dense)
     labels = output.labels
 
     try:
@@ -128,7 +128,7 @@ def to_TGraph(output, *, substitutions: dict[str, str] = {}):
     labels = output.labels
 
     x = _buffer_clean(output.dd.axes_meshes[0].data)
-    y = _buffer_clean(output.data)
+    y = _buffer_clean(output.data_dense)
 
     title = labels.get_root_title(substitutions=substitutions)
     xtitle = output.dd.axis_label(0, axistype="mesh", root=True) or "Index [#]"
@@ -147,7 +147,7 @@ def to_TGraph2(output, *, substitutions: dict[str, str] = {}):
 
     x = _buffer_clean(output.dd.axes_meshes[0].data)
     y = _buffer_clean(output.dd.axes_meshes[1].data)
-    z = _buffer_clean(output.data)
+    z = _buffer_clean(output.data_dense)
 
     title = labels.get_root_title(substitutions=substitutions)
     xtitle = output.dd.axis_label(0, axistype="mesh", root=True) or "Index [#]"

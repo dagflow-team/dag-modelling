@@ -29,6 +29,8 @@ cdef class Output:
 
     # Cold non-dunder API via class-attribute binding.
     to_dict = _OutputMethods.to_dict
+    data_dense = _OutputMethods.data_dense
+    data_sparse = _OutputMethods.data_sparse
     _set_data = _OutputMethods._set_data
     allocate = _OutputMethods.allocate
     _connect_to_input = _OutputMethods._connect_to_input

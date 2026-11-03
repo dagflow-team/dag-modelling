@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Generator, Mapping, Sequence
 
-from numpy import zeros
-
 from ..core.labels import repr_pretty
-from .data_descriptor import DataDescriptor
+from .csr_array import CSRArray
+from .data_descriptor import DataDescriptor, Layout
 from .exception import (
     AllocationError,
     CalculationError,
@@ -145,6 +144,21 @@ class _OutputMethods:
             ) from exc
 
     @property
+    def data_dense(self):
+        """The data as a dense array, a read-only copy for a sparse layout"""
+        data = self.data
+        if self._dd.layout == Layout.DENSE:
+            return data
+        dense = data.toarray()
+        dense.flags.writeable = False
+        return dense
+
+    @property
+    def data_sparse(self):
+        """The sparse matrix, `None` for the dense layout"""
+        return None if self._dd.layout == Layout.DENSE else self.data
+
+    @property
     def dd(self):
         return self._dd
 
@@ -181,7 +195,7 @@ class _OutputMethods:
                 ret["value"] = "…"
             elif size == 1:
                 try:
-                    data = self.data
+                    data = self.data_dense
                 except DagModellingError:
                     ret["value"] = "???"
                 else:
@@ -221,11 +235,16 @@ class _OutputMethods:
             self._node.taint_type()
 
         self._data = data
-        self._data_ro = data.view()
-        self._data_ro.flags.writeable = False
+        if isinstance(data, CSRArray):
+            self._data_ro = data.matrix
+        else:
+            self._data_ro = data.view()
+            self._data_ro.flags.writeable = False
 
         self._dd.dtype = data.dtype
         self._dd.shape = data.shape
+        self._dd.layout = getattr(data, "layout", Layout.DENSE.value)
+        self._dd.capacity = getattr(data, "capacity", None)
         self._owns_buffer = owns_buffer
         self._forbid_reallocation = forbid_reallocation
 
@@ -268,8 +287,7 @@ class _OutputMethods:
             )
 
         try:
-            data = zeros(self._dd.shape, self._dd.dtype, **kwargs)
-            self._set_data(data, owns_buffer=True)
+            self._set_data(self._dd.allocate(**kwargs), owns_buffer=True)
         except Exception as exc:
             raise AllocationError(f"Output: {exc.args[0]}", node=self._node, output=self) from exc
 

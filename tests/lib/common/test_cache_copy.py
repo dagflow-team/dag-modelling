@@ -67,3 +67,25 @@ def test_cache_copy(test_name, debug_graph, dtype, output_path: str):
     assert copy2.tainted == False
 
     savegraph(graph, f"{output_path}/{test_name}.png")
+
+
+def test_cache_flag():
+    array_in_1, array_in_2 = linspace(0, 1, 3), linspace(1, 2, 3)
+    with Graph(close_on_exit=True):
+        array = Array("array", array_in_1, mode="fill")
+        cached_copy = Copy("cached copy", cache=True)
+        plain_cache = Cache("plain cache", cache=False)
+        array >> cached_copy
+        array >> plain_cache
+
+    assert not issubclass(Cache, Copy)
+    assert (Cache.__module__, Cache.__name__) == ("dag_modelling.lib.common.cache", "Cache")
+    assert (cached_copy.labels.mark, plain_cache.labels.mark) == ("cache", "copy")
+
+    assert allclose(cached_copy.outputs[0].data, array_in_1, rtol=0, atol=0)
+    assert allclose(plain_cache.outputs[0].data, array_in_1, rtol=0, atol=0)
+    array.outputs[0].set(array_in_2)
+    assert allclose(cached_copy.outputs[0].data, array_in_1, rtol=0, atol=0)
+    assert allclose(plain_cache.outputs[0].data, array_in_2, rtol=0, atol=0)
+    cached_copy.recache()
+    assert allclose(cached_copy.outputs[0].data, array_in_2, rtol=0, atol=0)

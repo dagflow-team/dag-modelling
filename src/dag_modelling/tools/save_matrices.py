@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING
 
 from h5py import File
 from numpy import savetxt, savez_compressed
+from scipy.sparse import issparse
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any, Literal
 
     from numpy.typing import NDArray
+    from scipy.sparse import sparray
 
 
 def _save_matrices(
@@ -101,10 +103,11 @@ def _save_matrices(
 
 
 def save_matrices(
-    matrices: Mapping[str, NDArray],
+    matrices: Mapping[str, NDArray | sparray],
     filenames: Path | str | Sequence[Path | str],
     **kwargs,
 ) -> None:
+    matrices = {name: m.toarray() if issparse(m) else m for name, m in matrices.items()}
     if isinstance(filenames, (Path, str)):
         _save_matrices(Path(filenames), matrices=matrices, **kwargs)
         return

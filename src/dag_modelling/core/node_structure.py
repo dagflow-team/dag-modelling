@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .data_descriptor import Layout
 from .exception import (
     ClosedGraphError,
     ClosingError,
     CriticalError,
     OpeningError,
     ReconnectionError,
+    TypeFunctionError,
 )
 from .input import Input
 from .iter import IsIterable
 from .output import Output
+from .type_functions.tools_for_type_functions import AllPositionals
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -29,6 +32,7 @@ class NodeStructure:
         "_outputs",
         "_evaluator",
         "_allowed_kw_inputs",
+        "_allowed_layouts",
     )
 
     _node: Node
@@ -36,6 +40,7 @@ class NodeStructure:
     _outputs: Outputs
     _evaluator: NodeEval
     _allowed_kw_inputs: tuple
+    _allowed_layouts: dict
 
     def __init__(
         self,
@@ -45,12 +50,14 @@ class NodeStructure:
         outputs: Outputs,
         evaluator: NodeEval,
         allowed_kw_inputs: tuple = (),
+        allowed_layouts: dict | None = None,
     ) -> None:
         self._node = node
         self._inputs = inputs
         self._outputs = outputs
         self._evaluator = evaluator
         self._allowed_kw_inputs = allowed_kw_inputs
+        self._allowed_layouts = allowed_layouts or {}
 
     #
     # I/O management
@@ -265,9 +272,29 @@ class NodeStructure:
                     raise ClosingError("Input is not connected", node=node, input=input)
                 input.parent_node.update_types(update_parents)
         node._logger.debug(f"Node '{node._name}': Update types...")
+        self._check_input_layouts()
         node._type_function()
         self._evaluator.types_tainted = False
         self._evaluator.needs_reallocation = True
+
+    def _check_input_layouts(self) -> None:
+        """Reject an input in a layout the node does not list in `allowed_layouts`.
+
+        `AllPositionals` stands for every positional input.
+        """
+        for input in self._inputs.iter_all():
+            if not input.connected():
+                continue
+            layout = input.dd.layout
+            if layout == Layout.DENSE or layout in self._allowed_layouts.get(input.name, ()):
+                continue
+            positional = input in tuple(self._inputs)
+            if not positional or layout not in self._allowed_layouts.get(AllPositionals, ()):
+                raise TypeFunctionError(
+                    f"The node does not support the {layout!r} layout",
+                    node=self._node,
+                    input=input,
+                )
 
     def allocate(self, allocate_parents: bool = True):
         if self._evaluator.allocated and not self._evaluator.needs_reallocation:

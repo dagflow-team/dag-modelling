@@ -9,6 +9,7 @@ from nested_mapping.typing import strkey
 from numpy import asarray
 from schema import And, Optional, Or, Schema, Use
 
+from ..core.data_descriptor import LAYOUTS
 from ..core.storage import NodeStorage
 from ..lib.common import Array
 from ..tools.logger import INFO3, logger
@@ -29,6 +30,7 @@ _schema_cfg = Schema(
         "name": str,
         "filenames": And(IsFilenameSeqOrFilename, AllFileswithExt(*file_readers.keys())),
         Optional("dtype", default=None): Or("d", "f"),
+        Optional("layout", default=None): Or(*LAYOUTS),
         Optional("replicate_outputs", default=((),)): Or((IsStrSeqOrStr,), [IsStrSeqOrStr]),
         Optional("replicate_files", default=((),)): Or((IsStrSeqOrStr,), [IsStrSeqOrStr]),
         Optional("skip", default=None): And(
@@ -82,6 +84,10 @@ def load_array(acfg: Mapping | None = None, *, array_kwargs: Mapping = {}, **kwa
     key_order = cfg["key_order"]
     output_key_order = cfg["output_key_order"]
     dtype = cfg["dtype"]
+    if (layout := cfg["layout"]) is not None:
+        if "layout" in array_kwargs:
+            raise RuntimeError("load_array: layout is set both in the config and in array_kwargs")
+        array_kwargs = dict(array_kwargs, layout=layout)
 
     data = {}
     reorder_output_key = make_reorder_function(output_key_order)

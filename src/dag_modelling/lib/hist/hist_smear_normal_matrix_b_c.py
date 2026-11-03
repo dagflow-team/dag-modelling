@@ -4,8 +4,9 @@ from math import exp, sqrt
 from typing import TYPE_CHECKING, override
 
 from numba import njit
-from numpy import allclose, pi
+from numpy import allclose, pi, zeros
 
+from ...core.data_descriptor import Layout, check_layout
 from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
@@ -14,7 +15,9 @@ from ...core.type_functions import (
     check_inputs_have_same_shape,
     check_size_of_inputs,
     find_max_size_of_inputs,
+    set_csr_output,
 )
+from ...methods.sparse.csr import dense_to_csr
 
 if TYPE_CHECKING:
     from numpy import double
@@ -22,6 +25,7 @@ if TYPE_CHECKING:
 
     from ...core.input import Input
     from ...core.output import Output
+    from ...core.types import LayoutLike
 
 
 @njit(cache=NUMBA_CACHE_ENABLE)
@@ -72,18 +76,41 @@ class HistSmearNormalMatrixBC(Node):
 
     outputs:
         `0` or `SmearMatrix`: SmearMatrixing weights (NxN)
+
+    extra arguments:
+        `layout` (str): "dense" (default) or "sparse-csr"
     """
 
-    __slots__ = ("_edges", "_edges_out", "_rel_sigma", "_smear_matrix", "_value_threshold")
+    __slots__ = (
+        "_edges",
+        "_edges_out",
+        "_rel_sigma",
+        "_smear_matrix",
+        "_value_threshold",
+        "_layout",
+        "_dense",
+    )
 
     _edges: Input
     _edges_out: Input
     _rel_sigma: Input
     _smear_matrix: Output
     _value_threshold: float
+    _layout: LayoutLike
+    _dense: NDArray | None
 
-    def __init__(self, name, value_threshold: float = 1e-10, *args, **kwargs):
+    def __init__(
+        self,
+        name,
+        value_threshold: float = 1e-10,
+        *args,
+        layout: LayoutLike = Layout.DENSE.value,
+        **kwargs,
+    ):
         super().__init__(name, *args, **kwargs)
+        check_layout(layout, self)
+        self._layout = layout
+        self._dense = None
         self.labels.setdefaults(
             {
                 "text": r"Energy resolution matrix (via bin centers)",
@@ -95,6 +122,7 @@ class HistSmearNormalMatrixBC(Node):
         self._edges = self._add_input("Edges", positional=False)
         self._edges_out = self._add_input("EdgesOut", positional=False)
         self._smear_matrix = self._add_output("SmearMatrix")  # output: 0
+        self._evaluator._functions_dict.update({"csr": self._function_csr})
 
     @property
     def value_threshold(self) -> float:
@@ -108,6 +136,17 @@ class HistSmearNormalMatrixBC(Node):
             self._smear_matrix._data,
             self._value_threshold,
         )
+
+    def _function_csr(self):
+        # the kernel writes every cell: compress a dense work matrix
+        _resolution_matrix(
+            self._rel_sigma.data,
+            self._edges.data,
+            self._edges_out.data,
+            self._dense,
+            self._value_threshold,
+        )
+        dense_to_csr(self._dense, self._smear_matrix._data)
 
     @override
     def _type_function(self) -> None:
@@ -125,3 +164,8 @@ class HistSmearNormalMatrixBC(Node):
         edges = self._edges._parent_output
         edges_out = self._edges_out._parent_output
         self._smear_matrix.dd.axes_edges = (edges_out, edges)
+        if self._layout == Layout.SPARSE_CSR:
+            # a first guess: the arrays grow on the first fill
+            set_csr_output(self, self._smear_matrix, edges_in_dd.shape[0] - 1)
+            self._dense = zeros(self._smear_matrix.dd.shape, self._smear_matrix.dd.dtype)
+            self._internal_buffers["dense"] = self._dense

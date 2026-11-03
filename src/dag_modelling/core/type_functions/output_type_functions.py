@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from numpy import issubdtype, result_type
 
+from ..data_descriptor import Layout
 from ..exception import TypeFunctionError
 from .tools_for_type_functions import AllPositionals, LimbKey
 
@@ -11,6 +12,14 @@ if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
     from ..node import Node
+    from ..output import Output
+
+
+def set_csr_output(node: Node, output: Output, capacity: int) -> None:
+    """Give `output` a sparse-csr layout of `capacity` and select the csr kernel."""
+    output.dd.layout = Layout.SPARSE_CSR.value
+    output.dd.capacity = capacity
+    node.choose_function("csr")
 
 
 def check_number_of_outputs(node: Node, n: int) -> None:

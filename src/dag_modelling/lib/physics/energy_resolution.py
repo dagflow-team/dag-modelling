@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...core.data_descriptor import Layout
 from ...core.exception import ConnectionError
 from ...core.meta_node import MetaNode
 from ...core.storage import NodeStorage
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
     from nested_mapping.typing import KeyLike
 
     from ...core.node import Node
+    from ...core.types import LayoutLike
 
 
 class EnergyResolution(MetaNode):
@@ -28,7 +30,9 @@ class EnergyResolution(MetaNode):
     _energy_resolution_sigma_rel_abc_list: list[Node]
     _bin_center_list: list[Node]
 
-    def __init__(self, *, bare: bool = False, labels: Mapping = {}):
+    def __init__(
+        self, *, bare: bool = False, labels: Mapping = {}, layout: LayoutLike = Layout.DENSE.value
+    ):
         super().__init__()
         self._energy_resolution_matrix_bc_list = []
         self._energy_resolution_sigma_rel_abc_list = []
@@ -42,7 +46,7 @@ class EnergyResolution(MetaNode):
         )
         self.add_bin_center("BinCenter", labels.get("BinCenter", {}))
         self.add_energy_resolution_matrix_bc(
-            "EnergyResolution", labels.get("EnergyResolution", {})
+            "EnergyResolution", labels.get("EnergyResolution", {}), layout=layout
         )
         self._bind_outputs()
 
@@ -83,8 +87,9 @@ class EnergyResolution(MetaNode):
         self,
         name: str = "EnergyResolution",
         label: Mapping = {},
+        layout: LayoutLike = Layout.DENSE.value,
     ) -> HistSmearNormalMatrixBC:
-        _energy_resolution_matrix_bc = HistSmearNormalMatrixBC(name, label=label)
+        _energy_resolution_matrix_bc = HistSmearNormalMatrixBC(name, label=label, layout=layout)
         self._energy_resolution_matrix_bc_list.append(_energy_resolution_matrix_bc)
         self._add_node(
             _energy_resolution_matrix_bc,
@@ -140,6 +145,7 @@ class EnergyResolution(MetaNode):
         labels: Mapping = {},
         replicate_outputs: tuple[KeyLike, ...] = ((),),
         verbose: bool = False,
+        layout: LayoutLike = Layout.DENSE.value,
     ) -> tuple[EnergyResolution, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
@@ -189,7 +195,7 @@ class EnergyResolution(MetaNode):
             if isinstance(key, str):
                 key = (key,)
             name = ".".join(key_energy_resolution_matrix_bc + key)
-            eres = instance.add_energy_resolution_matrix_bc(name, label_int)
+            eres = instance.add_energy_resolution_matrix_bc(name, label_int, layout=layout)
             nodes[key_energy_resolution_matrix_bc + key] = eres
             inputs[key_energy_resolution_matrix_bc + key_edges0 + key] = eres.inputs[
                 "Edges"

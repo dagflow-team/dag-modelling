@@ -13,13 +13,17 @@ from dag_modelling.plot.graphviz import savegraph
 @mark.parametrize("mode", ("diag", "offdiag"))
 @mark.parametrize("ndiag", (1, 2, 3, 4))
 @mark.parametrize("scale", (2.0, 0.33))
+@mark.parametrize("layout", ("dense", "sparse-csr"))
 def test_RenormalizeDiag(
-    test_name, debug_graph, ndiag, dtype, mode, scale, output_path: str, debug=False
+    test_name, debug_graph, ndiag, dtype, mode, scale, layout, output_path: str, debug=False
 ):
     size = 4
     matrix = arange(size**2, dtype=dtype).reshape(size, size)
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
-        array_matrix = Array("matrix", matrix, mode="fill")
+        if layout == "sparse-csr":
+            array_matrix = Array("matrix", matrix, layout="sparse-csr")
+        else:
+            array_matrix = Array("matrix", matrix, mode="fill")
         scale_diag = Array("scale", [scale], mode="fill")
 
         prod = RenormalizeDiag("RenormalizeDiag", mode=mode, ndiag=ndiag)
@@ -27,6 +31,7 @@ def test_RenormalizeDiag(
         scale_diag >> prod("scale")
 
     actual = prod.get_data()
+    actual = actual.toarray() if layout == "sparse-csr" else actual
     # NOTE: uncomment to print input and result
     if debug:
         print(f"matrix:\n{matrix}")

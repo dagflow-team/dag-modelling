@@ -31,3 +31,7 @@ def test_NormalizeMatrix(dtype: str, mode: str, output_path: str):
     ograph = f"{output_path}/test_NormalizeMatrix_{dtype}_{mode}.png"
     print(f"Write graph: {ograph}")
     savegraph(graph, ograph, show="all")
+
+    # a second evaluation must not add to the old result
+    array_matrix.outputs[0].set(2 * matrix)
+    assert allclose(desired, prod.get_data(), atol=0, rtol=0)
