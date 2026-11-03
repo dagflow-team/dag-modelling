@@ -37,10 +37,15 @@ from dag_modelling.plot.graphviz import savegraph
 )
 @mark.parametrize(
     "mode",
-    ("exact", "linear", "pointwise"),
+    ("binwise", "linear", "pointwise"),
 )
+@mark.parametrize("layout", ("dense", "sparse-csr"))
 def test_AxisDistortionMatrix(
-    setname: str, dtype: str, mode: Literal["exact", "linear", "pointwise"], output_path: str
+    setname: str,
+    dtype: str,
+    mode: Literal["binwise", "linear", "pointwise"],
+    layout: str,
+    output_path: str,
 ):
     test_sets_current = test_sets[mode]
     edgesset = test_sets_current[setname]
@@ -60,25 +65,25 @@ def test_AxisDistortionMatrix(
     with Graph(close_on_exit=True) as graph:
         Edges = Array("Edges", edges, mode="fill")
         EdgesModified = Array("Edges modified", edges_modified, mode="fill")
-        if mode == "exact":
+        if mode == "binwise":
             EdgesBackward = Array("Edges, projected backward", edges_backward, mode="fill")
 
         match mode:
             case "linear":
-                mat = AxisDistortionMatrixLinear("LSNL matrix (linear)")
+                mat = AxisDistortionMatrixLinear("LSNL matrix (linear)", layout=layout)
 
                 Edges >> mat.inputs["EdgesOriginal"]
                 Edges >> mat.inputs["EdgesTarget"]
                 EdgesModified >> mat.inputs["EdgesModified"]
-            case "exact":
-                mat = AxisDistortionMatrix("LSNL matrix")
+            case "binwise":
+                mat = AxisDistortionMatrix("LSNL matrix", layout=layout)
 
                 Edges >> mat.inputs["EdgesOriginal"]
                 Edges >> mat.inputs["EdgesTarget"]
                 EdgesModified >> mat.inputs["EdgesModified"]
                 EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
             case "pointwise":
-                mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
+                mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)", layout=layout)
 
                 Edges >> mat.inputs["EdgesOriginal"]
                 Edges >> mat.inputs["EdgesTarget"]
@@ -89,6 +94,7 @@ def test_AxisDistortionMatrix(
                 assert False
 
     res = mat.get_data()
+    res = res.toarray() if layout == "sparse-csr" else res
 
     ressum = res.sum(axis=0)
     print("Obtained matrix:\n", res)
@@ -113,7 +119,7 @@ def test_AxisDistortionMatrix(
 
     savegraph(
         graph,
-        f"{output_path}/test_AxisDistortionMatrix{mode.capitalize()}_{dtype}.png",
+        f"{output_path}/test_AxisDistortionMatrix{mode.capitalize()}_{layout}_{dtype}.png",
     )
 
 
@@ -263,7 +269,7 @@ test_sets = {
                     ]
                 ),
         },
-        "exact": {
+        "binwise": {
             'test1': dict(
                 # from:           0         1    2              3              4
                 edges          = [1.0,      2.0, 3.0,           4.0,           5.0, ],

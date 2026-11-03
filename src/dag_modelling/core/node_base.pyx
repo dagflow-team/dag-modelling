@@ -30,6 +30,7 @@ cdef class NodeBase:
     _repr_pretty_ = _NodeBaseMethods._repr_pretty_
     print = _NodeBaseMethods.print
     get_data = _NodeBaseMethods.get_data
+    get_data_dense = _NodeBaseMethods.get_data_dense
     get_input_data = _NodeBaseMethods.get_input_data
     to_dict = _NodeBaseMethods.to_dict
 

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.17.0] - 2026-11-03
+
+- feature: add sparse matrices `DataDescriptor.layout` (`"dense"` or `"sparse-csr"`). Distortion and
+  rebinning matrices are sparse by default.
+- feature: sparse `data` is a read-only `scipy.sparse.csr_array`. `data_dense` returns a dense copy
+  and `data_sparse` returns the sparse object.
+- fix: `NormalizeMatrix` writes normalized values, so a second evaluation no longer doubles the
+  result.
+- fix: `disable_implicit_numpy_multithreading` sets unset thread-count variables.
+- fix: `hist_edges_strategy` is keyword-only. Non-histogram graphs and array files (npz, hdf5, tsv)
+  keep their own edges.
+
 ## [0.16.2] - 2026-11-02
 
 - hotfix: update dependencies `nested-mapping>=0.12.1`

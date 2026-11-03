@@ -50,7 +50,7 @@ class GraphGetter:
             file_name, object_name = names
         fr = FileReader[file_name]
 
-        return fr.get_graph(object_name, hist_edges_strategy)
+        return fr.get_graph(object_name, hist_edges_strategy=hist_edges_strategy)
 
     __getitem__ = get
 
@@ -208,11 +208,11 @@ class FileReader(metaclass=FileReaderMeta):
         except KeyError as e:
             raise KeyError(f"Can not read {object_name} from {self._file_name!s}") from e
 
-    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         raise RuntimeError("not implemented method")
 
-    def get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
-        x, y = self._get_graph(object_name, hist_edges_strategy)
+    def get_graph(self, object_name: str | None, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        x, y = self._get_graph(object_name, hist_edges_strategy=hist_edges_strategy)
         logger.log(
             INFO2,
             f"graph {object_name} ({len(y)}): x"
@@ -274,9 +274,7 @@ class FileReader(metaclass=FileReaderMeta):
 class FileReaderArray(FileReader):
     _extension: str = ""
 
-    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
-        if hist_edges_strategy is not None:
-            raise RuntimeError("Strategy for loading edges is not supported for arrays")
+    def _get_graph(self, object_name: str | None, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         return self._get_xy(object_name)
 
     def _get_hist(self, object_name: str | None) -> tuple[NDArray, NDArray]:
@@ -423,9 +421,9 @@ class FileReaderROOTUpROOT(FileReader):
         y, x = obj.to_numpy()
         return x, y
 
-    def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+    def _get_graph(self, object_name: str | None, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
         obj = self._get_object(object_name)
-        return _uproot_load_graph(obj, hist_edges_strategy)
+        return _uproot_load_graph(obj, hist_edges_strategy=hist_edges_strategy)
 
     def _get_array(self, object_name: str | None) -> NDArray:
         obj = self._get_object(object_name)
@@ -461,7 +459,7 @@ def _uproot_load_array(object) -> NDArray:
     return array
 
 
-def _uproot_load_graph(object, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+def _uproot_load_graph(object, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
     # At the moment uproot does not support reading numpy data from TGraph*
     from uproot import behaviors
 
@@ -484,8 +482,6 @@ def _uproot_load_graph(object, hist_edges_strategy: Literal["left", "center", "r
             behaviors.TGraphAsymmErrors.TGraphAsymmErrors,
         ),
     ):
-        if hist_edges_strategy is not None:
-            raise RuntimeError(f"Strategy for loading edges is supported only for ROOT.TH*")
         x = object.all_members["fX"]
         y = object.all_members["fY"]
         if x.dtype.byteorder == ">":
@@ -543,7 +539,7 @@ with suppress(ImportError):
 
             raise ValueError(f"Do not know ho to convert {obj} to hist")
 
-        def _get_graph(self, object_name: str | None, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
+        def _get_graph(self, object_name: str | None, *, hist_edges_strategy: Literal["left", "center", "right"] | None) -> tuple[NDArray, NDArray]:
             import ROOT
 
             obj = self._get_object(object_name)
@@ -557,10 +553,7 @@ with suppress(ImportError):
                         return _get_bin_right_edges(obj.GetXaxis()), _get_buffer_hist1(obj, flows=False)
                     case _:
                         raise RuntimeError(f"Unsupported {hist_edges_strategy=} for loading histogram edges")
-            if isinstance(obj, ROOT.TGraph):
-                if hist_edges_strategy is not None:
-                    raise RuntimeError(f"Strategy for loading edges is supproted only ROOT.TH*")
-                return _get_buffers_graph(obj)
+            return _get_buffers_graph(obj)
 
             raise ValueError(f"Do not know ho to convert {obj} to graph")
 

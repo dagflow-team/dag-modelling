@@ -23,7 +23,10 @@ def partial_sum(y_old: NDArray, stride: int) -> list:
 @mark.parametrize("start", (0, 1))
 @mark.parametrize("stride", (2, 4))
 @mark.parametrize("mode", ("python", "numba"))
-def test_Rebin(test_name: str, start: int, stride: int, dtype: str, mode: str, output_path: str):
+@mark.parametrize("layout", ("dense", "sparse-csr"))
+def test_Rebin(
+    test_name: str, start: int, stride: int, dtype: str, mode: str, layout: str, output_path: str
+):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
     edges_new = edges_old[start::stride]
@@ -38,7 +41,7 @@ def test_Rebin(test_name: str, start: int, stride: int, dtype: str, mode: str, o
         EdgesNew = Array("edges_new", edges_new, mode="fill")
         Y = Array("Y", y_old_list[0], mode="fill")
         Y2 = Array("Y2", y_old_list[1], mode="fill")
-        metanode = Rebin(mode=mode, atol=atol)
+        metanode = Rebin(mode=mode, atol=atol, layout=layout)
 
         EdgesOld >> metanode.inputs["edges_old"]
         EdgesNew >> metanode.inputs["edges_new"]
@@ -55,7 +58,9 @@ def test_Rebin(test_name: str, start: int, stride: int, dtype: str, mode: str, o
         # metanode.print()
         # metanode._RebinMatrixList[0].print()
 
+    assert metanode.outputs["matrix"].dd.layout == layout
     mat = metanode.outputs["matrix"].data
+    mat = mat.toarray() if layout == "sparse-csr" else mat
     # NOTE: Asserts below are only for current edges_new! For other binning it may not coincide!
     if not start:
         assert (mat.sum(axis=0) == 1).all()
@@ -118,12 +123,13 @@ def test_Rebin(test_name: str, start: int, stride: int, dtype: str, mode: str, o
     ),
 )
 @mark.parametrize("mode", ("python", "numba"))
-def test_RebinMatrix_wrong_edges_new(edges_new, mode):
+@mark.parametrize("layout", ("dense", "sparse-csr"))
+def test_RebinMatrix_wrong_edges_new(edges_new, mode, layout):
     edges_old = linspace(0.0, 2.0, 21)
     with Graph(close_on_exit=True):
         EdgesOld = Array("edges_old", edges_old, mode="fill")
         EdgesNew = Array("edges_new", edges_new, mode="fill")
-        mat = RebinMatrix("Rebin Matrix", mode=mode)
+        mat = RebinMatrix("Rebin Matrix", mode=mode, layout=layout)
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
     with raises(Exception):
@@ -131,7 +137,8 @@ def test_RebinMatrix_wrong_edges_new(edges_new, mode):
 
 
 @mark.parametrize("mode", ("python", "numba"))
-def test_RebinMatrix_wrong_edges_new_v2(mode):
+@mark.parametrize("layout", ("dense", "sparse-csr"))
+def test_RebinMatrix_wrong_edges_new_v2(mode, layout):
     edges_old = linspace(0.0, 2.0, 21)
     edges_new = edges_old[0::2]
     edges_clone = edges_old.copy()
@@ -140,7 +147,7 @@ def test_RebinMatrix_wrong_edges_new_v2(mode):
         EdgesOld = Array("edges_old", edges_old, mode="fill")
         EdgesNew = Array("edges_new", edges_new, mode="fill")
         EdgesClone = Array("edges_clone", edges_clone, mode="fill")
-        mat = RebinMatrix("Rebin Matrix", mode=mode)
+        mat = RebinMatrix("Rebin Matrix", mode=mode, layout=layout)
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
         EdgesClone >> mat

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from numpy import zeros
-
 from ..core.labels import repr_pretty
-from .data_descriptor import DataDescriptor
+from .data_descriptor import DataDescriptor, Layout
 from .exception import AllocationError, ClosedGraphError, InitializationError, ReconnectionError
 
 
@@ -130,6 +128,14 @@ class _InputMethods:
         return self._parent_output.data
 
     @property
+    def data_dense(self):
+        return self._parent_output.data_dense
+
+    @property
+    def data_sparse(self):
+        return self._parent_output.data_sparse
+
+    @property
     def _data(self):
         return self._parent_output._data
 
@@ -162,6 +168,8 @@ class _InputMethods:
         self._owns_buffer = owns_buffer
         self._own_dd.dtype = data.dtype
         self._own_dd.shape = data.shape
+        self._own_dd.layout = getattr(data, "layout", Layout.DENSE.value)
+        self._own_dd.capacity = getattr(data, "capacity", None)
         self._own_dd.axes_edges = axes_edges or ()
         self._own_dd.axes_meshes = axes_meshes or ()
 
@@ -214,7 +222,7 @@ class _InputMethods:
                 output=self,
             )
         try:
-            self._own_data = zeros(self._own_dd.shape, self._own_dd.dtype, **kwargs)
+            self._own_data = self._own_dd.allocate(**kwargs)
         except Exception as exc:
             raise AllocationError(f"Input: {exc.args[0]}", node=self._node, input=self) from exc
 
