@@ -5,9 +5,12 @@ from typing import TYPE_CHECKING, override
 
 from numpy import array as nparray
 from numpy import full
+from scipy.sparse import csr_array, issparse
 
 from nested_mapping import NestedMapping
 
+from ...core.csr_array import CSRArray
+from ...core.data_descriptor import Layout, check_layout
 from ...core.exception import InitializationError
 from ...core.node import Node
 from ...core.output import Output
@@ -18,21 +21,28 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from numpy.typing import ArrayLike, DTypeLike, NDArray
+    from scipy.sparse import sparray
+
+    from ...core.types import LayoutLike
 
 
 class Array(Node):
-    """Creates a node with a single data output with predefined array."""
+    """Creates a node with a single data output with predefined array.
+
+    extra arguments:
+        `layout` (str): "dense" (default) or "sparse-csr" for a matrix with `mode="store"`
+    """
 
     __slots__ = ("_mode", "_data", "_output")
 
     _mode: Literal["store", "store_weak", "fill"]
-    _data: NDArray
+    _data: NDArray | CSRArray
     _output: Output
 
     def __init__(
         self,
         name: str,
-        array: NDArray | list[float | int] | tuple[float | int, ...],
+        array: NDArray | sparray | list[float | int] | tuple[float | int, ...],
         *,
         mode: Literal["store", "store_weak", "fill"] = "store",
         outname: str = "array",
@@ -40,6 +50,7 @@ class Array(Node):
         mark: str | None = None,
         edges: Output | Sequence[Output] | Node | None = None,
         meshes: Output | Sequence[Output] | Node | None = None,
+        layout: LayoutLike = Layout.DENSE.value,
         **kwargs,
     ):
         super().__init__(name, **kwargs)
@@ -52,7 +63,21 @@ class Array(Node):
             self._labels.setdefault("mark", "y⃗")
         else:
             self._labels.setdefault("mark", "a⃗")
-        self._data = nparray(array, copy=True, dtype=dtype)
+        check_layout(layout, self)
+        if layout == Layout.SPARSE_CSR:
+            matrix = csr_array(array, dtype=dtype, copy=True)
+            if matrix.ndim != 2 or mode != "store":
+                raise InitializationError(
+                    f"Array: 'sparse-csr' needs a matrix and mode 'store',"
+                    f" got {matrix.ndim}d, {mode!r}",
+                    node=self,
+                )
+            matrix.sum_duplicates()  # the canonical form: sorted columns, no repeated cells
+            matrix.eliminate_zeros()
+            self._data = CSRArray(matrix.data, matrix.indices, matrix.indptr, matrix.shape)
+        else:
+            dense = array.toarray() if issparse(array) else array
+            self._data = nparray(dense, copy=True, dtype=dtype)
 
         if mode == "store":
             self._output = self._add_output(outname, data=self._data)
@@ -72,7 +97,7 @@ class Array(Node):
                 "fill": self._fcn_fill,
             }
         )
-        self._evaluator.function =self._evaluator._functions_dict[self._mode]
+        self._evaluator.function = self._evaluator._functions_dict[self._mode]
 
         if edges:
             self.set_edges(edges)

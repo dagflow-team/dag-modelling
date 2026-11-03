@@ -1,20 +1,11 @@
-from ..abstract import OneToOneNode
+from .copy import Copy
 
 
-class Cache(OneToOneNode):
-    """Copy/identity/cache function, which freezes after operation"""
-    __slots__ = ()
+def _copy_class(cls: type, name: str, **attributes) -> type:
+    """A copy of `cls` with other `attributes`, not a subclass: its methods can't use super()"""
+    # the slot descriptors of cls would conflict with the new ones
+    namespace = {key: value for key, value in vars(cls).items() if key not in cls.__slots__}
+    return type(cls)(name, cls.__bases__, namespace | attributes)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._labels.setdefault("mark", "cache")
 
-    def _function(self):
-        for indata, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
-            outdata[:] = indata
-        # We need to set the flag frozen manually
-        self._evaluator.frozen = True
-
-    def recache(self) -> None:
-        self.unfreeze()
-        self.touch(force_computation=True)
+Cache = _copy_class(Copy, "Cache", __module__=__name__, _cache_default=True)

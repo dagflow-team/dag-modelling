@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, override
 from numba import njit
 from numpy import allclose, digitize, fabs
 
+from ...core.data_descriptor import Layout, check_layout
 from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
@@ -14,7 +15,10 @@ from ...core.type_functions import (
     check_size_of_inputs,
     copy_dtype_from_inputs_to_outputs,
     evaluate_dtype_of_outputs,
+    set_csr_output,
 )
+from ...methods.sparse.coo import coo_add
+from ...methods.sparse.coo_buffer import COOBuffer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,12 +27,16 @@ if TYPE_CHECKING:
 
     from ...core.input import Input
     from ...core.output import Output
+    from ...core.types import LayoutLike
 
 
 class AxisDistortionMatrixPointwise(Node):
     """For a given historam and distorted X axis compute the conversion matrix.
 
     Distortion is assumed to be linear.
+
+    extra arguments:
+        `layout` (str): "sparse-csr" (default) or "dense"
     """
 
     __slots__ = (
@@ -37,15 +45,21 @@ class AxisDistortionMatrixPointwise(Node):
         "_distortion_original",
         "_distortion_target",
         "_result",
+        "_layout",
+        "_coo",
     )
 
     _edges_original: Input
     _edges_target: Input
     _edges_modified: Input
     _result: Output
+    _layout: LayoutLike
+    _coo: COOBuffer
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, layout: LayoutLike = Layout.SPARSE_CSR.value, **kwargs):
         super().__init__(*args, **kwargs)
+        check_layout(layout, self)
+        self._layout = layout
         self.labels.setdefaults(
             {
                 "text": r"Bin edges distortion matrix",
@@ -61,6 +75,7 @@ class AxisDistortionMatrixPointwise(Node):
             {
                 "python": self._function_python,
                 "numba": self._function_numba,
+                "csr": self._function_csr,
             }
         )
 
@@ -80,6 +95,17 @@ class AxisDistortionMatrixPointwise(Node):
             self._distortion_original.data,
             self._distortion_target.data,
             self._result._data,
+        )
+
+    def _function_csr(self):
+        self._coo.fill(
+            self._result._data,
+            _axisdistortion_pointwise_numba,
+            self._edges_original.data,
+            self._edges_target.data,
+            self._distortion_original.data,
+            self._distortion_target.data,
+            None,
         )
 
     @override
@@ -105,6 +131,12 @@ class AxisDistortionMatrixPointwise(Node):
         edges_target = self._edges_target.parent_output
         self._result.dd.axes_edges = (edges_target, edges_original)
         self._evaluator.function = self._evaluator._functions_dict["numba"]
+        if self._layout == Layout.SPARSE_CSR:
+            # a monotonic curve crosses at most 2N-1 cells, otherwise the arrays grow
+            capacity = 2 * nedges - 3
+            self._coo = COOBuffer(capacity, nedges - 1)
+            self._internal_buffers["coo"] = self._coo
+            set_csr_output(self, self._result, capacity)
 
 
 @njit
@@ -126,17 +158,26 @@ def _axisdistortion_pointwise_python(
     edges_target: NDArray,
     distortion_original: NDArray,
     distortion_target: NDArray,
-    matrix: NDArray,
-):
+    matrix: NDArray | None,
+    rows: NDArray | None = None,
+    cols: NDArray | None = None,
+    values: NDArray | None = None,
+) -> int:
+    """Fill the dense `matrix` or put its entries to the COO arrays and return their number"""
     # in general, target edges may be different (finer than original), the code should be able to handle it.
     # but currently we just check that edges are the same.
     assert edges_original is edges_target or allclose(
         edges_original, edges_target, atol=0.0, rtol=0.0
     )
-    matrix[:, :] = 0.0
+    # only `matrix` or only the COO arrays are given, numba drops the code for the other
+    if matrix is not None:
+        matrix[:, :] = 0.0
+    elif rows is None:
+        raise ValueError("Either the dense matrix or the COO arrays must be given")
+    nentries = 0
 
     if distortion_original[0] >= edges_original[-1] or distortion_original[-1] < edges_original[0]:
-        return
+        return nentries
 
     n_bins_x = edges_original.size - 1
     n_bins_y = edges_target.size - 1
@@ -320,7 +361,10 @@ def _axisdistortion_pointwise_python(
                 element = width_x_partial / width_x_full
 
                 # += takes into acount possibility to return to current element bu up/down or down/up movement
-                matrix[bin_idx_y, bin_idx_x] += element
+                if matrix is not None:
+                    matrix[bin_idx_y, bin_idx_x] += element
+                elif rows is not None:
+                    nentries = coo_add(rows, cols, values, nentries, bin_idx_y, bin_idx_x, element)
 
         skip_incomplete_x = False
         if left < right:
@@ -366,8 +410,9 @@ def _axisdistortion_pointwise_python(
                 bottom_y = large_negative_number
     # else:                                                                                              # debug
     #     print("break due to lack of advancement")                                                      # debug
+    return nentries
 
 
-_axisdistortion_pointwise_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = (
-    njit(cache=NUMBA_CACHE_ENABLE)(_axisdistortion_pointwise_python)
+_axisdistortion_pointwise_numba: Callable[..., int] = njit(cache=NUMBA_CACHE_ENABLE)(
+    _axisdistortion_pointwise_python
 )

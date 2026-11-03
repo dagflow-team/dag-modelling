@@ -132,7 +132,7 @@ class plot_auto:
         if (masked_value := self._plotoptions.get("mask_value")) is not None:
             kwargs = dict(kwargs, masked_value=masked_value)
 
-        data = _mask_if_needed(self._output.data, *args, **kwargs)
+        data = _mask_if_needed(self._output.data_dense, *args, **kwargs)
         self._array = data
         self._edges = self._output.dd.edges_arrays
         self._meshes = self._output.dd.meshes_arrays

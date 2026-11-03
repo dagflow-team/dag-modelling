@@ -30,6 +30,7 @@ class _NodeMethods:
         immediate=False,
         frozen=False,
         allowed_kw_inputs=(),
+        allowed_layouts=None,
         **kwargs,
     ):
         from .graph import Graph
@@ -56,6 +57,7 @@ class _NodeMethods:
             outputs=self.outputs,
             evaluator=self._evaluator,
             allowed_kw_inputs=tuple(allowed_kw_inputs),
+            allowed_layouts=allowed_layouts,
         )
 
         self.graph = Graph.current() if graph is None else graph

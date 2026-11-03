@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, override
 from nested_mapping.typing import properkey
 from numpy.typing import NDArray
 
+from ...core.exception import TypeFunctionError
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.node import Node
 from ...core.storage import NodeStorage
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     from nested_mapping.typing import KeyLike
+
+    from ...core.types import LayoutLike
 
 
 class OneToOneNode(Node):
@@ -51,6 +54,15 @@ class OneToOneNode(Node):
             ignore_Nd=True,
             merge_input_axes=False,
         )
+
+    def _copy_layout_from_inputs(self) -> LayoutLike:
+        """Copy the input layouts and capacities to the outputs, return the common layout"""
+        layouts = {input.dd.layout for input in self.inputs}
+        if len(layouts) > 1:
+            raise TypeFunctionError("The inputs must have the same layout", node=self)
+        for input, output in zip(self.inputs, self.outputs):
+            output.dd.layout, output.dd.capacity = input.dd.layout, input.dd.capacity
+        return layouts.pop()
 
     @override
     def _post_allocate(self):

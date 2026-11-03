@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 
 from numpy import printoptions, square
 
+from ..core.csr_array import CSRArray
+from ..core.data_descriptor import Layout
 from ..core.exception import UnclosedGraphError
 from ..core.graph import Graph
 from ..core.input import Input
@@ -650,6 +652,10 @@ class GraphDot:
         nin = "+".join(nin) or "0"
 
         nlimbs = f"{nin}→{nout}"
+        if layouts := {output.dd.layout for output in node.outputs.iter_all()} - {
+            Layout.DENSE.value
+        }:
+            nlimbs += f" [{', '.join(sorted(layouts))}]"
 
         left, right = [], []
         br_left, br_right = ("\\{", "\\}") if hasedges else ("[", "]")
@@ -705,12 +711,14 @@ class GraphDot:
             tainted = "tainted" if out0.tainted else "updated"
             data = None
             try:
-                data = out0.data
+                data = out0.data_dense
             except UnclosedGraphError:
                 data = out0._data
             except Exception:
                 right.append("cought exception")
                 data = out0._data
+            if isinstance(data, CSRArray):
+                data = data.toarray()
 
             if show_data_summary and data is not None:
                 sm = data.sum()

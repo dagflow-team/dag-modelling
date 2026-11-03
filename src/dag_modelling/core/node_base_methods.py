@@ -162,8 +162,11 @@ class _NodeBaseMethods:
     def get_data(self, key=0):
         return self.outputs[key].data
 
+    def get_data_dense(self, key=0):
+        return self.outputs[key].data_dense
+
     def get_input_data(self, key):
-        return self.inputs[key].data()
+        return self.inputs[key].data
 
     def to_dict(self, **kwargs):
         return self.outputs[0].to_dict(**kwargs)

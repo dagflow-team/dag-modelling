@@ -41,15 +41,17 @@ def test_AxisDistortionMatrixPointwise(
         Distortion = Array("Distortion", x_fine, mode="fill")
         DistortionModified = Array("Distortion modified", y_fine, mode="fill")
 
-        mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
+        mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)", layout="dense")
+        mat_csr = AxisDistortionMatrixPointwise("LSNL matrix (pointwise, CSR)")
+        for matrix in (mat, mat_csr):
+            Edges >> matrix.inputs["EdgesOriginal"]
+            EdgesModified >> matrix.inputs["EdgesTarget"]
 
-        Edges >> mat.inputs["EdgesOriginal"]
-        EdgesModified >> mat.inputs["EdgesTarget"]
-
-        Distortion >> mat.inputs["DistortionOriginal"]
-        DistortionModified >> mat.inputs["DistortionTarget"]
+            Distortion >> matrix.inputs["DistortionOriginal"]
+            DistortionModified >> matrix.inputs["DistortionTarget"]
 
     res = mat.get_data()
+    assert mat_csr.get_data().toarray().tobytes() == res.tobytes()
 
     plt.figure()
     ax = plt.subplot(111, xlabel="x", ylabel="y", title=f"Δx={xoffset}, Δy={yoffset}")
@@ -173,15 +175,17 @@ def test_AxisDistortionMatrixPointwise_pol3(
         Distortion = Array("Distortion", x_fine, mode="fill")
         DistortionModified = Array("Distortion modified", y_fine, mode="fill")
 
-        mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
+        mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)", layout="dense")
+        mat_csr = AxisDistortionMatrixPointwise("LSNL matrix (pointwise, CSR)")
+        for matrix in (mat, mat_csr):
+            Edges >> matrix.inputs["EdgesOriginal"]
+            EdgesModified >> matrix.inputs["EdgesTarget"]
 
-        Edges >> mat.inputs["EdgesOriginal"]
-        EdgesModified >> mat.inputs["EdgesTarget"]
-
-        Distortion >> mat.inputs["DistortionOriginal"]
-        DistortionModified >> mat.inputs["DistortionTarget"]
+            Distortion >> matrix.inputs["DistortionOriginal"]
+            DistortionModified >> matrix.inputs["DistortionTarget"]
 
     res = mat.get_data()
+    assert mat_csr.get_data().toarray().tobytes() == res.tobytes()
 
     plt.figure()
     ax = plt.subplot(111, xlabel="x", ylabel="y", title="")

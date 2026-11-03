@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, override
 
 from numpy import matmul, multiply
 
+from ...core.data_descriptor import Layout
 from ...core.exception import TypeFunctionError
 from ...core.input_strategy import AddNewInputAddNewOutput
 from ...core.node import Node
@@ -14,6 +15,7 @@ from ...core.type_functions import (
     check_inputs_are_matrix_multipliable,
     evaluate_dtype_of_outputs,
 )
+from ...methods.sparse.csr import csr_matvec, csr_vecmat
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class VectorMatrixProduct(Node):
-    """Compute matrix product `C=row(v)@M` or `C=M@column(v)`"""
+    """Compute matrix product `C=row(v)@M` or `C=M@column(v)`, `M` is dense, diagonal or CSR"""
 
     __slots__ = ("_mat", "_matrix_column")
 
@@ -34,7 +36,12 @@ class VectorMatrixProduct(Node):
             "input_strategy",
             AddNewInputAddNewOutput(input_fmt="vector", output_fmt="result"),
         )
-        super().__init__(*args, **kwargs, allowed_kw_inputs=("matrix",))
+        super().__init__(
+            *args,
+            **kwargs,
+            allowed_kw_inputs=("matrix",),
+            allowed_layouts={"matrix": (Layout.SPARSE_CSR.value,)},
+        )
         self._mat = self._add_input("matrix", positional=False)
 
         if mode == "column":
@@ -52,8 +59,20 @@ class VectorMatrixProduct(Node):
                 "row_block": self._fcn_row_block,
                 "diagonal_column": self._fcn_diagonal_column,
                 "block_column": self._fcn_block_column,
+                "row_csr": self._fcn_row_csr,
+                "csr_column": self._fcn_csr_column,
             }
         )
+
+    def _fcn_row_csr(self):
+        mat = self._mat.data
+        for row, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
+            csr_vecmat(row, mat.data, mat.indices, mat.indptr, outdata)
+
+    def _fcn_csr_column(self):
+        mat = self._mat.data
+        for column, outdata in zip(self.inputs.iter_data(), self.outputs.iter_data_unsafe()):
+            csr_matvec(mat.data, mat.indices, mat.indptr, column, outdata)
 
     def _fcn_row_block(self):
         mat = self._mat.data
@@ -97,6 +116,8 @@ class VectorMatrixProduct(Node):
             self._evaluator.function = (
                 ndim_mat == 2 and self._fcn_block_column or self._fcn_diagonal_column
             )
+            if self._mat.dd.layout == Layout.SPARSE_CSR:
+                self._evaluator.function = self._fcn_csr_column
         else:
             for i, out in enumerate(self.outputs):
                 (resshape,) = check_inputs_are_matrix_multipliable(self, i, "matrix")
@@ -104,6 +125,12 @@ class VectorMatrixProduct(Node):
             self._evaluator.function = (
                 ndim_mat == 2 and self._fcn_row_block or self._fcn_row_diagonal
             )
+            if self._mat.dd.layout == Layout.SPARSE_CSR:
+                self._logger.warning(
+                    f"{self.name}: row(v) @ CSR scatters to the output and is slower, "
+                    "a CSC layout (not implemented yet) would make it a gather"
+                )
+                self._evaluator.function = self._fcn_row_csr
 
         # column: [MxN] x [Nx1] -> [Mx1]
         # row: [1xM] x [MxN] -> [1xN]

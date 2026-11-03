@@ -24,6 +24,8 @@ cdef class Input:
     touch = _InputMethods.touch
     allocate = _InputMethods.allocate
     to_dict = _InputMethods.to_dict
+    data_dense = _InputMethods.data_dense
+    data_sparse = _InputMethods.data_sparse
     # Not on the hot path: touched only by graph type propagation / repr.
     taint_type = _InputMethods.taint_type
     connected = _InputMethods.connected

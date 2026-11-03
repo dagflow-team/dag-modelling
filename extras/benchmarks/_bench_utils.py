@@ -1,7 +1,8 @@
-"""Shared print helpers for the extras/benchmarks/ scripts."""
+"""Shared helpers for the extras/benchmarks/ scripts."""
 
 import io
 import pstats
+import timeit
 
 
 def banner(title: str, width: int = 70) -> None:
@@ -16,3 +17,8 @@ def print_cprofile_stats(profiler, sort_by: str = "cumulative", n: int = 20) -> 
     stats.print_stats(n)
     print(stream.getvalue())
     return stats
+
+
+def best_time(fn, number: int, repeat: int = 5) -> float:
+    fn()
+    return min(timeit.repeat(fn, number=number, repeat=repeat)) / number

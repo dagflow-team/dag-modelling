@@ -6,6 +6,7 @@ from typing import override
 from numba import njit
 from numpy import allclose
 
+from ...core.data_descriptor import Layout, check_layout
 from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.node import Node
 from ...core.type_functions import (
@@ -15,7 +16,9 @@ from ...core.type_functions import (
     check_size_of_inputs,
     copy_dtype_from_inputs_to_outputs,
     evaluate_dtype_of_outputs,
+    set_csr_output,
 )
+from ...methods.sparse.csr import csr_set_sequential
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,11 +27,16 @@ if TYPE_CHECKING:
 
     from ...core.input import Input
     from ...core.output import Output
+    from ...core.types import LayoutLike
 
 
 class AxisDistortionMatrix(Node):
     """For a given histogram and distorted X axis compute the conversion
-    matrix."""
+    matrix.
+
+    extra arguments:
+        `layout` (str): "sparse-csr" (default) or "dense"
+    """
 
     __slots__ = (
         "_edges_original",
@@ -36,6 +44,7 @@ class AxisDistortionMatrix(Node):
         "_edges_modified",
         "_edges_backward",
         "_result",
+        "_layout",
     )
 
     _edges_original: Input
@@ -43,9 +52,12 @@ class AxisDistortionMatrix(Node):
     _edges_modified: Input
     _edges_backward: Input
     _result: Output
+    _layout: LayoutLike
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, layout: LayoutLike = Layout.SPARSE_CSR.value, **kwargs):
         super().__init__(*args, **kwargs)
+        check_layout(layout, self)
+        self._layout = layout
         self.labels.setdefaults(
             {
                 "text": r"Bin edges distortion matrix",
@@ -61,6 +73,7 @@ class AxisDistortionMatrix(Node):
             {
                 "python": self._function_python,
                 "numba": self._function_numba,
+                "csr": self._function_csr,
             }
         )
 
@@ -81,6 +94,20 @@ class AxisDistortionMatrix(Node):
             self._edges_backward.data,
             self._result._data,
         )
+
+    def _function_csr(self):
+        matrix = self._result._data
+        _axisdistortion_numba(
+            self._edges_original.data,
+            self._edges_target.data,
+            self._edges_modified.data,
+            self._edges_backward.data,
+            None,
+            matrix.data,
+            matrix.indices,
+            matrix.indptr,
+        )
+        matrix.update()
 
     @override
     def _type_function(self) -> None:
@@ -103,6 +130,9 @@ class AxisDistortionMatrix(Node):
         edges_target = self._edges_target.parent_output
         self._result.dd.axes_edges = (edges_target, edges_original)
         self._evaluator.function = self._evaluator._functions_dict["numba"]
+        if self._layout == Layout.SPARSE_CSR:
+            # a segment of the traversal gives one entry, there are at most 2(N+1) segments
+            set_csr_output(self, self._result, 2 * nedges)
 
 
 def _axisdistortion_python(
@@ -110,7 +140,10 @@ def _axisdistortion_python(
     edges_target: NDArray,
     edges_modified: NDArray,
     edges_backwards: NDArray,
-    matrix: NDArray,
+    matrix: NDArray | None,
+    data: NDArray | None = None,
+    indices: NDArray | None = None,
+    indptr: NDArray | None = None,
 ) -> None:
     # in general, target edges may be different (finer than original), the code should be able to handle it.
     # but currently we just check that edges are the same.
@@ -124,7 +157,14 @@ def _axisdistortion_python(
     nbinsx = edges_original.size - 1
     nbinsy = edges_target.size - 1
 
-    matrix[:, :] = 0.0
+    # only `matrix` or only the CSR arrays are given, numba drops the code for the other
+    if matrix is not None:
+        matrix[:, :] = 0.0
+    elif indptr is not None:
+        indptr[:] = 0  # an early return below must leave the matrix empty
+    else:
+        raise ValueError("Either the dense matrix or the CSR arrays must be given")
+    nnz, row = 0, 0
 
     threshold = -1e10
     # left_axis = 0
@@ -178,7 +218,14 @@ def _axisdistortion_python(
         #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}"
         # )
 
-        matrix[idxy, idxx0] = (rightx_fine - leftx_fine) / width_coarse
+        # idxx0 is -1 on the empty first segment when the first edges coincide
+        if idxx0 >= 0:
+            value = (rightx_fine - leftx_fine) / width_coarse
+            if matrix is not None:
+                matrix[idxy, idxx0] = value
+            elif indptr is not None:
+                # sparse (CSR) matrix only; rounding may bring the traversal back to the same cell
+                nnz, row = csr_set_sequential(data, indices, indptr, nnz, row, idxy, idxx0, value)
 
         if right_axis == 0:
             if (idxx0 := idxx0 + 1) >= nbinsx:
@@ -189,7 +236,10 @@ def _axisdistortion_python(
         leftx_fine, lefty_fine = rightx_fine, righty_fine
         # left_axis = right_axis
 
+    if indptr is not None:
+        # the rows after the last entry are empty
+        row += 1
+        indptr[row:] = nnz
 
-_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = njit(
-    cache=NUMBA_CACHE_ENABLE
-)(_axisdistortion_python)
+
+_axisdistortion_numba: Callable[..., None] = njit(cache=NUMBA_CACHE_ENABLE)(_axisdistortion_python)

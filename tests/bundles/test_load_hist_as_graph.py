@@ -4,10 +4,21 @@ import numpy as np
 import pytest
 import uproot
 
+from numpy.typing import NDArray
+
 from dag_modelling.bundles.load_graph import load_graph
 
 
-def _save_data(filename, object_name, hist):
+def _create_hist_file(filename, suffix, object_name, object_type, entries) -> tuple[str, tuple[NDArray, NDArray]]:
+    filename_prefix, _ = filename.split(suffix)
+    filename_object = filename_prefix + "." + object_type
+    generated_data = np.random.random(size=entries)
+    hist, bin_edges = np.histogram(generated_data)
+    _save_hist(filename, object_name, (hist, bin_edges))
+    return filename_object, (hist, bin_edges)
+
+
+def _save_hist(filename, object_name, hist):
     _, extension = filename.split(".")
     if extension == "root":
         f = uproot.recreate(filename)
@@ -29,12 +40,7 @@ def test_load_hist_as_graph(object_type, entries, dtype, strategy):
     # prefix_{object_name}.tsv -- {object_name} refers to key in .root/.hdf5/.npz files
     suffix = f"_{object_name}.{object_type}" if object_type == "tsv" else f".{object_type}"
     with tempfile.NamedTemporaryFile(suffix=suffix) as f:
-        filename = f.name
-        filename_prefix, _ = filename.split(suffix)
-        filename_object = filename_prefix + "." + object_type
-        generated_data = np.random.random(size=entries)
-        hist, bin_edges = np.histogram(generated_data)
-        _save_data(filename, object_name, (hist, bin_edges))
+        filename_object, (hist, bin_edges) = _create_hist_file(f.name, suffix, object_name, object_type, entries)
         x_points = (
             bin_edges[:-1]
             if strategy == "left"
@@ -76,12 +82,7 @@ def test_load_hist_as_graph_exceptions(object_type, entries, dtype):
     # prefix_{object_name}.tsv -- {object_name} refers to key in .root/.hdf5/.npz files
     suffix = f"_{object_name}.{object_type}" if object_type == "tsv" else f".{object_type}"
     with tempfile.NamedTemporaryFile(suffix=suffix) as f:
-        filename = f.name
-        filename_prefix, _ = filename.split(suffix)
-        filename_object = filename_prefix + "." + object_type
-        generated_data = np.random.random(size=entries)
-        hist, bin_edges = np.histogram(generated_data)
-        _save_data(filename, object_name, (hist, bin_edges))
+        filename_object, (hist, bin_edges) = _create_hist_file(f.name, suffix, object_name, object_type, entries)
 
         with pytest.raises(RuntimeError):
             storage = load_graph(
@@ -91,3 +92,6 @@ def test_load_hist_as_graph_exceptions(object_type, entries, dtype):
                 name_function={output_name: object_name},
                 dtype=dtype,
             )
+
+
+    # TODO: Add test for graph as hist

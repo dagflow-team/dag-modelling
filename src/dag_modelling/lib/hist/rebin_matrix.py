@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal, override
 from numba import njit
 from numpy import allclose, finfo, isclose
 
+from ...core.data_descriptor import Layout, check_layout
 from ...core.exception import InitializationError
 from ...core.global_parameters import NUMBA_CACHE_ENABLE
 from ...core.input_strategy import AddNewInput
@@ -15,6 +16,8 @@ from ...core.type_functions import (
     check_dimension_of_inputs,
     check_inputs_equivalence,
 )
+from ...methods.sparse.coo import coo_add
+from ...methods.sparse.coo_buffer import COOBuffer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,6 +26,7 @@ if TYPE_CHECKING:
 
     from ...core.input import Input
     from ...core.output import Output
+    from ...core.types import LayoutLike
 
 
 RebinModes = {"python", "numba"}
@@ -31,7 +35,11 @@ RebinModesType = Literal[RebinModes]
 
 class RebinMatrix(Node):
     """For a given `edges_old` and `edges_new` computes the conversion
-    matrix."""
+    matrix.
+
+    extra arguments:
+        `layout` (str): "sparse-csr" (default) or "dense"
+    """
 
     __slots__ = (
         "_edges_old",
@@ -41,6 +49,8 @@ class RebinMatrix(Node):
         "_atol",
         "_rtol",
         "_mode",
+        "_layout",
+        "_coo",
     )
 
     _edges_old: Input
@@ -50,6 +60,8 @@ class RebinMatrix(Node):
     _atol: float
     _rtol: float
     _mode: str
+    _layout: LayoutLike
+    _coo: COOBuffer
 
     def __init__(
         self,
@@ -57,6 +69,7 @@ class RebinMatrix(Node):
         atol: float = float(finfo("d").resolution) * 10.0,
         rtol: float = 0.0,
         mode: RebinModesType = "numba",
+        layout: LayoutLike = Layout.SPARSE_CSR.value,
         **kwargs,
     ):
         super().__init__(
@@ -72,7 +85,9 @@ class RebinMatrix(Node):
         )
         if mode not in RebinModes:
             raise InitializationError(f"mode must be in {RebinModes}, but given {mode}!", node=self)
+        check_layout(layout, self)
         self._mode = mode
+        self._layout = layout
         self._atol = atol
         self._rtol = rtol
         self._edges_old = self._add_input("edges_old")  # input: 0
@@ -98,30 +113,23 @@ class RebinMatrix(Node):
         return self._rtol
 
     def _function_python(self):
-        edges_old = self._edges_old.data
-        ret = _calc_rebin_matrix_python(
-            edges_old, self._edges_new.data, self._result._data, self.atol, self.rtol
-        )
-        if ret[0] > 0:
-            self.__raise_exception_at_wrong_edges(*ret)
-        for i, input in enumerate(self._edges_old_clones):
-            if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
-                raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
+        self._fill(_calc_rebin_matrix_python)
 
     def _function_numba(self):
+        self._fill(_calc_rebin_matrix_numba)
+
+    def _fill(self, kernel: Callable) -> None:
         edges_old = self._edges_old.data
-        ret = _calc_rebin_matrix_numba(
-            self._edges_old.data,
-            self._edges_new.data,
-            self._result._data,
-            self.atol,
-            self.rtol,
+        coo = self._coo
+        ret = kernel(
+            edges_old, self._edges_new.data, coo.rows, coo.cols, coo.values, self.atol, self.rtol
         )
         if ret[0] > 0:
-            self.__raise_exception_at_wrong_edges(*ret)
+            self.__raise_exception_at_wrong_edges(*ret[:-1])
         for i, input in enumerate(self._edges_old_clones):
             if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
                 raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
+        coo.write(ret[-1], self._result._data)
 
     def __raise_exception_at_wrong_edges(self, retcode, iold, edge_old, inew, edge_new) -> None:
         print("Old edges:", self._edges_old.dd.size, self._edges_old.data)
@@ -141,11 +149,15 @@ class RebinMatrix(Node):
         """A output takes this function to determine the dtype and shape."""
         check_dimension_of_inputs(self, ("edges_old", "edges_new"), 1)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
-        self._result.dd.shape = (
-            self._edges_new.dd.size - 1,
-            self._edges_old.dd.size - 1,
-        )
+        nrows, ncols = self._edges_new.dd.size - 1, self._edges_old.dd.size - 1
+        self._result.dd.shape = (nrows, ncols)
         self._result.dd.dtype = "d"
+        # every old bin goes to one new bin at most
+        self._coo = COOBuffer(ncols, nrows)
+        self._internal_buffers["coo"] = self._coo
+        if self._layout == Layout.SPARSE_CSR:
+            self._result.dd.layout = Layout.SPARSE_CSR.value
+            self._result.dd.capacity = ncols
         self._evaluator.function = self._evaluator._functions_dict[self.mode]
         assign_edges_from_inputs_to_outputs((self._edges_new, self._edges_old), self._result)
 
@@ -155,26 +167,30 @@ class RebinMatrix(Node):
 def _calc_rebin_matrix_python(
     edges_old: NDArray,
     edges_new: NDArray,
-    rebin_matrix: NDArray,
+    rows: NDArray,
+    cols: NDArray,
+    values: NDArray,
     atol: float,
     rtol: float,
-) -> tuple[int, int, float, int, float]:
+) -> tuple[int, int, float, int, float, int]:
     """
     For a column C of size N: Cnew = M C
     Cnew = [Mx1]
     M = [MxN]
     C = [Nx1]
+    The unit entries of M go to the COO arrays, their number is returned last.
     """
 
     if edges_new[0] < edges_old[0] and not isclose(
         edges_new[0], edges_old[0], atol=atol, rtol=rtol
     ):
-        return 1, 0, edges_old[0], 0, edges_new[0]
+        return 1, 0, edges_old[0], 0, edges_new[0], 0
     if edges_new[-1] > edges_old[-1] and not isclose(
         edges_new[-1], edges_old[-1], atol=atol, rtol=rtol
     ):
-        return 2, -1, edges_old[-1], -1, edges_new[-1]
+        return 2, -1, edges_old[-1], -1, edges_new[-1], 0
 
+    nentries = 0
     inew = 0
     iold = 0
     edge_old = edges_old[0]
@@ -186,16 +202,16 @@ def _calc_rebin_matrix_python(
     for inew, edge_new in enumerate(edges_new[1:], 1):
         while edge_old < edge_new and not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
             if edge_old >= edge_new_prev or isclose(edge_old, edge_new_prev, atol=atol, rtol=rtol):
-                rebin_matrix[inew - 1, iold] = 1.0
+                nentries = coo_add(rows, cols, values, nentries, inew - 1, iold, 1.0)
 
             iold, edge_old = next(stepper_old)
 
         if not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            return 3, iold, edge_old, inew, edge_new_prev
+            return 3, iold, edge_old, inew, edge_new_prev, nentries
 
-    return 0, iold, edge_old, inew, edge_new_prev
+    return 0, iold, edge_old, inew, edge_new_prev, nentries
 
 
-_calc_rebin_matrix_numba: Callable[
-    [NDArray, NDArray, NDArray, float, float], tuple[int, int, float, int, float]
-] = njit(cache=NUMBA_CACHE_ENABLE)(_calc_rebin_matrix_python)
+_calc_rebin_matrix_numba: Callable[..., tuple[int, int, float, int, float, int]] = njit(
+    cache=NUMBA_CACHE_ENABLE
+)(_calc_rebin_matrix_python)
